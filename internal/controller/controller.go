@@ -72,7 +72,7 @@ func New(kubeconfig string, logger log.Logger) (*Controller, error) {
 	c.promRuleLister = ruleInf.Lister()
 	c.promRuleInformer = ruleInf.Informer()
 	c.promRuleInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    c.handleRuleAdd,
+		AddFunc:    c.enqueuePromRule,
 		UpdateFunc: c.handleRuleUpdate,
 		DeleteFunc: c.handleRuleDelete,
 	})

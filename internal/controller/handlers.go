@@ -14,10 +14,22 @@
 
 package controller
 
-import "github.com/go-kit/kit/log/level"
+import (
+	"github.com/go-kit/kit/log/level"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/tools/cache"
+)
 
-func (c *Controller) handleRuleAdd(obj interface{}) {
-	level.Info(c.logger).Log("msg", "handleRuleAdd called")
+// enqueuePromRule takes a PrometheusRule resource and converts it into a
+// namespace/name string which is then put onto the workqueue. This method
+// should *not* be passed resources of any type other than PrometheusRule.
+func (c *Controller) enqueuePromRule(obj interface{}) {
+	key, err := cache.MetaNamespaceKeyFunc(obj)
+	if err != nil {
+		utilruntime.HandleError(err)
+		return
+	}
+	c.workqueue.Add(key)
 }
 
 func (c *Controller) handleRuleUpdate(old, new interface{}) {
