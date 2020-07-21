@@ -1,0 +1,40 @@
+linters:
+  # please, do not use `enable-all`: it is deprecated.
+  disable-all: true
+  enable:
+    - bodyclose
+    - deadcode
+    - depguard
+    - dogsled
+    - dupl
+    - maligned
+    - prealloc
+    - errcheck
+    - funlen
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - golint
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - interfacer
+    - lll
+    - misspell
+    - nakedret
+    - rowserrcheck
+    - scopelint
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - varcheck
+    - whitespace
