@@ -25,6 +25,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/sapcc/absent-metrics-operator/internal/controller"
+	"github.com/sapcc/absent-metrics-operator/internal/version"
 )
 
 func main() {
@@ -42,7 +43,8 @@ func main() {
 
 	logger := getLogger(logFormat, logLevel)
 
-	logger.Log("msg", "starting absent-metrics-operator")
+	logger.Log("msg", "starting absent-metrics-operator",
+		"version", version.Version, "git-commit", version.GitCommitHash, "build-date", version.BuildDate)
 
 	c, err := controller.New(kubeconfig, log.With(logger, "component", "controller"))
 	if err != nil {
@@ -50,7 +52,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// set up signal handling for graceful shutdown
+	// Set up signal handling for graceful shutdown
 	wg, ctx := setupSignalHandlerAndRoutineGroup(logger)
 
 	wg.Go(func() error { return c.Run(threadiness, ctx.Done()) })

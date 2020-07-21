@@ -1,12 +1,15 @@
 PKG     = github.com/sapcc/absent-metrics-operator
 PREFIX := /usr
 
+VERSION         := $(shell git describe --long --abbrev=6)
+GIT_COMMIT_HASH := $(shell git rev-parse --verify HEAD)
+
 # NOTE: This repo uses Go modules, and uses a synthetic GOPATH at
 # $(CURDIR)/.gopath that is only used for the build cache. $GOPATH/src/ is
 # empty.
 GO            := GOPATH=$(CURDIR)/.gopath GOBIN=$(CURDIR)/build go
 GO_BUILDFLAGS :=
-GO_LDFLAGS    := -s -w
+GO_LDFLAGS    := -s -w -X $(PKG)/internal/version.Version=$(VERSION) -X $(PKG)/internal/version.GitCommitHash=$(GIT_COMMIT_HASH)
 
 all: build
 

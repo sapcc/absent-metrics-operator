@@ -11,7 +11,8 @@ require (
 	k8s.io/klog/v2 v2.3.0
 )
 
-// To avoid problems, make sure that the k8s components use the same version.
+// To avoid problems, make sure that the k8s components use the same version as
+// the prometheus-operator.
 replace (
 	k8s.io/apimachinery => k8s.io/apimachinery v0.18.2
 	k8s.io/client-go => k8s.io/client-go v0.18.2
