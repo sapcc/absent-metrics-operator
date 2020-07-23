@@ -15,6 +15,9 @@
 package controller
 
 import (
+	"fmt"
+
+	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/go-kit/kit/log/level"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/tools/cache"
@@ -24,18 +27,23 @@ import (
 // namespace/name string which is then put onto the workqueue. This method
 // should *not* be passed resources of any type other than PrometheusRule.
 func (c *Controller) enqueuePromRule(obj interface{}) {
-	key, err := cache.MetaNamespaceKeyFunc(obj)
+	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 	if err != nil {
-		utilruntime.HandleError(err)
+		utilruntime.HandleError(fmt.Errorf("could not create key for object: %s", err.Error()))
 		return
 	}
+
+	// Do not enqueue object to workqueue if it is managed (read: created) by
+	// the operator itself or if the annotation for disabling the operator is
+	// present.
+	l := obj.(*monitoringv1.PrometheusRule).GetLabels()
+	if l[labelManagedBy] == "true" {
+		return
+	}
+	if l[labelDisable] == "true" {
+		level.Info(c.logger).Log("msg", "operator disabled, skipping", "key", key)
+		return
+	}
+
 	c.workqueue.Add(key)
-}
-
-func (c *Controller) handleRuleUpdate(old, new interface{}) {
-	level.Info(c.logger).Log("msg", "handleRuleUpdate called")
-}
-
-func (c *Controller) handleRuleDelete(obj interface{}) {
-	level.Info(c.logger).Log("msg", "handleRuleDelete called")
 }

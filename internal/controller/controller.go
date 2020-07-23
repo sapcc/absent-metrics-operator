@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"time"
 
+	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	monitoringinformers "github.com/coreos/prometheus-operator/pkg/client/informers/externalversions"
 	monitoringlisters "github.com/coreos/prometheus-operator/pkg/client/listers/monitoring/v1"
 	monitoringclient "github.com/coreos/prometheus-operator/pkg/client/versioned"
@@ -30,6 +31,11 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/workqueue"
+)
+
+const (
+	labelManagedBy = "absent-metrics-operator/managed-by"
+	labelDisable   = "absent-metrics-operator/disable"
 )
 
 // Controller is the controller implementation for acting on PrometheusRule
@@ -72,9 +78,19 @@ func New(kubeconfig string, logger log.Logger) (*Controller, error) {
 	c.promRuleLister = ruleInf.Lister()
 	c.promRuleInformer = ruleInf.Informer()
 	c.promRuleInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    c.enqueuePromRule,
-		UpdateFunc: c.handleRuleUpdate,
-		DeleteFunc: c.handleRuleDelete,
+		AddFunc: c.enqueuePromRule,
+		UpdateFunc: func(old, new interface{}) {
+			newRule := new.(*monitoringv1.PrometheusRule)
+			oldRule := old.(*monitoringv1.PrometheusRule)
+			if newRule.ResourceVersion == oldRule.ResourceVersion {
+				// Periodic resync will send update events for all known
+				// PrometheusRules. Two different versions of the same
+				// PrometheusRule will always have different RVs.
+				return
+			}
+			c.enqueuePromRule(new)
+		},
+		DeleteFunc: c.enqueuePromRule,
 	})
 
 	return c, nil
@@ -112,11 +128,10 @@ func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 		return fmt.Errorf("failed to sync informer cache")
 	}
 
-	level.Info(c.logger).Log("msg", "starting workers")
+	level.Info(c.logger).Log("msg", fmt.Sprintf("starting %d workers", threadiness))
 	for i := 0; i < threadiness; i++ {
 		go wait.Until(c.runWorker, time.Second, stopCh)
 	}
-	level.Info(c.logger).Log("msg", fmt.Sprintf("started %d workers", threadiness))
 
 	<-stopCh
 	level.Info(c.logger).Log("msg", "shutting down workers")
