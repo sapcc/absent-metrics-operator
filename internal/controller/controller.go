@@ -52,7 +52,7 @@ type Controller struct {
 }
 
 // New creates a new Controller.
-func New(kubeconfig string, logger log.Logger) (*Controller, error) {
+func New(kubeconfig string, resyncPeriod time.Duration, logger log.Logger) (*Controller, error) {
 	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
 		return nil, fmt.Errorf("instantiating cluster config failed: %s", err.Error())
@@ -74,7 +74,7 @@ func New(kubeconfig string, logger log.Logger) (*Controller, error) {
 		promClientset: pClient,
 		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "prometheusrules"),
 	}
-	ruleInf := monitoringinformers.NewSharedInformerFactory(pClient, time.Second*30).Monitoring().V1().PrometheusRules()
+	ruleInf := informers.NewSharedInformerFactory(pClient, resyncPeriod).Monitoring().V1().PrometheusRules()
 	c.promRuleLister = ruleInf.Lister()
 	c.promRuleInformer = ruleInf.Informer()
 	c.promRuleInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{

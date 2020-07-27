@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-kit/kit/log"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc" // load auth plugin
@@ -29,7 +30,7 @@ import (
 )
 
 func main() {
-	var logLevel, logFormat, kubeconfig string
+	var logLevel, logFormat, kubeconfig, resyncPeriod string
 	var threadiness int
 	flagset := flag.CommandLine
 	klog.InitFlags(flagset)
@@ -39,14 +40,23 @@ func main() {
 		fmt.Sprintf("Log format to use. Possible values: %s", strings.Join(availableLogFormats, ", ")))
 	flagset.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster")
 	flagset.IntVar(&threadiness, "threadiness", 1, "The controller's threadiness (number of workers)")
+	flagset.StringVar(&resyncPeriod, "resync-period", "30s", "The controller's resync period. Valid time units are 's', 'm', 'h'. Minimum acceptable value is 15s.")
 	flagset.Parse(os.Args[1:])
+
+	dur, err := time.ParseDuration(resyncPeriod)
+	if err != nil {
+		logFatalAndExit(fmt.Sprintf("could not parse resync period: %s", err.Error()))
+	}
+	if dur < 15*time.Second {
+		logFatalAndExit(fmt.Sprintf("minimum acceptable value for resync period is 15s, got: %s", dur))
+	}
 
 	logger := getLogger(logFormat, logLevel)
 
 	logger.Log("msg", "starting absent-metrics-operator",
 		"version", version.Version, "git-commit", version.GitCommitHash, "build-date", version.BuildDate)
 
-	c, err := controller.New(kubeconfig, log.With(logger, "component", "controller"))
+	c, err := controller.New(kubeconfig, dur, log.With(logger, "component", "controller"))
 	if err != nil {
 		logger.Log("msg", "could not instantiate controller", "err", err)
 		os.Exit(1)
