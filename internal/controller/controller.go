@@ -99,7 +99,7 @@ func New(kubeconfig string, resyncPeriod time.Duration, logger log.Logger) (*Con
 // Run will sync informer caches and start workers. It will block until stopCh
 // is closed, at which point it will shutdown the workqueue and wait for
 // workers to finish processing their current work items.
-func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
+func (c *Controller) Run(stopCh <-chan struct{}) error {
 	defer c.workqueue.ShutDown()
 
 	level.Info(c.logger).Log("msg", "starting controller")
@@ -128,10 +128,8 @@ func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 		return fmt.Errorf("failed to sync informer cache")
 	}
 
-	level.Info(c.logger).Log("msg", fmt.Sprintf("starting %d workers", threadiness))
-	for i := 0; i < threadiness; i++ {
-		go wait.Until(c.runWorker, time.Second, stopCh)
-	}
+	level.Info(c.logger).Log("msg", "starting worker")
+	go wait.Until(c.runWorker, time.Second, stopCh)
 
 	<-stopCh
 	level.Info(c.logger).Log("msg", "shutting down workers")

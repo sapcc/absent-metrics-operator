@@ -31,7 +31,6 @@ import (
 
 func main() {
 	var logLevel, logFormat, kubeconfig, resyncPeriod string
-	var threadiness int
 	flagset := flag.CommandLine
 	klog.InitFlags(flagset)
 	flagset.StringVar(&logLevel, "log-level", logLevelInfo,
@@ -39,7 +38,6 @@ func main() {
 	flagset.StringVar(&logFormat, "log-format", logFormatLogfmt,
 		fmt.Sprintf("Log format to use. Possible values: %s", strings.Join(availableLogFormats, ", ")))
 	flagset.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster")
-	flagset.IntVar(&threadiness, "threadiness", 1, "The controller's threadiness (number of workers)")
 	flagset.StringVar(&resyncPeriod, "resync-period", "30s", "The controller's resync period. Valid time units are 's', 'm', 'h'. Minimum acceptable value is 15s.")
 	flagset.Parse(os.Args[1:])
 
@@ -65,7 +63,7 @@ func main() {
 	// Set up signal handling for graceful shutdown
 	wg, ctx := setupSignalHandlerAndRoutineGroup(logger)
 
-	wg.Go(func() error { return c.Run(threadiness, ctx.Done()) })
+	wg.Go(func() error { return c.Run(ctx.Done()) })
 
 	if err := wg.Wait(); err != nil {
 		logger.Log("msg", "unhandled error received", "err", err)
