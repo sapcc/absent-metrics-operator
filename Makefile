@@ -7,7 +7,7 @@ GIT_COMMIT_HASH := $(shell git rev-parse --verify HEAD)
 
 GO            := GOBIN=$(CURDIR)/build go
 GO_BUILDFLAGS :=
-GO_LDFLAGS    := -s -w -X $(PKG)/internal/version.Version=$(VERSION) -X $(PKG)/internal/version.GitCommitHash=$(GIT_COMMIT_HASH)
+GO_LDFLAGS    := -s -w -X main.version=$(VERSION) -X main.gitCommitHash=$(GIT_COMMIT_HASH)
 
 # Which packages to test with `go test`?
 GO_TESTPKGS   := $(shell $(GO) list $(GO_BUILDFLAGS) -f '{{if .TestGoFiles}}{{.ImportPath}}{{end}}' ./...)

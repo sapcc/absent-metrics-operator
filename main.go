@@ -26,7 +26,14 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/sapcc/absent-metrics-operator/internal/controller"
-	"github.com/sapcc/absent-metrics-operator/internal/version"
+)
+
+// This info identifies a specific build of the app.
+// version and gitCommitHash are set at compile time.
+var (
+	version       = "dev"
+	gitCommitHash = "unknown"
+	buildDate     = time.Now().UTC().Format(time.RFC3339)
 )
 
 func main() {
@@ -55,7 +62,7 @@ func main() {
 	logger := getLogger(logFormat, logLevel)
 
 	logger.Log("msg", "starting absent-metrics-operator",
-		"version", version.Version, "git-commit", version.GitCommitHash, "build-date", version.BuildDate)
+		"version", version, "git-commit", gitCommitHash, "build-date", buildDate)
 
 	c, err := controller.New(kubeconfig, dur, log.With(logger, "component", "controller"))
 	if err != nil {
