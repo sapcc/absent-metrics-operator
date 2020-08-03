@@ -75,9 +75,8 @@ func getLogger(logFormat, logLevel string) log.Logger {
 	case logLevelNone:
 		logger = level.NewFilter(logger, level.AllowNone())
 	default:
-		fmt.Fprintf(os.Stderr, "FATAL: unexpected value for log level %q, valid values are: %v\n",
+		logFatalf("unexpected value for log level %q, valid values are: %v\n",
 			logLevel, strings.Join(availableLogLevels, ", "))
-		os.Exit(1)
 	}
 	logger = log.With(logger,
 		"ts", log.DefaultTimestampUTC,
@@ -106,4 +105,9 @@ func setupSignalHandlerAndRoutineGroup(logger log.Logger) (*errgroup.Group, cont
 	}()
 
 	return wg, ctx
+}
+
+func logFatalf(format string, a ...interface{}) {
+	fmt.Fprintf(os.Stderr, "FATAL: "+format+"\n", a...)
+	os.Exit(1)
 }

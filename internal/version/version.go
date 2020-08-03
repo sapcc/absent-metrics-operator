@@ -17,7 +17,7 @@ package version
 import "time"
 
 // This info identifies a specific build of the operator.
-// Version and GitCommitHash is set at compile time.
+// Version and GitCommitHash are set at compile time.
 var (
 	Version       = "unknown"
 	GitCommitHash = "unknown"

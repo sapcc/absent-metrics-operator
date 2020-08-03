@@ -38,15 +38,18 @@ func main() {
 	flagset.StringVar(&logFormat, "log-format", logFormatLogfmt,
 		fmt.Sprintf("Log format to use. Possible values: %s", strings.Join(availableLogFormats, ", ")))
 	flagset.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster")
-	flagset.StringVar(&resyncPeriod, "resync-period", "30s", "The controller's resync period. Valid time units are 's', 'm', 'h'. Minimum acceptable value is 15s.")
-	flagset.Parse(os.Args[1:])
+	flagset.StringVar(&resyncPeriod, "resync-period", "30s",
+		"The controller's resync period. Valid time units are 's', 'm', 'h'. Minimum acceptable value is 15s")
+	if err := flagset.Parse(os.Args[1:]); err != nil {
+		logFatalf("could not parse flagset: %s", err.Error())
+	}
 
 	dur, err := time.ParseDuration(resyncPeriod)
 	if err != nil {
-		logFatalAndExit(fmt.Sprintf("could not parse resync period: %s", err.Error()))
+		logFatalf("could not parse resync period: %s", err.Error())
 	}
 	if dur < 15*time.Second {
-		logFatalAndExit(fmt.Sprintf("minimum acceptable value for resync period is 15s, got: %s", dur))
+		logFatalf("minimum acceptable value for resync period is 15s, got: %s", dur)
 	}
 
 	logger := getLogger(logFormat, logLevel)

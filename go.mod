@@ -5,15 +5,18 @@ go 1.14
 require (
 	github.com/coreos/prometheus-operator v0.40.0
 	github.com/go-kit/kit v0.10.0
+	github.com/prometheus/prometheus v2.5.0+incompatible
+	github.com/syndtr/goleveldb v1.0.0 // indirect
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	k8s.io/apimachinery v0.18.6
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/klog/v2 v2.3.0
 )
 
-// To avoid problems, make sure that the k8s components use the same version as
-// the prometheus-operator.
+// To avoid problems, make sure that the versions of k8s and Prometheus modules
+// are the same as used by the prometheus-operator.
 replace (
+	github.com/prometheus/prometheus => github.com/prometheus/prometheus v1.8.2
 	k8s.io/apimachinery => k8s.io/apimachinery v0.18.2
 	k8s.io/client-go => k8s.io/client-go v0.18.2
 )
