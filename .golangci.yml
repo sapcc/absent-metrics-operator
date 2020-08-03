@@ -1,5 +1,7 @@
 linters:
-  # please, do not use `enable-all`: it is deprecated.
+  # Do not use 'enable-all', it is deprecated.
+  # We use 'disable-all' and enable linters explicitly so that a newer version
+  # will not introduce new linters unexpectedly.
   disable-all: true
   enable:
     - bodyclose
@@ -7,11 +9,9 @@ linters:
     - depguard
     - dogsled
     - dupl
-    - maligned
-    - prealloc
     - errcheck
-    - funlen
     - gochecknoinits
+    - gocognit
     - goconst
     - gocritic
     - gocyclo
@@ -25,8 +25,10 @@ linters:
     - ineffassign
     - interfacer
     - lll
+    - maligned
     - misspell
     - nakedret
+    - prealloc
     - rowserrcheck
     - scopelint
     - staticcheck
@@ -38,3 +40,45 @@ linters:
     - unused
     - varcheck
     - whitespace
+
+linters-settings:
+  dupl:
+    # Tokens count to trigger issue, 150 by default.
+    threshold: 100
+
+  errcheck:
+    # Report about assignment of errors to blank identifier:
+    #   `num, _ := strconv.Atoi(numStr)`;
+    check-blank: true
+
+    # Report about not checking of errors in type assertions:
+    #   `a := b.(MyStruct)`;
+    check-type-assertions: false
+
+    # Path to a file containing a list of functions to exclude from checking.
+    # See https://github.com/kisielk/errcheck#excluding-functions for details.
+    exclude: ./.errcheck-excludes
+
+  goimports:
+    # Put imports beginning with prefix after 3rd-party packages. It's a
+    # comma-separated list of prefixes.
+    local-prefixes: github.com/sapcc/absent-metrics-operator
+
+  lll:
+    line-length: 140
+
+  maligned:
+    # Print struct with more effective memory layout.
+    suggest-new: true
+
+  unused:
+    # Treat code as a program (not a library) and report unused exported
+    # identifiers.
+    # If you enable this setting, unused will report a lot of false-positives
+    # in text editors. All text editor integrations with golangci-lint call it
+    # on a directory with the changed file.
+    check-exported: true
+
+  whitespace:
+    # Enforce newlines (or comments) after multi-line function signature.
+    multi-func: true
