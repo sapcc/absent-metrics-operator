@@ -45,7 +45,7 @@ func (c *Controller) createAbsentPrometheusRule(namespace, name, promServerName 
 	}
 
 	_, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).
-		Create(context.TODO(), pr, metav1.CreateOptions{})
+		Create(context.Background(), pr, metav1.CreateOptions{})
 	return err
 }
 
@@ -81,7 +81,7 @@ func (c *Controller) updateAbsentPrometheusRule(
 	pr.Spec.Groups = new
 
 	_, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).
-		Update(context.TODO(), pr, metav1.UpdateOptions{})
+		Update(context.Background(), pr, metav1.UpdateOptions{})
 	return err
 }
 
@@ -90,7 +90,7 @@ func (c *Controller) updateAbsentPrometheusRule(
 // across a namespace.
 func (c *Controller) deleteAbsentAlertRulesNamespace(namespace, promRuleName string) error {
 	prList, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).
-		List(context.TODO(), metav1.ListOptions{LabelSelector: labelManagedBy})
+		List(context.Background(), metav1.ListOptions{LabelSelector: labelManagedBy})
 	if err != nil {
 		return fmt.Errorf("could not list absent alert PrometheusRules for '%s': %s", namespace, err.Error())
 	}
@@ -124,10 +124,10 @@ func (c *Controller) deleteAbsentAlertRules(namespace, promRuleName string, abse
 	var err error
 	if len(pr.Spec.Groups) == 0 {
 		err = c.promClientset.MonitoringV1().PrometheusRules(namespace).
-			Delete(context.TODO(), pr.Name, metav1.DeleteOptions{})
+			Delete(context.Background(), pr.Name, metav1.DeleteOptions{})
 	} else {
 		_, err = c.promClientset.MonitoringV1().PrometheusRules(namespace).
-			Update(context.TODO(), pr, metav1.UpdateOptions{})
+			Update(context.Background(), pr, metav1.UpdateOptions{})
 	}
 	return err
 }

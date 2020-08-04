@@ -257,7 +257,7 @@ func (c *Controller) syncHandler(key string) error {
 	// rules for this namespace.
 	absentPromRuleName := fmt.Sprintf("%s-absent-metrics-alert-rules", promServerName)
 	absentPromRule, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).
-		Get(context.TODO(), absentPromRuleName, metav1.GetOptions{})
+		Get(context.Background(), absentPromRuleName, metav1.GetOptions{})
 
 	// Default tier and service label values to use for absent metric alerts.
 	// See parseRuleGroups() for info on why we need this.
@@ -271,7 +271,7 @@ func (c *Controller) syncHandler(key string) error {
 		// Try to get a value for tier and service by traversing through
 		// all the PrometheusRules for this namespace.
 		prList, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).
-			List(context.TODO(), metav1.ListOptions{})
+			List(context.Background(), metav1.ListOptions{})
 		if err != nil {
 			// Requeue object for later processing.
 			return fmt.Errorf("could not list PrometheusRules: %s", err.Error())
