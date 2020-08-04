@@ -1,4 +1,9 @@
+// Parts of this file have been borrowed from github.com/kubernetes/sample-controller
+// which is released under Apache-2.0 License with notice;
 // Copyright 2017 The Kubernetes Authors
+//
+// The rest of the source code is licensed under:
+// Copyright 2020 SAP SE
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
