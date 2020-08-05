@@ -43,6 +43,10 @@ const (
 	PrometheusRuleKind    = "PrometheusRule"
 	PrometheusRuleName    = "prometheusrules"
 	PrometheusRuleKindKey = "prometheusrule"
+
+	ProbesKind   = "Probe"
+	ProbeName    = "probes"
+	ProbeKindKey = "probe"
 )
 
 // Prometheus defines a Prometheus deployment.
@@ -95,14 +99,22 @@ type PrometheusSpec struct {
 	// Namespaces to be selected for PodMonitor discovery. If nil, only
 	// check own namespace.
 	PodMonitorNamespaceSelector *metav1.LabelSelector `json:"podMonitorNamespaceSelector,omitempty"`
+	// *Experimental* Probes to be selected for target discovery.
+	ProbeSelector *metav1.LabelSelector `json:"probeSelector,omitempty"`
+	// *Experimental* Namespaces to be selected for Probe discovery. If nil, only check own namespace.
+	ProbeNamespaceSelector *metav1.LabelSelector `json:"probeNamespaceSelector,omitempty"`
 	// Version of Prometheus to be deployed.
 	Version string `json:"version,omitempty"`
 	// Tag of Prometheus container image to be deployed. Defaults to the value of `version`.
 	// Version is ignored if Tag is set.
+	// Deprecated: use 'image' instead.  The image tag can be specified
+	// as part of the image URL.
 	Tag string `json:"tag,omitempty"`
 	// SHA of Prometheus container image to be deployed. Defaults to the value of `version`.
 	// Similar to a tag, but the SHA explicitly deploys an immutable container image.
 	// Version and Tag are ignored if SHA is set.
+	// Deprecated: use 'image' instead.  The image digest can be specified
+	// as part of the image URL.
 	SHA string `json:"sha,omitempty"`
 	// When a Prometheus deployment is paused, no actions except for deletion
 	// will be performed on the underlying objects.
@@ -113,6 +125,7 @@ type PrometheusSpec struct {
 	// configured.
 	Image *string `json:"image,omitempty"`
 	// Base image to use for a Prometheus deployment.
+	// Deprecated: use 'image' instead
 	BaseImage string `json:"baseImage,omitempty"`
 	// An optional list of references to secrets in the same namespace
 	// to use for pulling prometheus and alertmanager images from registries
@@ -326,6 +339,9 @@ type PrometheusSpec struct {
 	// the desired limit.
 	// Note that if SampleLimit is lower that value will be taken instead.
 	EnforcedSampleLimit *uint64 `json:"enforcedSampleLimit,omitempty"`
+	// AllowOverlappingBlocks enables vertical compaction and vertical query merge in Prometheus.
+	// This is still experimental in Prometheus so it may change in any upcoming release.
+	AllowOverlappingBlocks bool `json:"allowOverlappingBlocks,omitempty"`
 }
 
 // PrometheusRuleExcludeConfig enables users to configure excluded PrometheusRule names and their namespaces
@@ -464,12 +480,17 @@ type ThanosSpec struct {
 	Version *string `json:"version,omitempty"`
 	// Tag of Thanos sidecar container image to be deployed. Defaults to the value of `version`.
 	// Version is ignored if Tag is set.
+	// Deprecated: use 'image' instead.  The image tag can be specified
+	// as part of the image URL.
 	Tag *string `json:"tag,omitempty"`
 	// SHA of Thanos container image to be deployed. Defaults to the value of `version`.
 	// Similar to a tag, but the SHA explicitly deploys an immutable container image.
 	// Version and Tag are ignored if SHA is set.
+	// Deprecated: use 'image' instead.  The image digest can be specified
+	// as part of the image URL.
 	SHA *string `json:"sha,omitempty"`
 	// Thanos base image if other than default.
+	// Deprecated: use 'image' instead
 	BaseImage *string `json:"baseImage,omitempty"`
 	// Resources defines the resource requirements for the Thanos sidecar.
 	// If not provided, no requests/limits will be set
@@ -766,6 +787,81 @@ type PodMetricsEndpoint struct {
 	ProxyURL *string `json:"proxyUrl,omitempty"`
 }
 
+// Probe defines monitoring for a set of static targets or ingresses.
+// +genclient
+// +k8s:openapi-gen=true
+type Probe struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+	// Specification of desired Ingress selection for target discovery by Prometheus.
+	Spec ProbeSpec `json:"spec"`
+}
+
+// ProbeSpec contains specification parameters for a Probe.
+// +k8s:openapi-gen=true
+type ProbeSpec struct {
+	// The job name assigned to scraped metrics by default.
+	JobName string `json:"jobName,omitempty"`
+	// Specification for the prober to use for probing targets.
+	// The prober.URL parameter is required. Targets cannot be probed if left empty.
+	ProberSpec ProberSpec `json:"prober,omitempty"`
+	// The module to use for probing specifying how to probe the target.
+	// Example module configuring in the blackbox exporter:
+	// https://github.com/prometheus/blackbox_exporter/blob/master/example.yml
+	Module string `json:"module,omitempty"`
+	// Targets defines a set of static and/or dynamically discovered targets to be probed using the prober.
+	Targets ProbeTargets `json:"targets,omitempty"`
+	// Interval at which targets are probed using the configured prober.
+	// If not specified Prometheus' global scrape interval is used.
+	Interval string `json:"interval,omitempty"`
+	// Timeout for scraping metrics from the Prometheus exporter.
+	ScrapeTimeout string `json:"scrapeTimeout,omitempty"`
+}
+
+// ProbeTargets defines a set of static and dynamically discovered targets for the prober.
+// +k8s:openapi-gen=true
+type ProbeTargets struct {
+	// StaticConfig defines static targets which are considers for probing.
+	// More info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#static_config.
+	StaticConfig *ProbeTargetStaticConfig `json:"staticConfig,omitempty"`
+	// Ingress defines the set of dynamically discovered ingress objects which hosts are considered for probing.
+	Ingress *ProbeTargetIngress `json:"ingress,omitempty"`
+}
+
+// ProbeTargetStaticConfig defines the set of static targets considered for probing.
+// +k8s:openapi-gen=true
+type ProbeTargetStaticConfig struct {
+	// Targets is a list of URLs to probe using the configured prober.
+	Targets []string `json:"static,omitempty"`
+	// Labels assigned to all metrics scraped from the targets.
+	Labels map[string]string `json:"labels,omitempty"`
+}
+
+// ProbeTargetIngress defines the set of Ingress objects considered for probing.
+// +k8s:openapi-gen=true
+type ProbeTargetIngress struct {
+	// Select Ingress objects by labels.
+	Selector metav1.LabelSelector `json:"selector,omitempty"`
+	// Select Ingress objects by namespace.
+	NamespaceSelector NamespaceSelector `json:"namespaceSelector,omitempty"`
+	// RelabelConfigs to apply to samples before ingestion.
+	// More info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config
+	RelabelConfigs []*RelabelConfig `json:"relabelingConfigs,omitempty"`
+}
+
+// ProberSpec contains specification parameters for the Prober used for probing.
+// +k8s:openapi-gen=true
+type ProberSpec struct {
+	// Mandatory URL of the prober.
+	URL string `json:"url"`
+	// HTTP scheme to use for scraping.
+	// Defaults to `http`.
+	Scheme string `json:"scheme,omitempty"`
+	// Path to collect metrics from.
+	// Defaults to `/probe`.
+	Path string `json:"path,omitempty"`
+}
+
 // BasicAuth allow an endpoint to authenticate over basic authentication
 // More info: https://prometheus.io/docs/operating/configuration/#endpoints
 // +k8s:openapi-gen=true
@@ -890,6 +986,17 @@ type PodMonitorList struct {
 	Items []*PodMonitor `json:"items"`
 }
 
+// ProbeList is a list of Probes.
+// +k8s:openapi-gen=true
+type ProbeList struct {
+	metav1.TypeMeta `json:",inline"`
+	// Standard list metadata
+	// More info: https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#metadata
+	metav1.ListMeta `json:"metadata,omitempty"`
+	// List of Probes
+	Items []*Probe `json:"items"`
+}
+
 // PrometheusRuleList is a list of PrometheusRules.
 // +k8s:openapi-gen=true
 type PrometheusRuleList struct {
@@ -978,12 +1085,17 @@ type AlertmanagerSpec struct {
 	Version string `json:"version,omitempty"`
 	// Tag of Alertmanager container image to be deployed. Defaults to the value of `version`.
 	// Version is ignored if Tag is set.
+	// Deprecated: use 'image' instead.  The image tag can be specified
+	// as part of the image URL.
 	Tag string `json:"tag,omitempty"`
 	// SHA of Alertmanager container image to be deployed. Defaults to the value of `version`.
 	// Similar to a tag, but the SHA explicitly deploys an immutable container image.
 	// Version and Tag are ignored if SHA is set.
+	// Deprecated: use 'image' instead.  The image digest can be specified
+	// as part of the image URL.
 	SHA string `json:"sha,omitempty"`
 	// Base image that is used to deploy pods, without tag.
+	// Deprecated: use 'image' instead
 	BaseImage string `json:"baseImage,omitempty"`
 	// An optional list of references to secrets in the same namespace
 	// to use for pulling prometheus and alertmanager images from registries
@@ -1180,6 +1292,16 @@ func (l *PodMonitor) DeepCopyObject() runtime.Object {
 
 // DeepCopyObject implements the runtime.Object interface.
 func (l *PodMonitorList) DeepCopyObject() runtime.Object {
+	return l.DeepCopy()
+}
+
+// DeepCopyObject implements the runtime.Object interface.
+func (l *Probe) DeepCopyObject() runtime.Object {
+	return l.DeepCopy()
+}
+
+// DeepCopyObject implements the runtime.Object interface.
+func (l *ProbeList) DeepCopyObject() runtime.Object {
 	return l.DeepCopy()
 }
 

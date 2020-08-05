@@ -19,7 +19,7 @@ import (
 	"strings"
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
-	"github.com/prometheus/prometheus/promql"
+	"github.com/prometheus/prometheus/promql/parser"
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
 )
 
@@ -35,18 +35,14 @@ type metricNameExtractor struct {
 	found map[string]struct{}
 }
 
-// Visit implements the promql.Visitor interface.
-func (mex *metricNameExtractor) Visit(node promql.Node) promql.Visitor {
-	var name string
-	switch n := node.(type) {
-	case *promql.MatrixSelector:
-		name = n.Name
-	case *promql.VectorSelector:
-		name = n.Name
-	default:
-		return mex
+// Visit implements the parser.Visitor interface.
+func (mex *metricNameExtractor) Visit(node parser.Node, path []parser.Node) (parser.Visitor, error) {
+	vs, ok := node.(*parser.VectorSelector)
+	if !ok {
+		return mex, nil
 	}
 
+	name := vs.Name
 	switch {
 	case strings.Contains(mex.expr, fmt.Sprintf("absent(%s", name)):
 		// Skip this metric if the there is already an
@@ -57,7 +53,7 @@ func (mex *metricNameExtractor) Visit(node promql.Node) promql.Visitor {
 	default:
 		mex.found[name] = struct{}{}
 	}
-	return mex
+	return mex, nil
 }
 
 // parseRuleGroups takes a slice of RuleGroup that has alert rules and returns
@@ -100,16 +96,16 @@ func parseRuleGroups(promRuleName, defaultTier, defaultService string, in []moni
 // absent metric alert rules (one for each time series).
 func parseAlertRule(tier, service string, in monitoringv1.Rule) ([]monitoringv1.Rule, error) {
 	exprStr := in.Expr.String()
-	exprNode, err := promql.ParseExpr(exprStr)
+	mex := &metricNameExtractor{expr: exprStr, found: map[string]struct{}{}}
+	exprNode, err := parser.ParseExpr(exprStr)
+	if err == nil {
+		err = parser.Walk(mex, exprNode, nil)
+	}
 	if err != nil {
 		// The returned error has the expression in last because
 		// it could contain newline chracters.
-		return nil, fmt.Errorf("could not parse rule expression: %s: %s",
-			err.Error(), in.Expr.String())
+		return nil, fmt.Errorf("could not parse rule expression: %s: %s", err.Error(), exprStr)
 	}
-
-	mex := &metricNameExtractor{expr: exprStr, found: map[string]struct{}{}}
-	promql.Walk(mex, exprNode)
 	if len(mex.found) == 0 {
 		return nil, nil
 	}
