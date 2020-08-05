@@ -23,7 +23,11 @@ import (
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
 )
 
+// metricNameExtractor is used to walk through a promql expression and extract
+// time series names.
 type metricNameExtractor struct {
+	// expr is the promql expression that the metricNameExtractor is working on.
+	expr string
 	// This map contains metric names that were extracted from a promql.Node.
 	// We only use the keys of the map and never depend on the presence of an
 	// element in the map nor its value therefore an empty struct is better
@@ -31,12 +35,27 @@ type metricNameExtractor struct {
 	found map[string]struct{}
 }
 
+// Visit implements the promql.Visitor interface.
 func (mex *metricNameExtractor) Visit(node promql.Node) promql.Visitor {
+	var name string
 	switch n := node.(type) {
 	case *promql.MatrixSelector:
-		mex.found[n.Name] = struct{}{}
+		name = n.Name
 	case *promql.VectorSelector:
-		mex.found[n.Name] = struct{}{}
+		name = n.Name
+	default:
+		return mex
+	}
+
+	switch {
+	case strings.Contains(mex.expr, fmt.Sprintf("absent(%s", name)):
+		// Skip this metric if the there is already an
+		// absent function for it in the original expression.
+	case name == "up":
+		// Skip "up" metric, it is automatically injected by
+		// Prometheus to describe Prometheus scraping jobs.
+	default:
+		mex.found[name] = struct{}{}
 	}
 	return mex
 }
@@ -46,41 +65,22 @@ func (mex *metricNameExtractor) Visit(node promql.Node) promql.Visitor {
 //
 // The original tier and service labels of alert rules will be carried over to
 // the corresponding absent alert rule unless templating was used (i.e. $labels)
-// for these labels in which case the provided tier and service will be used.
+// for these labels in which case the provided default tier and service will be used.
 //
-// The rule group names have the format: promRuleName/originalGroupName.
-func parseRuleGroups(promRuleName, tier, service string, in []monitoringv1.RuleGroup) ([]monitoringv1.RuleGroup, error) {
+// The rule group names for the absent metric alerts have the format:
+//   promRuleName/originalGroupName.
+func parseRuleGroups(promRuleName, defaultTier, defaultService string, in []monitoringv1.RuleGroup) ([]monitoringv1.RuleGroup, error) {
 	out := make([]monitoringv1.RuleGroup, 0, len(in))
 	for _, g := range in {
 		var absentRules []monitoringv1.Rule
 		for _, r := range g.Rules {
-			exprStr := r.Expr.String()
-			exprNode, err := promql.ParseExpr(exprStr)
+			rules, err := parseAlertRule(defaultTier, defaultService, r)
 			if err != nil {
-				// The returned error has the expression in last because
-				// it could contain newline chracters.
-				return nil, fmt.Errorf("could not parse rule expression: %s: %s",
-					err.Error(), r.Expr.String())
+				return nil, err
 			}
 
-			mex := &metricNameExtractor{found: map[string]struct{}{}}
-			promql.Walk(mex, exprNode)
-			if len(mex.found) == 0 {
-				continue // to next rule
-			}
-			for k := range mex.found {
-				switch {
-				case strings.Contains(exprStr, fmt.Sprintf("absent(%s", k)):
-					// Skip this metric if the there is already an
-					// absent function for it in the original expression.
-					continue
-				case k == "up":
-					// Skip "up" metric, it is automatically injected by
-					// Prometheus to describe Prometheus scraping jobs.
-					continue
-				default:
-					absentRules = append(absentRules, newAbsentRule(k, tier, service, r.Labels))
-				}
+			if len(rules) > 0 {
+				absentRules = append(absentRules, rules...)
 			}
 		}
 
@@ -91,61 +91,78 @@ func parseRuleGroups(promRuleName, tier, service string, in []monitoringv1.RuleG
 			})
 		}
 	}
-
 	return out, nil
 }
 
-// newAbsentRule takes a metric name and labels and returns a corresponding
-// absent metric rule.
-func newAbsentRule(metric, tier, service string, originalLabels map[string]string) monitoringv1.Rule {
+// parseAlertRule converts an alert rule to absent metric alert rules.
+// Since an original alert expression can reference multiple time series therefore
+// a slice of []monitoringv1.Rule is returned as the result would be multiple
+// absent metric alert rules (one for each time series).
+func parseAlertRule(tier, service string, in monitoringv1.Rule) ([]monitoringv1.Rule, error) {
+	exprStr := in.Expr.String()
+	exprNode, err := promql.ParseExpr(exprStr)
+	if err != nil {
+		// The returned error has the expression in last because
+		// it could contain newline chracters.
+		return nil, fmt.Errorf("could not parse rule expression: %s: %s",
+			err.Error(), in.Expr.String())
+	}
+
+	mex := &metricNameExtractor{expr: exprStr, found: map[string]struct{}{}}
+	promql.Walk(mex, exprNode)
+	if len(mex.found) == 0 {
+		return nil, nil
+	}
+
 	// Carry over labels from the original alert
-	if originalLabels != nil {
-		if v, ok := originalLabels["tier"]; ok {
-			if !strings.Contains(v, "$labels") {
-				tier = v
-			}
+	if origLab := in.Labels; origLab != nil {
+		if v, ok := origLab["tier"]; ok && !strings.Contains(v, "$labels") {
+			tier = v
 		}
-		if v, ok := originalLabels["service"]; ok {
-			if !strings.Contains(v, "$labels") {
-				service = v
-			}
+		if v, ok := origLab["service"]; ok && !strings.Contains(v, "$labels") {
+			service = v
 		}
 	}
-	labels := map[string]string{
+	lab := map[string]string{
 		"tier":     tier,
 		"service":  service,
 		"severity": "info",
 	}
 
-	// Generate an alert name from metric name:
-	//   network:tis_a_metric:rate5m -> Absent("tier")("service")NetworkTisAMetricRate5m
-	words := []string{"absent", tier, service}
-	sL1 := strings.Split(metric, "_")
-	for _, v := range sL1 {
-		sL2 := strings.Split(v, ":")
-		words = append(words, sL2...)
-	}
-	// Avoid name stuttering
-	var alertName string
-	var prev string
-	for _, v := range words {
-		l := strings.ToLower(v)
-		if l != prev {
-			prev = l
-			alertName += strings.Title(l)
+	out := make([]monitoringv1.Rule, 0, len(mex.found))
+	for metric := range mex.found {
+		// Generate an alert name from metric name:
+		//   network:tis_a_metric:rate5m -> AbsentTierServiceNetworkTisAMetricRate5m
+		words := []string{"absent", tier, service}
+		sL1 := strings.Split(metric, "_")
+		for _, v := range sL1 {
+			sL2 := strings.Split(v, ":")
+			words = append(words, sL2...)
 		}
+		// Avoid name stuttering
+		var alertName string
+		var prev string
+		for _, v := range words {
+			l := strings.ToLower(v)
+			if prev != l {
+				prev = l
+				alertName += strings.Title(l)
+			}
+		}
+
+		ann := map[string]string{
+			"summary":     fmt.Sprintf("missing %s", metric),
+			"description": fmt.Sprintf("The metric '%s' is missing", metric),
+		}
+
+		out = append(out, monitoringv1.Rule{
+			Alert:       alertName,
+			Expr:        intstr.FromString(fmt.Sprintf("absent(%s)", metric)),
+			For:         "10m",
+			Labels:      lab,
+			Annotations: ann,
+		})
 	}
 
-	annotations := map[string]string{
-		"summary":     fmt.Sprintf("missing %s", metric),
-		"description": fmt.Sprintf("The metric '%s' is missing", metric),
-	}
-
-	return monitoringv1.Rule{
-		Alert:       alertName,
-		Expr:        intstr.FromString(fmt.Sprintf("absent(%s)", metric)),
-		For:         "10m",
-		Labels:      labels,
-		Annotations: annotations,
-	}
+	return out, nil
 }

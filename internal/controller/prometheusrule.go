@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
+	"github.com/go-kit/kit/log/level"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -46,7 +47,13 @@ func (c *Controller) createAbsentPrometheusRule(namespace, name, promServerName 
 
 	_, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).
 		Create(context.Background(), pr, metav1.CreateOptions{})
-	return err
+	if err != nil {
+		return fmt.Errorf("could not create new absent PrometheusRule: %s", err.Error())
+	}
+
+	level.Info(c.logger).Log("msg", "successfully created new absent PrometheusRule",
+		"key", fmt.Sprintf("%s/%s", namespace, name))
+	return nil
 }
 
 // updateAbsentPrometheusRule takes a PrometheusRule and updates it with the
@@ -82,7 +89,13 @@ func (c *Controller) updateAbsentPrometheusRule(
 
 	_, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).
 		Update(context.Background(), pr, metav1.UpdateOptions{})
-	return err
+	if err != nil {
+		return fmt.Errorf("could not update absent PrometheusRule: %s", err.Error())
+	}
+
+	level.Info(c.logger).Log("msg", "successfully updated absent alert rules",
+		"key", fmt.Sprintf("%s/%s", namespace, pr.Name))
+	return nil
 }
 
 // deleteAbsentAlertRulesNamespace deletes absent alert rules concerning
@@ -92,7 +105,7 @@ func (c *Controller) deleteAbsentAlertRulesNamespace(namespace, promRuleName str
 	prList, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).
 		List(context.Background(), metav1.ListOptions{LabelSelector: labelManagedBy})
 	if err != nil {
-		return fmt.Errorf("could not list absent alert PrometheusRules for '%s': %s", namespace, err.Error())
+		return fmt.Errorf("could not list absent PrometheusRules for '%s': %s", namespace, err.Error())
 	}
 
 	for _, pr := range prList.Items {
@@ -105,7 +118,7 @@ func (c *Controller) deleteAbsentAlertRulesNamespace(namespace, promRuleName str
 }
 
 // deleteAbsentAlertRules deletes absent alert rules concerning a specific
-// PrometheusRule from a specific PrometheusRule.
+// PrometheusRule from a specific absent PrometheusRule.
 func (c *Controller) deleteAbsentAlertRules(namespace, promRuleName string, absentPromRule *monitoringv1.PrometheusRule) error {
 	// The provided promRule is read-only, local cache from the Store.
 	// We make a deep copy of the original object and modify that.
@@ -129,5 +142,11 @@ func (c *Controller) deleteAbsentAlertRules(namespace, promRuleName string, abse
 		_, err = c.promClientset.MonitoringV1().PrometheusRules(namespace).
 			Update(context.Background(), pr, metav1.UpdateOptions{})
 	}
-	return err
+	if err != nil {
+		return fmt.Errorf("could not clean up orphaned absent alert rules: %s", err.Error())
+	}
+
+	level.Info(c.logger).Log("msg", "successfully cleaned up orphaned absent alert rules",
+		"key", fmt.Sprintf("%s/%s", namespace, pr.Name))
+	return nil
 }

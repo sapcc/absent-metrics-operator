@@ -1,3 +1,7 @@
+run:
+  modules-download-mode: vendor
+  deadline: 2m # 1m by default
+
 linters:
   # Do not use 'enable-all', it is deprecated.
   # We use 'disable-all' and enable linters explicitly so that a newer version
@@ -58,6 +62,14 @@ linters-settings:
     # Path to a file containing a list of functions to exclude from checking.
     # See https://github.com/kisielk/errcheck#excluding-functions for details.
     exclude: ./.errcheck-excludes
+
+  gocognit:
+    # Minimal code complexity to report, 30 by default.
+    min-complexity: 20
+
+  gocyclo:
+    # Minimal code complexity to report, 30 by default.
+    min-complexity: 20
 
   goimports:
     # Put imports beginning with prefix after 3rd-party packages. It's a

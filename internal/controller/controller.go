@@ -234,12 +234,7 @@ func (c *Controller) syncHandler(key string) error {
 		// The resource may no longer exist, in which case we clean up any
 		// orphaned absent alert rules.
 		level.Info(c.logger).Log("msg", "PrometheusRule no longer exists in work queue", "key", key)
-		if err := c.deleteAbsentAlertRulesNamespace(namespace, name); err != nil {
-			// Requeue object for later processing.
-			return fmt.Errorf("could not clean up orphaned absent alert rules: %s", err.Error())
-		}
-		level.Info(c.logger).Log("msg", "successfully cleaned up orphaned absent alert rules", "key", key)
-		return nil
+		return c.deleteAbsentAlertRulesNamespace(namespace, name)
 	default:
 		// Requeue object for later processing.
 		return err
@@ -304,15 +299,14 @@ func (c *Controller) syncHandler(key string) error {
 		utilruntime.HandleError(fmt.Errorf("could not parse rule groups for '%s': %s", key, err.Error()))
 		return nil
 	}
-	if len(rg) == 0 && absentPromRuleExists {
+	if len(rg) == 0 {
 		// This can happen when changes have been made to a PrometheusRule
 		// that result in no absent alert rules. E.g. absent() operator was used.
-		if err := c.deleteAbsentAlertRules(namespace, name, absentPromRule); err != nil {
-			// Requeue object for later processing.
-			return fmt.Errorf("could not clean up orphaned absent alert rules: %s", err.Error())
+		if absentPromRuleExists {
+			// In this case we clean up orphaned absent alert rules.
+			return c.deleteAbsentAlertRules(namespace, name, absentPromRule)
 		}
-		level.Info(c.logger).Log("msg", "successfully cleaned up orphaned absent alert rules", "key", key)
-		return nil
+		return nil // nothing to do
 	}
 
 	if absentPromRuleExists {
