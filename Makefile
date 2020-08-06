@@ -39,6 +39,9 @@ build/cover.out: FORCE | build
 build/cover.html: build/cover.out
 	$(GO) tool cover -html $< -o $@
 
+build/release-info: CHANGELOG.md | build
+	$(GO) run $(GO_BUILDFLAGS) tools/releaseinfo.go $< $(shell git describe --tags --abbrev=0) > $@
+
 build:
 	mkdir $@
 

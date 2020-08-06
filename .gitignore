@@ -1,6 +1,3 @@
 # build artifacts
-.gopath/
 build/
-
-# test artifacts
-*.actual
+dist/
