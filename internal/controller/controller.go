@@ -261,10 +261,10 @@ func (c *Controller) syncHandler(key string) error {
 	switch {
 	case err == nil:
 		absentPromRuleExists = true
-		tier, service = c.getTierAndService(absentPromRule.Spec.Groups)
+		tier, service = getTierAndService(absentPromRule.Spec.Groups)
 	case errors.IsNotFound(err):
-		// Try to get a value for tier and service by traversing through
-		// all the PrometheusRules for this namespace.
+		// Try to get a value for tier and service by traversing through all the
+		// PrometheusRules for the specific Prometheus server in this namespace.
 		prList, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).
 			List(context.Background(), metav1.ListOptions{})
 		if err != nil {
@@ -273,9 +273,11 @@ func (c *Controller) syncHandler(key string) error {
 		}
 		var rg []monitoringv1.RuleGroup
 		for _, pr := range prList.Items {
-			rg = append(rg, pr.Spec.Groups...)
+			if v := pr.Labels["prometheus"]; v == promServerName {
+				rg = append(rg, pr.Spec.Groups...)
+			}
 		}
-		tier, service = c.getTierAndService(rg)
+		tier, service = getTierAndService(rg)
 	default:
 		// This could have been caused by a temporary network failure, or any
 		// other transient reason. Requeue object for later processing.
@@ -310,9 +312,7 @@ func (c *Controller) syncHandler(key string) error {
 	}
 
 	if absentPromRuleExists {
-		err = c.updateAbsentPrometheusRule(namespace, absentPromRule, rg)
-	} else {
-		err = c.createAbsentPrometheusRule(namespace, absentPromRuleName, promServerName, rg)
+		return c.updateAbsentPrometheusRule(namespace, absentPromRule, rg)
 	}
-	return err
+	return c.createAbsentPrometheusRule(namespace, absentPromRuleName, promServerName, rg)
 }

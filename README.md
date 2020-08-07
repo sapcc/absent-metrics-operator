@@ -57,7 +57,7 @@ labels:
   severity: info
 annotations:
   summary: missing foo_bar
-  description: The metric foo_bar is missing
+  description: The metric 'foo_bar' is missing
 ```
 
 ## Installation
@@ -137,7 +137,7 @@ labels:
   severity: info
 annotations:
   summary: missing $metric
-  description: The metric $metric is missing
+  description: The metric '$metric' is missing
 ```
 
 Consider the metric `limes_successful_scrapes:rate5m` with tier `os` and
@@ -147,21 +147,23 @@ Then the alert name would be `AbsentOsLimesSuccessfulScrapesRate5m`.
 
 ### Labels
 
-**Note**: There should be at least one alert rule per namespace that has the
-`tier` and `service` label defined without templating, i.e. `$labels`. See
-caveat below.
+**Note**: There should be at least one alert rule for a specific Prometheus
+server in a namespace that has the `tier` and `service` label defined without
+templating, i.e. does not use `$labels`. See caveat below.
 
 - `tier` and `service` labels are carried over from the original alert rule
-  unless the alert rule uses templating for theses labels, in which case the
-  default `tier` and `service` values for that namespace will be used.
+  unless the alert rule uses templating for these labels, in which case the
+  default `tier` and `service` values for that Prometheus server in that
+  namespace will be used.
 - `severity` is always `info`.
 
 #### Caveat
 
-The operator determines a default `tier` and `service` for a namespace by
-traversing through all the alert rule definitions in a namespace. It chooses
-the most common `tier` and `service` label combination that is used across
-these alerts for the default values.
+The operator determines a default `tier` and `service` for a specific
+Prometheus server in a namespace by traversing through all the alert rule
+definitions for that Prometheus server in that namespace. It chooses the most
+common `tier` and `service` label combination that is used across these alerts
+as the default values.
 
 It is important that the operator finds a default `tier` and `service`
 otherwise the operator will print an error and it will not create absent alert

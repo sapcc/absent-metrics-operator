@@ -23,7 +23,7 @@ import (
 // getTierAndService returns the most common tier and service combination
 // for a namespace.
 // See parseRuleGroups() for info on why we need this.
-func (c *Controller) getTierAndService(rg []monitoringv1.RuleGroup) (tier, service string) {
+func getTierAndService(rg []monitoringv1.RuleGroup) (tier, service string) {
 	// Map of tier to service to number of occurrences.
 	count := make(map[string]map[string]int)
 	for _, g := range rg {
