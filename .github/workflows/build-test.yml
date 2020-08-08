@@ -40,7 +40,7 @@ jobs:
 
       - name: Upload coverage report to Coveralls
         run: |
-          go get -u github.com/mattn/goveralls
+          GO111MODULE=off go get -u github.com/mattn/goveralls
           goveralls -coverprofile=build/cover.out -service=github
         env:
           COVERALLS_TOKEN: ${{ github.token }}

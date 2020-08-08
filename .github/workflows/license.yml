@@ -22,5 +22,5 @@ jobs:
 
       - name: Run license checker
         run: |
-          go get -u github.com/google/addlicense
+          GO111MODULE=off go get -u github.com/google/addlicense
           addlicense --check -- *.go internal/
