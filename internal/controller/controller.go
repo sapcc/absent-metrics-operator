@@ -30,13 +30,13 @@ import (
 	monitoringclient "github.com/coreos/prometheus-operator/pkg/client/versioned"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/workqueue"
 )
 
@@ -59,12 +59,7 @@ type Controller struct {
 }
 
 // New creates a new Controller.
-func New(kubeconfig string, resyncPeriod time.Duration, logger log.Logger) (*Controller, error) {
-	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		return nil, fmt.Errorf("instantiating cluster config failed: %s", err.Error())
-	}
-
+func New(cfg *rest.Config, resyncPeriod time.Duration, logger log.Logger) (*Controller, error) {
 	kClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("instantiating kubernetes client failed: %s", err.Error())
@@ -230,7 +225,7 @@ func (c *Controller) syncHandler(key string) error {
 	switch {
 	case err == nil:
 		// continue processing down below
-	case errors.IsNotFound(err):
+	case apierrors.IsNotFound(err):
 		// The resource may no longer exist, in which case we clean up any
 		// orphaned absent alert rules.
 		level.Info(c.logger).Log("msg", "PrometheusRule no longer exists in work queue", "key", key)
@@ -262,7 +257,7 @@ func (c *Controller) syncHandler(key string) error {
 	case err == nil:
 		absentPromRuleExists = true
 		tier, service = getTierAndService(absentPromRule.Spec.Groups)
-	case errors.IsNotFound(err):
+	case apierrors.IsNotFound(err):
 		// Try to get a value for tier and service by traversing through all the
 		// PrometheusRules for the specific Prometheus server in this namespace.
 		prList, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).

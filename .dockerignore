@@ -2,3 +2,4 @@
 .github/
 build/
 dist/
+test/

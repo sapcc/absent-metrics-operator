@@ -23,6 +23,7 @@ import (
 
 	"github.com/go-kit/kit/log"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc" // load auth plugin
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 
 	"github.com/sapcc/absent-metrics-operator/internal/controller"
@@ -60,11 +61,15 @@ func main() {
 	}
 
 	logger := getLogger(logFormat, logLevel)
-
 	logger.Log("msg", "starting absent-metrics-operator",
 		"version", version, "git-commit", gitCommitHash, "build-date", buildDate)
 
-	c, err := controller.New(kubeconfig, dur, log.With(logger, "component", "controller"))
+	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		logger.Log("msg", "instantiating cluster config failed", "err", err)
+		os.Exit(1)
+	}
+	c, err := controller.New(cfg, dur, log.With(logger, "component", "controller"))
 	if err != nil {
 		logger.Log("msg", "could not instantiate controller", "err", err)
 		os.Exit(1)

@@ -1,0 +1,57 @@
+{
+  "apiVersion": "monitoring.coreos.com/v1",
+  "kind": "PrometheusRule",
+  "metadata": {
+    "name": "openstack-swift.alerts",
+    "namespace": "swift",
+    "labels": {
+      "type": "alerting-rules",
+      "prometheus": "openstack",
+      "absent-metrics-operator/disable": "true"
+    }
+  },
+  "spec": {
+    "groups": [
+      {
+        "name": "swift.alerts",
+        "rules": [
+          {
+            "alert": "OpenstackSwiftUsedSpace",
+            "expr": "max(predict_linear(global:swift_cluster_storage_used_percent_average[1w], 60 * 60 * 24 * 30)) > 0.8",
+            "for": "1d",
+            "labels": {
+              "context": "usedcapacity",
+              "dashboard": "swift-capacity-global?var-region={{ $labels.region }}",
+              "service": "swift",
+              "severity": "critical",
+              "tier": "os",
+              "meta": "Swift storage usage will reach 80% in 30 days. Order hardware now!"
+            },
+            "annotations": {
+              "description": "Swift storage usage will reach 80% in 30 days. Order hardware now!",
+              "summary": "Swift storage expected to be full soon"
+            }
+          },
+          {
+            "alert": "OpenstackSwiftHealthCheck",
+            "expr": "avg(swift_recon_task_exit_code) BY (region) > 0.2 or avg(swift_dispersion_task_exit_code) BY (region) > 0.2",
+            "for": "5m",
+            "labels": {
+              "context": "health",
+              "dashboard": "swift-overview",
+              "service": "swift",
+              "severity": "warning",
+              "tier": "os",
+              "playbook": "docs/support/playbook/swift/healthcheck.html",
+              "meta": "some health checks for Swift are failing"
+            },
+            "annotations": {
+              "description": "Swift health check failures. Run kubectl log (swift-proxy-... / swift-health-exporter-...) collector to get details",
+              "summary": "swift-health-check"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

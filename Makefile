@@ -1,6 +1,10 @@
 PKG     = github.com/sapcc/absent-metrics-operator
 PREFIX := /usr
 
+GOOS   = $(shell go env GOOS)
+GOARCH = $(shell go env GOARCH)
+KUBEBUILDER_RELEASE_VERSION = $(shell cat test/.kubebuilder-version)
+
 # TODO: uncomment when at least one tag exists
 # VERSION         := $(shell git describe --long --abbrev=7)
 GIT_COMMIT_HASH := $(shell git rev-parse --verify HEAD)
@@ -27,15 +31,15 @@ lint: FORCE
 	golangci-lint run
 
 # Run unit tests
-test: FORCE
+test: FORCE | test/bin
 	@printf "\e[1;34m>> go test\e[0m\n"
-	$(GO) test $(GO_BUILDFLAGS) -ldflags '$(GO_LDFLAGS)' ./...
+	$(GO) test $(GO_BUILDFLAGS) -ldflags '$(GO_LDFLAGS)' $(PKG)/test
 
 # Test with coverage
 test-coverage: FORCE build/cover.out
-build/cover.out: FORCE | build
+build/cover.out: FORCE | build test/bin
 	@printf "\e[1;34m>> go test with coverage\e[0m\n"
-	$(GO) test $(GO_BUILDFLAGS) -ldflags '$(GO_LDFLAGS)' -failfast -race -coverprofile=$@ -covermode=atomic ./...
+	$(GO) test $(GO_BUILDFLAGS) -ldflags '$(GO_LDFLAGS)' -failfast -race -covermode=atomic -coverpkg=$(PKG)/internal/controller -coverprofile=$@  $(PKG)/test
 build/cover.html: build/cover.out
 	$(GO) tool cover -html $< -o $@
 
@@ -45,8 +49,16 @@ build/release-info: CHANGELOG.md | build
 build:
 	mkdir $@
 
+# Download the kubebuilder control plane binaries
+test/bin:
+	mkdir $@
+	# Download kubebuilder and extract it to tmp
+	curl -L https://go.kubebuilder.io/dl/$(KUBEBUILDER_RELEASE_VERSION)/$(GOOS)/$(GOARCH) | tar -xz -C /tmp/
+	# Move to test/bin
+	mv /tmp/kubebuilder*/bin/* test/bin/
+
 clean: FORCE
-	rm -rf -- build/*
+	rm -rf -- build test/bin
 
 vendor: FORCE
 	$(GO) mod tidy -v

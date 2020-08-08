@@ -16,6 +16,7 @@ package controller
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
@@ -70,7 +71,7 @@ func parseRuleGroups(promRuleName, defaultTier, defaultService string, in []moni
 	for _, g := range in {
 		var absentRules []monitoringv1.Rule
 		for _, r := range g.Rules {
-			rules, err := parseAlertRule(defaultTier, defaultService, r)
+			rules, err := ParseAlertRule(defaultTier, defaultService, r)
 			if err != nil {
 				return nil, err
 			}
@@ -90,11 +91,11 @@ func parseRuleGroups(promRuleName, defaultTier, defaultService string, in []moni
 	return out, nil
 }
 
-// parseAlertRule converts an alert rule to absent metric alert rules.
+// ParseAlertRule converts an alert rule to absent metric alert rules.
 // Since an original alert expression can reference multiple time series therefore
 // a slice of []monitoringv1.Rule is returned as the result would be multiple
 // absent metric alert rules (one for each time series).
-func parseAlertRule(tier, service string, in monitoringv1.Rule) ([]monitoringv1.Rule, error) {
+func ParseAlertRule(tier, service string, in monitoringv1.Rule) ([]monitoringv1.Rule, error) {
 	exprStr := in.Expr.String()
 	mex := &metricNameExtractor{expr: exprStr, found: map[string]struct{}{}}
 	exprNode, err := parser.ParseExpr(exprStr)
@@ -125,12 +126,19 @@ func parseAlertRule(tier, service string, in monitoringv1.Rule) ([]monitoringv1.
 		"severity": "info",
 	}
 
-	out := make([]monitoringv1.Rule, 0, len(mex.found))
-	for metric := range mex.found {
+	// Sort metric names alphabetically for consistent test results.
+	metrics := make([]string, 0, len(mex.found))
+	for k := range mex.found {
+		metrics = append(metrics, k)
+	}
+	sort.Strings(metrics)
+
+	out := make([]monitoringv1.Rule, 0, len(metrics))
+	for _, m := range metrics {
 		// Generate an alert name from metric name:
 		//   network:tis_a_metric:rate5m -> AbsentTierServiceNetworkTisAMetricRate5m
 		words := []string{"absent", tier, service}
-		sL1 := strings.Split(metric, "_")
+		sL1 := strings.Split(m, "_")
 		for _, v := range sL1 {
 			sL2 := strings.Split(v, ":")
 			words = append(words, sL2...)
@@ -147,13 +155,13 @@ func parseAlertRule(tier, service string, in monitoringv1.Rule) ([]monitoringv1.
 		}
 
 		ann := map[string]string{
-			"summary":     fmt.Sprintf("missing %s", metric),
-			"description": fmt.Sprintf("The metric '%s' is missing", metric),
+			"summary":     fmt.Sprintf("missing %s", m),
+			"description": fmt.Sprintf("The metric '%s' is missing", m),
 		}
 
 		out = append(out, monitoringv1.Rule{
 			Alert:       alertName,
-			Expr:        intstr.FromString(fmt.Sprintf("absent(%s)", metric)),
+			Expr:        intstr.FromString(fmt.Sprintf("absent(%s)", m)),
 			For:         "10m",
 			Labels:      lab,
 			Annotations: ann,

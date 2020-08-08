@@ -1,5 +1,9 @@
 # Absent Metrics Operator
 
+![Build and Test](https://github.com/sapcc/absent-metrics-operator/workflows/Build%20and%20Test/badge.svg)
+[![Coverage Status](https://coveralls.io/repos/github/sapcc/absent-metrics-operator/badge.svg)](https://coveralls.io/github/sapcc/absent-metrics-operator)
+[![Go Report Card](https://goreportcard.com/badge/github.com/sapcc/absent-metrics-operator)](https://goreportcard.com/report/github.com/sapcc/absent-metrics-operator)
+
 > Project status: **alpha**. The API and user facing objects may change.
 
 The absent metrics operator is a companion operator for the [Prometheus

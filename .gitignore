@@ -1,3 +1,6 @@
 # build artifacts
 build/
 dist/
+
+# test artifacts
+test/bin/
