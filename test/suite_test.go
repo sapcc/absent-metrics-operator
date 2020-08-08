@@ -60,8 +60,8 @@ var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter)))
 
 	By("bootstrapping test environment")
-	// Use "bin" subdirectory for control binaries. By default, envtest looks
-	// for these binaries in "/usr/local/kubebuilder/bin".
+	// Use "bin" subdirectory for control plane binaries. By default, envtest
+	// looks for these binaries in "/usr/local/kubebuilder/bin".
 	p, err := filepath.Abs("bin")
 	Expect(err).ToNot(HaveOccurred())
 	err = os.Setenv("KUBEBUILDER_ASSETS", p)
@@ -118,6 +118,9 @@ var _ = BeforeSuite(func() {
 		err = k8sClient.Create(ctx, &pr)
 		Expect(err).ToNot(HaveOccurred())
 	}
+
+	// High duration for sleep is needed otherwise test runs in CI fail.
+	time.Sleep(1 * time.Second)
 })
 
 var _ = AfterSuite(func() {
