@@ -24,8 +24,6 @@ import (
 	"time"
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"golang.org/x/sync/errgroup"
@@ -40,6 +38,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/sapcc/absent-metrics-operator/internal/controller"
+	"github.com/sapcc/absent-metrics-operator/internal/log"
 )
 
 var (
@@ -86,17 +85,13 @@ var _ = BeforeSuite(func() {
 	// queued by the controller sequentially and we depend on this behavior in
 	// our mock assertion.
 	By("starting controller")
-	l := log.NewLogfmtLogger(log.NewSyncWriter(GinkgoWriter))
-	l = level.NewFilter(l, level.AllowAll())
-	l = log.With(l,
-		"ts", log.DefaultTimestampUTC,
-		"caller", log.DefaultCaller,
-	)
+	l, err := log.New(GinkgoWriter, log.FormatLogfmt, log.LevelAll)
+	Expect(err).ToNot(HaveOccurred())
 	c, err := controller.New(cfg, 1*time.Second, l)
 	Expect(err).ToNot(HaveOccurred())
 
-	var ctx context.Context
-	ctx, cancel = context.WithCancel(context.Background())
+	ctx := context.Background()
+	ctx, cancel = context.WithCancel(ctx)
 	wg, ctx = errgroup.WithContext(ctx)
 	wg.Go(func() error { return c.Run(ctx.Done()) })
 

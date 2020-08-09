@@ -97,17 +97,14 @@ $ absent-metrics-operator --kubeconfig="$KUBECONFIG"
 You can configure the resync period (time period between each operator scan)
 using the `resync-period` flag.
 
-The operator uses the same logging structure as the Prometheus Operator so you
-can reuse the same flags with the same configuration.
-
 For detailed usage instructions:
 
 ```
 $ absent-metrics-operator --help
 ```
 
-You can disable the operator by adding the following label to your
-`PrometheusRule` resource:
+You can disable the operator for a specific `PrometheusRule` resource by adding
+the following label to it:
 
 ```yaml
 absent-metrics-operator/disable: true

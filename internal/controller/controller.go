@@ -1,5 +1,5 @@
 // Parts of this file have been borrowed from github.com/kubernetes/sample-controller
-// which is released under Apache-2.0 License with notice;
+// which is released under Apache-2.0 License with notice:
 // Copyright 2017 The Kubernetes Authors
 //
 // The rest of the source code is licensed under:
@@ -28,16 +28,16 @@ import (
 	informers "github.com/coreos/prometheus-operator/pkg/client/informers/externalversions"
 	monitoringlisters "github.com/coreos/prometheus-operator/pkg/client/listers/monitoring/v1"
 	monitoringclient "github.com/coreos/prometheus-operator/pkg/client/versioned"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
+	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+
+	"github.com/sapcc/absent-metrics-operator/internal/log"
 )
 
 const (
@@ -48,7 +48,7 @@ const (
 // Controller is the controller implementation for acting on PrometheusRule
 // resources.
 type Controller struct {
-	logger log.Logger
+	logger *log.Logger
 
 	kubeClientset kubernetes.Interface
 	promClientset monitoringclient.Interface
@@ -59,15 +59,15 @@ type Controller struct {
 }
 
 // New creates a new Controller.
-func New(cfg *rest.Config, resyncPeriod time.Duration, logger log.Logger) (*Controller, error) {
+func New(cfg *rest.Config, resyncPeriod time.Duration, logger *log.Logger) (*Controller, error) {
 	kClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("instantiating kubernetes client failed: %s", err.Error())
+		return nil, errors.Wrap(err, "instantiating kubernetes client failed")
 	}
 
 	pClient, err := monitoringclient.NewForConfig(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("instantiating monitoring client failed: %s", err.Error())
+		return nil, errors.Wrap(err, "instantiating monitoring client failed")
 	}
 
 	c := &Controller{
@@ -104,20 +104,20 @@ func New(cfg *rest.Config, resyncPeriod time.Duration, logger log.Logger) (*Cont
 func (c *Controller) Run(stopCh <-chan struct{}) error {
 	defer c.workqueue.ShutDown()
 
-	level.Info(c.logger).Log("msg", "starting controller")
+	c.logger.Info("msg", "starting controller")
 
 	errChan := make(chan error)
 	go func() {
 		v, err := c.kubeClientset.Discovery().ServerVersion()
 		if err == nil {
-			level.Info(c.logger).Log("msg", "connection established", "cluster-version", v)
+			c.logger.Info("msg", "connection established", "cluster-version", v)
 		}
 		errChan <- err
 	}()
 	select {
 	case err := <-errChan:
 		if err != nil {
-			return fmt.Errorf("communication with server failed: %s", err.Error())
+			return errors.Wrap(err, "communication with server failed")
 		}
 	case <-stopCh:
 		return nil
@@ -125,16 +125,16 @@ func (c *Controller) Run(stopCh <-chan struct{}) error {
 
 	go c.promRuleInformer.Run(stopCh)
 
-	level.Info(c.logger).Log("msg", "waiting for informer cache to sync")
+	c.logger.Info("msg", "waiting for informer cache to sync")
 	if !cache.WaitForCacheSync(stopCh, c.promRuleInformer.HasSynced) {
-		return fmt.Errorf("failed to sync informer cache")
+		return errors.New("failed to sync informer cache")
 	}
 
-	level.Info(c.logger).Log("msg", "starting worker")
+	c.logger.Info("msg", "starting worker")
 	go wait.Until(c.runWorker, time.Second, stopCh)
 
 	<-stopCh
-	level.Info(c.logger).Log("msg", "shutting down workers")
+	c.logger.Info("msg", "shutting down workers")
 
 	return nil
 }
@@ -145,7 +145,7 @@ func (c *Controller) Run(stopCh <-chan struct{}) error {
 func (c *Controller) enqueuePromRule(obj interface{}) {
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 	if err != nil {
-		utilruntime.HandleError(fmt.Errorf("could not create key for object: %s", err.Error()))
+		c.logger.ErrorWithBackoff("msg", "could not create key for object", "err", err)
 		return
 	}
 
@@ -157,7 +157,7 @@ func (c *Controller) enqueuePromRule(obj interface{}) {
 		return
 	}
 	if l[labelDisable] == "true" {
-		level.Info(c.logger).Log("msg", "operator disabled, skipping", "key", key)
+		c.logger.Info("msg", "operator disabled, skipping", "key", key)
 		return
 	}
 
@@ -192,21 +192,21 @@ func (c *Controller) processNextWorkItem() bool {
 		// Forget here else we'd go into a loop of attempting to
 		// process an invalid work item.
 		c.workqueue.Forget(obj)
-		utilruntime.HandleError(fmt.Errorf("expected string in work queue but got %#v", obj))
+		c.logger.ErrorWithBackoff("msg", fmt.Sprintf("expected string in work queue but got %#v", obj))
 		return true
 	}
 
 	if err := c.syncHandler(key); err != nil {
 		// Put the item back on the workqueue to handle any transient errors.
 		c.workqueue.AddRateLimited(obj)
-		utilruntime.HandleError(fmt.Errorf("error syncing '%s': %s, requeuing", key, err.Error()))
+		c.logger.ErrorWithBackoff("msg", "could not sync object, requeuing", "key", key, "err", err)
 		return true
 	}
 
 	// Finally, if no errors occurred we Forget this item so it does not
 	// get queued again until another change happens.
 	c.workqueue.Forget(obj)
-	level.Info(c.logger).Log("msg", "sync successful", "key", key)
+	c.logger.Info("msg", "sync successful", "key", key)
 	return true
 }
 
@@ -216,7 +216,7 @@ func (c *Controller) syncHandler(key string) error {
 	// Convert the namespace/name string into a distinct namespace and name.
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
-		utilruntime.HandleError(fmt.Errorf("invalid resource key: %s", key))
+		c.logger.ErrorWithBackoff("msg", "invalid resource key", "key", key)
 		return nil
 	}
 
@@ -228,7 +228,7 @@ func (c *Controller) syncHandler(key string) error {
 	case apierrors.IsNotFound(err):
 		// The resource may no longer exist, in which case we clean up any
 		// orphaned absent alert rules.
-		level.Info(c.logger).Log("msg", "PrometheusRule no longer exists in work queue", "key", key)
+		c.logger.Info("msg", "PrometheusRule no longer exists in work queue", "key", key)
 		return c.deleteAbsentAlertRulesNamespace(namespace, name)
 	default:
 		// Requeue object for later processing.
@@ -239,7 +239,7 @@ func (c *Controller) syncHandler(key string) error {
 	promServerName, ok := promRule.Labels["prometheus"]
 	if !ok {
 		// This shouldn't happen but just in case it does.
-		utilruntime.HandleError(fmt.Errorf("no 'prometheus' label found on the PrometheusRule %s", key))
+		c.logger.ErrorWithBackoff("msg", "no 'prometheus' label found on the PrometheusRule", "key", key)
 		return nil
 	}
 
@@ -264,7 +264,7 @@ func (c *Controller) syncHandler(key string) error {
 			List(context.Background(), metav1.ListOptions{})
 		if err != nil {
 			// Requeue object for later processing.
-			return fmt.Errorf("could not list PrometheusRules: %s", err.Error())
+			return errors.Wrap(err, "could not list PrometheusRules")
 		}
 		var rg []monitoringv1.RuleGroup
 		for _, pr := range prList.Items {
@@ -276,15 +276,14 @@ func (c *Controller) syncHandler(key string) error {
 	default:
 		// This could have been caused by a temporary network failure, or any
 		// other transient reason. Requeue object for later processing.
-		return fmt.Errorf("could not get absent alert PrometheusRule '%s/%s': %s",
-			namespace, absentPromRuleName, err.Error())
+		return errors.Wrap(err, "could not get absent PrometheusRule "+absentPromRuleName)
 	}
 	if tier == "" || service == "" {
 		// We shouldn't arrive at this point because this would mean that
 		// there was not a single alert rule in the namespace that did not
 		// use templating for its tier and service labels.
 		// Requeue object for later processing.
-		return fmt.Errorf("could not find default tier and service for '%s'", namespace)
+		return errors.New("could not find default tier and service")
 	}
 
 	// Parse alert rules into absent metric alert rules.
@@ -292,8 +291,9 @@ func (c *Controller) syncHandler(key string) error {
 	if err != nil {
 		// We choose to absorb the error here as the worker would requeue the
 		// resource otherwise and we'll be stuck parsing broken alert rules.
-		// Instead we wait for the next time the resource is updated and requeued.
-		utilruntime.HandleError(fmt.Errorf("could not parse rule groups for '%s': %s", key, err.Error()))
+		// Instead we wait for the next time the resource is updated and
+		// requeued.
+		c.logger.ErrorWithBackoff("msg", "could not parse rule groups", "key", key, "err", err)
 		return nil
 	}
 	if len(rg) == 0 {

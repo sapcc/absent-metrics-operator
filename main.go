@@ -21,12 +21,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-kit/kit/log"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc" // load auth plugin
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/klog/v2"
 
 	"github.com/sapcc/absent-metrics-operator/internal/controller"
+	"github.com/sapcc/absent-metrics-operator/internal/log"
 )
 
 // This info identifies a specific build of the app.
@@ -37,13 +36,27 @@ var (
 	buildDate     = time.Now().UTC().Format(time.RFC3339)
 )
 
+var (
+	availableLogLevels = []string{
+		log.LevelAll,
+		log.LevelDebug,
+		log.LevelInfo,
+		log.LevelWarn,
+		log.LevelError,
+		log.LevelNone,
+	}
+	availableLogFormats = []string{
+		log.FormatLogfmt,
+		log.FormatJSON,
+	}
+)
+
 func main() {
 	var logLevel, logFormat, kubeconfig, resyncPeriod string
 	flagset := flag.CommandLine
-	klog.InitFlags(flagset)
-	flagset.StringVar(&logLevel, "log-level", logLevelInfo,
+	flagset.StringVar(&logLevel, "log-level", log.LevelInfo,
 		fmt.Sprintf("Log level to use. Possible values: %s", strings.Join(availableLogLevels, ", ")))
-	flagset.StringVar(&logFormat, "log-format", logFormatLogfmt,
+	flagset.StringVar(&logFormat, "log-format", log.FormatLogfmt,
 		fmt.Sprintf("Log format to use. Possible values: %s", strings.Join(availableLogFormats, ", ")))
 	flagset.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster")
 	flagset.StringVar(&resyncPeriod, "resync-period", "30s",
@@ -51,7 +64,6 @@ func main() {
 	if err := flagset.Parse(os.Args[1:]); err != nil {
 		logFatalf("could not parse flagset: %s", err.Error())
 	}
-
 	dur, err := time.ParseDuration(resyncPeriod)
 	if err != nil {
 		logFatalf("could not parse resync period: %s", err.Error())
@@ -60,28 +72,37 @@ func main() {
 		logFatalf("minimum acceptable value for resync period is 15s, got: %s", dur)
 	}
 
-	logger := getLogger(logFormat, logLevel)
-	logger.Log("msg", "starting absent-metrics-operator",
+	logger, err := log.New(os.Stdout, logFormat, logLevel)
+	if err != nil {
+		logFatalf(err.Error())
+	}
+
+	logger.Info("msg", "starting absent-metrics-operator",
 		"version", version, "git-commit", gitCommitHash, "build-date", buildDate)
 
+	// Create controller
 	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
-		logger.Log("msg", "instantiating cluster config failed", "err", err)
-		os.Exit(1)
+		logger.Fatal("msg", "instantiating cluster config failed", "err", err)
 	}
-	c, err := controller.New(cfg, dur, log.With(logger, "component", "controller"))
+	c, err := controller.New(cfg, dur, log.With(*logger, "component", "controller"))
 	if err != nil {
-		logger.Log("msg", "could not instantiate controller", "err", err)
-		os.Exit(1)
+		logger.Fatal("msg", "could not instantiate controller", "err", err)
 	}
 
 	// Set up signal handling for graceful shutdown
 	wg, ctx := setupSignalHandlerAndRoutineGroup(logger)
 
+	// Start controller
 	wg.Go(func() error { return c.Run(ctx.Done()) })
 
 	if err := wg.Wait(); err != nil {
-		logger.Log("msg", "unhandled error received", "err", err)
-		os.Exit(1)
+		logger.Fatal("msg", "unhandled error received", "err", err)
 	}
+}
+
+// logFatalf is used when there is no log.Logger.
+func logFatalf(format string, a ...interface{}) {
+	fmt.Fprintf(os.Stderr, "FATAL: "+format+"\n", a...)
+	os.Exit(1)
 }
