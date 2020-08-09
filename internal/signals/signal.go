@@ -1,4 +1,9 @@
-// Copyright 2016 The prometheus-operator Authors
+// Parts of this file have been borrowed from github.com/kubernetes/sample-controller
+// which is released under Apache-2.0 License with notice:
+// Copyright 2017 The Kubernetes Authors
+//
+// The rest of the source code is licensed under:
+// Copyright 2020 SAP SE
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,17 +17,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package signals
 
 import (
 	"context"
 	"fmt"
 	"os"
 	"os/signal"
-	"syscall"
 
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/sapcc/absent-metrics-operator/internal/log"
@@ -30,18 +32,21 @@ import (
 
 var onlyOneSignalHandler = make(chan struct{})
 
-func setupSignalHandlerAndRoutineGroup(logger log.Logger) (*errgroup.Group, context.Context) {
+// SetupSignalHandlerAndRoutineGroup sets up a signal handler for for SIGTERM
+// and SIGINT, and returns an errgroup.Group and a context which can be used to
+// launch new goroutines.
+func SetupSignalHandlerAndRoutineGroup(logger *log.Logger) (*errgroup.Group, context.Context) {
 	close(onlyOneSignalHandler) // panics when called twice
 
 	ctx, cancel := context.WithCancel(context.Background())
 	wg, ctx := errgroup.WithContext(ctx)
 
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(c, shutdownSignals...)
 	go func() {
 		select {
 		case s := <-c:
-			logger.Log("msg", fmt.Sprintf("received %s signal, exiting gracefully...", s.String()))
+			logger.Info("msg", fmt.Sprintf("received %s signal, exiting gracefully", s.String()))
 		case <-ctx.Done():
 		}
 		cancel()

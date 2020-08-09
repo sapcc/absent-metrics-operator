@@ -26,6 +26,7 @@ import (
 
 	"github.com/sapcc/absent-metrics-operator/internal/controller"
 	"github.com/sapcc/absent-metrics-operator/internal/log"
+	"github.com/sapcc/absent-metrics-operator/internal/signals"
 )
 
 // This info identifies a specific build of the app.
@@ -91,7 +92,7 @@ func main() {
 	}
 
 	// Set up signal handling for graceful shutdown
-	wg, ctx := setupSignalHandlerAndRoutineGroup(logger)
+	wg, ctx := signals.SetupSignalHandlerAndRoutineGroup(logger)
 
 	// Start controller
 	wg.Go(func() error { return c.Run(ctx.Done()) })
