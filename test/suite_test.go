@@ -30,7 +30,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
@@ -42,7 +41,6 @@ import (
 )
 
 var (
-	cfg       *rest.Config
 	testEnv   *envtest.Environment
 	k8sClient client.Client
 
@@ -72,7 +70,7 @@ var _ = BeforeSuite(func() {
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths: []string{filepath.Join("fixtures", "crd")},
 	}
-	cfg, err = testEnv.Start()
+	cfg, err := testEnv.Start()
 	Expect(err).ToNot(HaveOccurred())
 
 	err = monitoringv1.AddToScheme(scheme.Scheme)
