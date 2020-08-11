@@ -1,0 +1,26 @@
+name: License
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.14
+
+      - name: Run license checker
+        run: |
+          GO111MODULE=off go get -u github.com/google/addlicense
+          addlicense --check -- *.go internal/ test/*.go test/fixtures/*.go
