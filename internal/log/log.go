@@ -39,8 +39,7 @@ const (
 	FormatJSON   = "json"
 )
 
-// Logger wraps a go-kit/kit/log.Logger. We used it to define our own methods
-// for it.
+// Logger wraps a go-kit/kit/log.Logger. We use it to define custom methods.
 // The Logger is safe for concurrent use by multiple goroutines.
 type Logger struct {
 	gokitlog.Logger
@@ -87,9 +86,9 @@ func (l *Logger) Info(keyvals ...interface{}) {
 	gokitlevel.Info(l.Logger).Log(keyvals...)
 }
 
-// ErrorWithBackoff is like Logger.Error() but it also blocks if it is called
-// quite often (1000 times in a second). This should be used instead of the
-// regular Error() to prevent overly tight hot error loops.
+// ErrorWithBackoff logs at the error level and also blocks if it is called
+// quite often (1000 times in a second). This behavior is helpful when it used
+// in overly tight hot error loops.
 func (l *Logger) ErrorWithBackoff(keyvals ...interface{}) {
 	gokitlevel.Error(l.Logger).Log(keyvals...)
 	errorBackoff()
