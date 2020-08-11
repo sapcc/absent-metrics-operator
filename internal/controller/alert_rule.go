@@ -156,7 +156,7 @@ func ParseAlertRule(tier, service string, in monitoringv1.Rule) ([]monitoringv1.
 
 		ann := map[string]string{
 			"summary":     fmt.Sprintf("missing %s", m),
-			"description": fmt.Sprintf("The metric '%s' is missing", m),
+			"description": fmt.Sprintf("The metric '%s' is missing. Alerts using it may not fire as intended.", m),
 		}
 
 		out = append(out, monitoringv1.Rule{

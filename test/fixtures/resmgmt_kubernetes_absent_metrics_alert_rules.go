@@ -50,7 +50,7 @@ var ResMgmtK8sAbsentPromRule = monitoringv1.PrometheusRule{
 						Labels: kepLab,
 						Annotations: map[string]string{
 							"summary":     "missing kube_pod_failed_scheduling_memory_total",
-							"description": "The metric 'kube_pod_failed_scheduling_memory_total' is missing",
+							"description": "The metric 'kube_pod_failed_scheduling_memory_total' is missing. Alerts using it may not fire as intended.",
 						},
 					},
 					{
@@ -60,7 +60,7 @@ var ResMgmtK8sAbsentPromRule = monitoringv1.PrometheusRule{
 						Labels: kepLab,
 						Annotations: map[string]string{
 							"summary":     "missing keppel_container_memory_usage_percent",
-							"description": "The metric 'keppel_container_memory_usage_percent' is missing",
+							"description": "The metric 'keppel_container_memory_usage_percent' is missing. Alerts using it may not fire as intended.",
 						},
 					},
 				},
