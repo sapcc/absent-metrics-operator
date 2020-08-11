@@ -30,7 +30,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: test/bin
-          key: ${{ runner.os }}-go-${{ hashFiles('test/.kubebuilder-version') }}
+          key: ${{ runner.os }}-kubebuilder-${{ hashFiles('test/.kubebuilder-version') }}
 
       - name: Basic build
         run: make GO_BUILDFLAGS='-mod vendor'
