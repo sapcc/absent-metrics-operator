@@ -28,6 +28,9 @@ func getTierAndService(rg []monitoringv1.RuleGroup) (tier, service string) {
 	count := make(map[string]map[string]int)
 	for _, g := range rg {
 		for _, r := range g.Rules {
+			if r.Record != "" {
+				continue
+			}
 			t, ok := r.Labels["tier"]
 			if !ok || strings.Contains(t, "$labels") {
 				continue

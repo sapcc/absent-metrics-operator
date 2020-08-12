@@ -33,6 +33,16 @@
             }
           },
           {
+            "record": "predict_linear_global_cluster_storage_used_percent_average",
+            "expr": "max(predict_linear(global:swift_cluster_storage_used_percent_average[1w], 60 * 60 * 24 * 30)) > 0.8",
+            "labels": {
+              "context": "usedcapacity",
+              "service": "swift",
+              "tier": "os",
+              "meta": "Swift storage usage will reach 80% in 30 days. Order hardware now!"
+            }
+          },
+          {
             "alert": "OpenstackSwiftHealthCheck",
             "expr": "avg(swift_recon_task_exit_code) BY (region) > 0.2 or avg(swift_dispersion_task_exit_code) BY (region) > 0.2",
             "for": "5m",

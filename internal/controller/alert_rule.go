@@ -71,6 +71,10 @@ func parseRuleGroups(promRuleName, defaultTier, defaultService string, in []moni
 	for _, g := range in {
 		var absentRules []monitoringv1.Rule
 		for _, r := range g.Rules {
+			// Do not parse recording rules.
+			if r.Record != "" {
+				continue
+			}
 			rules, err := ParseAlertRule(defaultTier, defaultService, r)
 			if err != nil {
 				return nil, err
