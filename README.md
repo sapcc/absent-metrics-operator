@@ -61,7 +61,7 @@ labels:
   severity: info
 annotations:
   summary: missing foo_bar
-  description: The metric 'foo_bar' is missing
+  description: The metric 'foo_bar' is missing. Alerts using it may not fire as intended.
 ```
 
 ## Installation
@@ -94,9 +94,6 @@ $ absent-metrics-operator --kubeconfig="$KUBECONFIG"
 
 `kubeconfig` flag is only required if running outside a cluster.
 
-You can configure the resync period (time period between each operator scan)
-using the `resync-period` flag.
-
 For detailed usage instructions:
 
 ```
@@ -121,8 +118,8 @@ For example, if a namespace has alert rules defined across several
 `Infra`. The absent metric alerts for this namespace would be aggregated in two
 new `PrometheusRule` resources called:
 
-- `openstack-absent-metrics-alert-rules`
-- `infra-absent-metrics-alert-rules`
+- `openstack-absent-metric-alert-rules`
+- `infra-absent-metric-alert-rules`
 
 ### Template
 
@@ -138,7 +135,7 @@ labels:
   severity: info
 annotations:
   summary: missing $metric
-  description: The metric '$metric' is missing
+  description: The metric '$metric' is missing. Alerts using it may not fire as intended.
 ```
 
 Consider the metric `limes_successful_scrapes:rate5m` with tier `os` and

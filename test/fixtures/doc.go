@@ -17,6 +17,6 @@ package fixtures
 
 // Common constants for reusability.
 const (
-	K8sAbsentPromRuleName = "kubernetes-absent-metrics-alert-rules"
-	OSAbsentPromRuleName  = "openstack-absent-metrics-alert-rules"
+	K8sAbsentPromRuleName = "kubernetes-absent-metric-alert-rules"
+	OSAbsentPromRuleName  = "openstack-absent-metric-alert-rules"
 )

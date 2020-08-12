@@ -175,7 +175,7 @@ var _ = Describe("Controller", func() {
 			})
 
 			It("should delete orphaned absent metric alert rule from "+fixtures.OSAbsentPromRuleName+" in resmgmt namespace", func() {
-				// Since "openstack-absent-metrics-alert-rules" in "resmgmt"
+				// Since "openstack-absent-metric-alert-rules" in "resmgmt"
 				// namespace holds the aggregate absent metric alert rules for
 				// the "openstack-limes-api.alerts" and
 				// "openstack-limes-roleassign.alerts", deleting one resource

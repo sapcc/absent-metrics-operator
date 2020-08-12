@@ -26,6 +26,7 @@ import (
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -85,7 +86,7 @@ var _ = BeforeSuite(func() {
 	By("starting controller")
 	l, err := log.New(GinkgoWriter, log.FormatLogfmt, log.LevelAll)
 	Expect(err).ToNot(HaveOccurred())
-	c, err := controller.New(cfg, 1*time.Second, l)
+	c, err := controller.New(cfg, 1*time.Second, prometheus.NewRegistry(), l)
 	Expect(err).ToNot(HaveOccurred())
 
 	ctx := context.Background()

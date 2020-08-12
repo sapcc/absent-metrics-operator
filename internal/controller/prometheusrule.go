@@ -45,8 +45,7 @@ func (c *Controller) createAbsentPrometheusRule(namespace, name, promServerName 
 		},
 	}
 
-	_, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).
-		Create(context.Background(), pr, metav1.CreateOptions{})
+	_, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).Create(context.Background(), pr, metav1.CreateOptions{})
 	if err != nil {
 		return errors.Wrap(err, "could not create new absent PrometheusRule")
 	}
@@ -87,13 +86,12 @@ func (c *Controller) updateAbsentPrometheusRule(
 	}
 	pr.Spec.Groups = new
 
-	_, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).
-		Update(context.Background(), pr, metav1.UpdateOptions{})
+	_, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).Update(context.Background(), pr, metav1.UpdateOptions{})
 	if err != nil {
 		return errors.Wrap(err, "could not update absent PrometheusRule")
 	}
 
-	c.logger.Info("msg", "successfully updated absent alert rules",
+	c.logger.Info("msg", "successfully updated absent metric alert rules",
 		"key", fmt.Sprintf("%s/%s", namespace, pr.Name))
 	return nil
 }
@@ -136,17 +134,21 @@ func (c *Controller) deleteAbsentAlertRules(namespace, promRuleName string, abse
 
 	var err error
 	if len(pr.Spec.Groups) == 0 {
-		err = c.promClientset.MonitoringV1().PrometheusRules(namespace).
-			Delete(context.Background(), pr.Name, metav1.DeleteOptions{})
+		err = c.promClientset.MonitoringV1().PrometheusRules(namespace).Delete(context.Background(), pr.Name, metav1.DeleteOptions{})
+		if err == nil {
+			c.logger.Info("msg", "successfully deleted orphaned absent PrometheusRule",
+				"key", fmt.Sprintf("%s/%s", namespace, pr.Name))
+		}
 	} else {
-		_, err = c.promClientset.MonitoringV1().PrometheusRules(namespace).
-			Update(context.Background(), pr, metav1.UpdateOptions{})
+		_, err = c.promClientset.MonitoringV1().PrometheusRules(namespace).Update(context.Background(), pr, metav1.UpdateOptions{})
+		if err == nil {
+			c.logger.Info("msg", "successfully cleaned up orphaned absent metric alert rules",
+				"key", fmt.Sprintf("%s/%s", namespace, pr.Name))
+		}
 	}
 	if err != nil {
-		return errors.Wrap(err, "could not clean up orphaned absent alert rules")
+		return errors.Wrap(err, "could not clean up orphaned absent metric alert rules")
 	}
 
-	c.logger.Info("msg", "successfully cleaned up orphaned absent alert rules",
-		"key", fmt.Sprintf("%s/%s", namespace, pr.Name))
 	return nil
 }
