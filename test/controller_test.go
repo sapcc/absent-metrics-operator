@@ -32,7 +32,7 @@ import (
 )
 
 // Wait for controller to resync and complete its processing.
-var waitForControllerToProcess = func() { time.Sleep(250 * time.Millisecond) }
+var waitForControllerToProcess = func() { time.Sleep(500 * time.Millisecond) }
 
 var _ = Describe("Controller", func() {
 	ctx := context.Background()
