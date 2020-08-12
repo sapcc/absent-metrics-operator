@@ -17,6 +17,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
@@ -64,35 +65,44 @@ func (c *Controller) updateAbsentPrometheusRule(
 
 	// The provided promRule is read-only, local cache from the Store.
 	// We make a deep copy of the original object and modify that.
-	pr := absentPromRule.DeepCopy()
+	prCopy := absentPromRule.DeepCopy()
 
-	// Check if the promRule already has these rule groups.
-	// Update if it does otherwise append.
+	// Check if the absent PrometheusRule already has these rule groups.
+	// Update if it does, otherwise append.
 	updated := make(map[string]bool)
 	for _, g := range rg {
-		for i, v := range pr.Spec.Groups {
+		for i, v := range prCopy.Spec.Groups {
 			if g.Name == v.Name {
-				pr.Spec.Groups[i] = g
+				prCopy.Spec.Groups[i] = g
 				updated[g.Name] = true
 			}
 		}
 	}
-	new := make([]monitoringv1.RuleGroup, 0, len(rg)-len(updated)+len(pr.Spec.Groups))
-	new = append(new, pr.Spec.Groups...)
+
+	// No need to update if old and new rule groups are exactly the same.
+	pendingCount := len(rg) - len(updated)
+	if pendingCount == 0 {
+		if reflect.DeepEqual(absentPromRule.Spec.Groups, prCopy.Spec.Groups) {
+			return nil
+		}
+	}
+
+	new := make([]monitoringv1.RuleGroup, 0, len(prCopy.Spec.Groups)+pendingCount)
+	new = append(new, prCopy.Spec.Groups...)
 	for _, g := range rg {
 		if !updated[g.Name] {
 			new = append(new, g)
 		}
 	}
-	pr.Spec.Groups = new
+	prCopy.Spec.Groups = new
 
-	_, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).Update(context.Background(), pr, metav1.UpdateOptions{})
+	_, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).Update(context.Background(), prCopy, metav1.UpdateOptions{})
 	if err != nil {
 		return errors.Wrap(err, "could not update absent PrometheusRule")
 	}
 
 	c.logger.Info("msg", "successfully updated absent metric alert rules",
-		"key", fmt.Sprintf("%s/%s", namespace, pr.Name))
+		"key", fmt.Sprintf("%s/%s", namespace, prCopy.Name))
 	return nil
 }
 
