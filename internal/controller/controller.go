@@ -324,12 +324,11 @@ func (c *Controller) syncHandler(key string) error {
 		return errors.Wrap(err, "could not get absent PrometheusRule "+absentPromRuleName)
 	}
 	if tier == "" || service == "" {
-		// We shouldn't arrive at this point because this would mean that there
-		// was not a single alert rule for the prometheus server in this
-		// namespace that did not use templating for its tier and service
+		// Ideally, we shouldn't arrive at this point because this would mean
+		// that there was not a single alert rule for the prometheus server in
+		// this namespace that did not use templating for its tier and service
 		// labels.
-		// Requeue object for later processing.
-		return errors.New("could not find default tier and service")
+		c.logger.ErrorWithBackoff("could not find default tier and service for Prometheus server '%s'", promServerName)
 	}
 
 	// Parse alert rules into absent metric alert rules.
