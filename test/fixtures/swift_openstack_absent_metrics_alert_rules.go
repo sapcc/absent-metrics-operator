@@ -51,7 +51,7 @@ var SwiftOSAbsentPromRule = monitoringv1.PrometheusRule{
 						Annotations: map[string]string{
 							"summary": "missing global:swift_cluster_storage_used_percent_average",
 							"description": "The metric 'global:swift_cluster_storage_used_percent_average' is missing. " +
-								"Alerts using it may not fire as intended.",
+								"'OpenstackSwiftUsedSpace' alert using it may not fire as intended.",
 						},
 					},
 					{
@@ -61,7 +61,7 @@ var SwiftOSAbsentPromRule = monitoringv1.PrometheusRule{
 						Labels: swiftLab,
 						Annotations: map[string]string{
 							"summary":     "missing swift_dispersion_task_exit_code",
-							"description": "The metric 'swift_dispersion_task_exit_code' is missing. Alerts using it may not fire as intended.",
+							"description": "The metric 'swift_dispersion_task_exit_code' is missing. 'OpenstackSwiftHealthCheck' alert using it may not fire as intended.",
 						},
 					},
 					{
@@ -71,7 +71,7 @@ var SwiftOSAbsentPromRule = monitoringv1.PrometheusRule{
 						Labels: swiftLab,
 						Annotations: map[string]string{
 							"summary":     "missing swift_recon_task_exit_code",
-							"description": "The metric 'swift_recon_task_exit_code' is missing. Alerts using it may not fire as intended.",
+							"description": "The metric 'swift_recon_task_exit_code' is missing. 'OpenstackSwiftHealthCheck' alert using it may not fire as intended.",
 						},
 					},
 				},

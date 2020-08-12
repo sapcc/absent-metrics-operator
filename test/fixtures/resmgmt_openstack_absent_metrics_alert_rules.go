@@ -55,7 +55,7 @@ var LimesAbsentAlertsAPIGroup = monitoringv1.RuleGroup{
 			Labels: limesLab,
 			Annotations: map[string]string{
 				"summary":     "missing http_requests_total",
-				"description": "The metric 'http_requests_total' is missing. Alerts using it may not fire as intended.",
+				"description": "The metric 'http_requests_total' is missing. 'OpenstackLimesHttpErrors' alert using it may not fire as intended.",
 			},
 		},
 		{
@@ -65,7 +65,7 @@ var LimesAbsentAlertsAPIGroup = monitoringv1.RuleGroup{
 			Labels: limesLab,
 			Annotations: map[string]string{
 				"summary":     "missing limes_suspended_scrapes",
-				"description": "The metric 'limes_suspended_scrapes' is missing. Alerts using it may not fire as intended.",
+				"description": "The metric 'limes_suspended_scrapes' is missing. 'OpenstackLimesSuspendedScrapes' alert using it may not fire as intended.",
 			},
 		},
 	},
@@ -83,7 +83,7 @@ var LimesAbsentAlertsRoleAssignGroup = monitoringv1.RuleGroup{
 			Labels: limesLab,
 			Annotations: map[string]string{
 				"summary":     "missing openstack_assignments_per_role",
-				"description": "The metric 'openstack_assignments_per_role' is missing. Alerts using it may not fire as intended.",
+				"description": "The metric 'openstack_assignments_per_role' is missing. 'OpenstackLimesUnexpectedCloudViewerRoleAssignments' alert using it may not fire as intended.",
 			},
 		},
 	},
