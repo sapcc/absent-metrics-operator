@@ -211,7 +211,7 @@ func (c *Controller) processNextWorkItem() bool {
 }
 
 // syncHandler gets a PrometheusRule from the queue and updates the
-// corresponding absent metrics alert PrometheusRule for it.
+// corresponding absent metric alert PrometheusRule for it.
 func (c *Controller) syncHandler(key string) error {
 	// Convert the namespace/name string into a distinct namespace and name.
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
@@ -228,7 +228,7 @@ func (c *Controller) syncHandler(key string) error {
 	case apierrors.IsNotFound(err):
 		// The resource may no longer exist, in which case we clean up any
 		// orphaned absent alert rules.
-		c.logger.Info("msg", "PrometheusRule no longer exists in work queue", "key", key)
+		c.logger.Info("msg", "PrometheusRule no longer exists", "key", key)
 		return c.deleteAbsentAlertRulesNamespace(namespace, name)
 	default:
 		// Requeue object for later processing.
@@ -243,9 +243,9 @@ func (c *Controller) syncHandler(key string) error {
 		return nil
 	}
 
-	// Get the PrometheusRule resource that defines the absent metrics alert
+	// Get the PrometheusRule resource that defines the absent metric alert
 	// rules for this namespace.
-	absentPromRuleName := fmt.Sprintf("%s-absent-metrics-alert-rules", promServerName)
+	absentPromRuleName := fmt.Sprintf("%s-absent-metric-alert-rules", promServerName)
 	absentPromRule, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).
 		Get(context.Background(), absentPromRuleName, metav1.GetOptions{})
 
