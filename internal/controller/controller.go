@@ -257,7 +257,6 @@ func (c *Controller) processNextWorkItem() bool {
 
 // syncHandler gets a PrometheusRule from the queue and updates the
 // corresponding absent metric alert PrometheusRule for it.
-//nolint:gocyclo,gocognit
 func (c *Controller) syncHandler(key string) error {
 	// Convert the namespace/name string into a distinct namespace and name.
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)

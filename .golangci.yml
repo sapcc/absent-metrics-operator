@@ -63,14 +63,6 @@ linters-settings:
     # See https://github.com/kisielk/errcheck#excluding-functions for details.
     exclude: ./.errcheck-excludes
 
-  gocognit:
-    # Minimal code complexity to report, 30 by default.
-    min-complexity: 20
-
-  gocyclo:
-    # Minimal code complexity to report, 30 by default.
-    min-complexity: 20
-
   goimports:
     # Put imports beginning with prefix after 3rd-party packages. It's a
     # comma-separated list of prefixes.
