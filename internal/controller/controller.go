@@ -29,6 +29,7 @@ import (
 	monitoringlisters "github.com/coreos/prometheus-operator/pkg/client/listers/monitoring/v1"
 	monitoringclient "github.com/coreos/prometheus-operator/pkg/client/versioned"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -45,10 +46,26 @@ const (
 	labelDisable   = "absent-metrics-operator/disable"
 )
 
+const (
+	// DefaultResyncPeriod is the period after which the shared informer will
+	// refresh its cache.
+	DefaultResyncPeriod = 10 * time.Minute
+
+	// DefaultReconciliationPeriod is the period after which all the objects in
+	// the informer's cache will be added to the workqueue so that they can be
+	// processed by the syncHandler().
+	//
+	// The informer calls the event handlers only if the resource state
+	// changes. We force this additional reconciliation as a liveness check to
+	// see if the operator is working as intended.
+	DefaultReconciliationPeriod = 5 * time.Minute
+)
+
 // Controller is the controller implementation for acting on PrometheusRule
 // resources.
 type Controller struct {
-	logger *log.Logger
+	logger  *log.Logger
+	metrics *Metrics
 
 	kubeClientset kubernetes.Interface
 	promClientset monitoringclient.Interface
@@ -59,7 +76,7 @@ type Controller struct {
 }
 
 // New creates a new Controller.
-func New(cfg *rest.Config, resyncPeriod time.Duration, logger *log.Logger) (*Controller, error) {
+func New(cfg *rest.Config, resyncPeriod time.Duration, r prometheus.Registerer, logger *log.Logger) (*Controller, error) {
 	kClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return nil, errors.Wrap(err, "instantiating kubernetes client failed")
@@ -72,6 +89,7 @@ func New(cfg *rest.Config, resyncPeriod time.Duration, logger *log.Logger) (*Con
 
 	c := &Controller{
 		logger:        logger,
+		metrics:       NewMetrics(r),
 		kubeClientset: kClient,
 		promClientset: pClient,
 		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "prometheusrules"),
@@ -164,12 +182,39 @@ func (c *Controller) enqueuePromRule(obj interface{}) {
 	c.workqueue.Add(key)
 }
 
+// enqueueAllObjects adds all objects in the shared informer's cache to the
+// workqueue.
+func (c *Controller) enqueueAllObjects() {
+	objs := c.promRuleInformer.GetStore().List()
+	for _, v := range objs {
+		if pr, ok := v.(*monitoringv1.PrometheusRule); ok {
+			c.enqueuePromRule(pr)
+		}
+	}
+}
+
 // runWorker is a long-running function that will continually call the
 // processNextWorkItem function in order to read and process a message on the
 // workqueue.
 func (c *Controller) runWorker() {
+	ticker := time.NewTicker(DefaultReconciliationPeriod)
+	defer ticker.Stop()
+	done := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				c.enqueueAllObjects()
+			}
+		}
+	}()
+
 	for c.processNextWorkItem() {
 	}
+
+	done <- struct{}{}
 }
 
 // processNextWorkItem will read a single work item off the workqueue and
@@ -212,6 +257,7 @@ func (c *Controller) processNextWorkItem() bool {
 
 // syncHandler gets a PrometheusRule from the queue and updates the
 // corresponding absent metric alert PrometheusRule for it.
+//nolint:gocyclo,gocognit
 func (c *Controller) syncHandler(key string) error {
 	// Convert the namespace/name string into a distinct namespace and name.
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
@@ -243,16 +289,16 @@ func (c *Controller) syncHandler(key string) error {
 		return nil
 	}
 
-	// Get the PrometheusRule resource that defines the absent metric alert
-	// rules for this namespace.
-	absentPromRuleName := fmt.Sprintf("%s-absent-metric-alert-rules", promServerName)
-	absentPromRule, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).
-		Get(context.Background(), absentPromRuleName, metav1.GetOptions{})
-
 	// Default tier and service label values to use for absent metric alerts.
 	// See parseRuleGroups() for info on why we need this.
 	var tier, service string
+
+	// Get the PrometheusRule resource that defines the absent metric alert
+	// rules for this namespace.
+	ctx := context.Background()
 	absentPromRuleExists := false
+	absentPromRuleName := fmt.Sprintf("%s-absent-metric-alert-rules", promServerName)
+	absentPromRule, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).Get(ctx, absentPromRuleName, metav1.GetOptions{})
 	switch {
 	case err == nil:
 		absentPromRuleExists = true
@@ -260,8 +306,7 @@ func (c *Controller) syncHandler(key string) error {
 	case apierrors.IsNotFound(err):
 		// Try to get a value for tier and service by traversing through all the
 		// PrometheusRules for the specific Prometheus server in this namespace.
-		prList, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).
-			List(context.Background(), metav1.ListOptions{})
+		prList, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).List(ctx, metav1.ListOptions{})
 		if err != nil {
 			// Requeue object for later processing.
 			return errors.Wrap(err, "could not list PrometheusRules")
@@ -279,9 +324,10 @@ func (c *Controller) syncHandler(key string) error {
 		return errors.Wrap(err, "could not get absent PrometheusRule "+absentPromRuleName)
 	}
 	if tier == "" || service == "" {
-		// We shouldn't arrive at this point because this would mean that
-		// there was not a single alert rule in the namespace that did not
-		// use templating for its tier and service labels.
+		// We shouldn't arrive at this point because this would mean that there
+		// was not a single alert rule for the prometheus server in this
+		// namespace that did not use templating for its tier and service
+		// labels.
 		// Requeue object for later processing.
 		return errors.New("could not find default tier and service")
 	}
@@ -296,18 +342,22 @@ func (c *Controller) syncHandler(key string) error {
 		c.logger.ErrorWithBackoff("msg", "could not parse rule groups", "key", key, "err", err)
 		return nil
 	}
-	if len(rg) == 0 {
-		// This can happen when changes have been made to a PrometheusRule
-		// that result in no absent alert rules. E.g. absent() operator was used.
-		if absentPromRuleExists {
-			// In this case we clean up orphaned absent alert rules.
-			return c.deleteAbsentAlertRules(namespace, name, absentPromRule)
-		}
-		return nil // nothing to do
+
+	switch lenRg := len(rg); {
+	case lenRg == 0 && absentPromRuleExists:
+		// This can happen when changes have been made to a PrometheusRule that
+		// result in no absent alert rules. E.g. absent() operator was used. In
+		// this case we clean up orphaned absent alert rules.
+		err = c.deleteAbsentAlertRules(namespace, name, absentPromRule)
+	case lenRg > 0 && absentPromRuleExists:
+		err = c.updateAbsentPrometheusRule(namespace, absentPromRule, rg)
+	case lenRg > 0:
+		err = c.createAbsentPrometheusRule(namespace, absentPromRuleName, promServerName, rg)
+	}
+	if err != nil {
+		return err
 	}
 
-	if absentPromRuleExists {
-		return c.updateAbsentPrometheusRule(namespace, absentPromRule, rg)
-	}
-	return c.createAbsentPrometheusRule(namespace, absentPromRuleName, promServerName, rg)
+	c.metrics.SuccessfulPrometheusRuleReconcileTime.WithLabelValues(namespace, name).SetToCurrentTime()
+	return nil
 }

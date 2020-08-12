@@ -17,10 +17,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sapcc/go-bits/httpee"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc" // load auth plugin
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -53,24 +57,15 @@ var (
 )
 
 func main() {
-	var logLevel, logFormat, kubeconfig, resyncPeriod string
+	var logLevel, logFormat, kubeconfig string
 	flagset := flag.CommandLine
 	flagset.StringVar(&logLevel, "log-level", log.LevelInfo,
 		fmt.Sprintf("Log level to use. Possible values: %s", strings.Join(availableLogLevels, ", ")))
 	flagset.StringVar(&logFormat, "log-format", log.FormatLogfmt,
 		fmt.Sprintf("Log format to use. Possible values: %s", strings.Join(availableLogFormats, ", ")))
 	flagset.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster")
-	flagset.StringVar(&resyncPeriod, "resync-period", "30s",
-		"The controller's resync period. Valid time units are 's', 'm', 'h'. Minimum acceptable value is 15s")
 	if err := flagset.Parse(os.Args[1:]); err != nil {
 		logFatalf("could not parse flagset: %s", err.Error())
-	}
-	dur, err := time.ParseDuration(resyncPeriod)
-	if err != nil {
-		logFatalf("could not parse resync period: %s", err.Error())
-	}
-	if dur < 15*time.Second {
-		logFatalf("minimum acceptable value for resync period is 15s, got: %s", dur)
 	}
 
 	logger, err := log.New(os.Stdout, logFormat, logLevel)
@@ -81,18 +76,29 @@ func main() {
 	logger.Info("msg", "starting absent-metrics-operator",
 		"version", version, "git-commit", gitCommitHash, "build-date", buildDate)
 
+	r := prometheus.NewRegistry()
+
 	// Create controller
 	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
 		logger.Fatal("msg", "instantiating cluster config failed", "err", err)
 	}
-	c, err := controller.New(cfg, dur, log.With(*logger, "component", "controller"))
+	c, err := controller.New(cfg, controller.DefaultResyncPeriod, r, log.With(*logger, "component", "controller"))
 	if err != nil {
 		logger.Fatal("msg", "could not instantiate controller", "err", err)
 	}
 
 	// Set up signal handling for graceful shutdown
 	wg, ctx := signals.SetupSignalHandlerAndRoutineGroup(logger)
+
+	// Serve metrics at port "9659". This port has been allocated for absent
+	// metrics operator.
+	// See: https://github.com/prometheus/prometheus/wiki/Default-port-allocations
+	listenAddr := ":9659"
+	http.HandleFunc("/", landingPageHandler(logger))
+	http.Handle("/metrics", promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
+	logger.Info("msg", "listening on "+listenAddr)
+	wg.Go(func() error { return httpee.ListenAndServeContext(ctx, listenAddr, nil) })
 
 	// Start controller
 	wg.Go(func() error { return c.Run(ctx.Done()) })
@@ -106,4 +112,21 @@ func main() {
 func logFatalf(format string, a ...interface{}) {
 	fmt.Fprintf(os.Stderr, "FATAL: "+format+"\n", a...)
 	os.Exit(1)
+}
+
+func landingPageHandler(logger *log.Logger) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		pageBytes := []byte(`<html>
+		<head><title>Absent Metrics Operator</title></head>
+		<body>
+		<h1>Absent Metrics Operator</h1>
+		<p><a href="/metrics">Metrics</a></p>
+		<p><a href="https://github.com/sapcc/absent-metrics-operator">Source Code</a></p>
+		</body>
+		</html>`)
+
+		if _, err := w.Write(pageBytes); err != nil {
+			logger.ErrorWithBackoff("msg", "could not write landing page bytes", "err", err)
+		}
+	}
 }

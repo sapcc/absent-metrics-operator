@@ -94,9 +94,6 @@ $ absent-metrics-operator --kubeconfig="$KUBECONFIG"
 
 `kubeconfig` flag is only required if running outside a cluster.
 
-You can configure the resync period (time period between each operator scan)
-using the `resync-period` flag.
-
 For detailed usage instructions:
 
 ```
