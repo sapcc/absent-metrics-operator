@@ -64,8 +64,9 @@ var LimesAbsentAlertsAPIGroup = monitoringv1.RuleGroup{
 			For:    "10m",
 			Labels: limesLab,
 			Annotations: map[string]string{
-				"summary":     "missing limes_suspended_scrapes",
-				"description": "The metric 'limes_suspended_scrapes' is missing. 'OpenstackLimesSuspendedScrapes' alert using it may not fire as intended.",
+				"summary": "missing limes_suspended_scrapes",
+				"description": "The metric 'limes_suspended_scrapes' is missing. " +
+					"'OpenstackLimesSuspendedScrapes' alert using it may not fire as intended.",
 			},
 		},
 	},
@@ -82,8 +83,9 @@ var LimesAbsentAlertsRoleAssignGroup = monitoringv1.RuleGroup{
 			For:    "10m",
 			Labels: limesLab,
 			Annotations: map[string]string{
-				"summary":     "missing openstack_assignments_per_role",
-				"description": "The metric 'openstack_assignments_per_role' is missing. 'OpenstackLimesUnexpectedCloudViewerRoleAssignments' alert using it may not fire as intended.",
+				"summary": "missing openstack_assignments_per_role",
+				"description": "The metric 'openstack_assignments_per_role' is missing. " +
+					"'OpenstackLimesUnexpectedCloudViewerRoleAssignments' alert using it may not fire as intended.",
 			},
 		},
 	},
