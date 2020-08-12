@@ -327,7 +327,8 @@ func (c *Controller) syncHandler(key string) error {
 		// that there was not a single alert rule for the prometheus server in
 		// this namespace that did not use templating for its tier and service
 		// labels.
-		c.logger.ErrorWithBackoff("could not find default tier and service for Prometheus server '%s'", promServerName)
+		c.logger.Info("msg", fmt.Sprintf("could not find default tier and service for Prometheus server '%s'", promServerName),
+			"key", key)
 	}
 
 	// Parse alert rules into absent metric alert rules.
