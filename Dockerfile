@@ -1,5 +1,5 @@
 FROM golang:1.14-alpine as builder
-RUN apk add --no-cache make gcc musl-dev
+RUN apk add --no-cache make gcc git musl-dev
 
 COPY . /src
 RUN make -C /src install PREFIX=/pkg GO_BUILDFLAGS='-mod vendor'
