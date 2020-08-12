@@ -60,49 +60,47 @@ func (c *Controller) createAbsentPrometheusRule(namespace, name, promServerName 
 // provided slice of RuleGroup.
 func (c *Controller) updateAbsentPrometheusRule(
 	namespace string,
-	absentPromRule *monitoringv1.PrometheusRule,
+	absentPR *monitoringv1.PrometheusRule,
 	rg []monitoringv1.RuleGroup) error {
-
-	// The provided promRule is read-only, local cache from the Store.
-	// We make a deep copy of the original object and modify that.
-	prCopy := absentPromRule.DeepCopy()
 
 	// Check if the absent PrometheusRule already has these rule groups.
 	// Update if it does, otherwise append.
+	old := absentPR.Spec.Groups
+	var new []monitoringv1.RuleGroup
 	updated := make(map[string]bool)
-	for _, g := range rg {
-		for i, v := range prCopy.Spec.Groups {
-			if g.Name == v.Name {
-				prCopy.Spec.Groups[i] = g
+OuterLoop:
+	for _, oldG := range old {
+		for _, g := range rg {
+			if oldG.Name == g.Name {
+				// Add the new updated RuleGroup.
+				new = append(new, g)
 				updated[g.Name] = true
+				continue OuterLoop
 			}
 		}
+		// This RuleGroup should be carried over as is.
+		new = append(new, oldG)
 	}
-
-	// No need to update if old and new rule groups are exactly the same.
-	pendingCount := len(rg) - len(updated)
-	if pendingCount == 0 {
-		if reflect.DeepEqual(absentPromRule.Spec.Groups, prCopy.Spec.Groups) {
-			return nil
-		}
-	}
-
-	new := make([]monitoringv1.RuleGroup, 0, len(prCopy.Spec.Groups)+pendingCount)
-	new = append(new, prCopy.Spec.Groups...)
+	// Add the pending RuleGroups.
 	for _, g := range rg {
 		if !updated[g.Name] {
 			new = append(new, g)
 		}
 	}
-	prCopy.Spec.Groups = new
 
-	_, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).Update(context.Background(), prCopy, metav1.UpdateOptions{})
+	// No need to update if old and new rule groups are exactly the same.
+	if reflect.DeepEqual(old, new) {
+		return nil
+	}
+
+	absentPR.Spec.Groups = new
+	_, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).Update(context.Background(), absentPR, metav1.UpdateOptions{})
 	if err != nil {
 		return errors.Wrap(err, "could not update absent PrometheusRule")
 	}
 
 	c.logger.Info("msg", "successfully updated absent metric alert rules",
-		"key", fmt.Sprintf("%s/%s", namespace, prCopy.Name))
+		"key", fmt.Sprintf("%s/%s", namespace, absentPR.Name))
 	return nil
 }
 
@@ -127,33 +125,33 @@ func (c *Controller) deleteAbsentAlertRulesNamespace(namespace, promRuleName str
 
 // deleteAbsentAlertRules deletes absent alert rules concerning a specific
 // PrometheusRule from a specific absent PrometheusRule.
-func (c *Controller) deleteAbsentAlertRules(namespace, promRuleName string, absentPromRule *monitoringv1.PrometheusRule) error {
-	// The provided promRule is read-only, local cache from the Store.
-	// We make a deep copy of the original object and modify that.
-	pr := absentPromRule.DeepCopy()
-
+func (c *Controller) deleteAbsentAlertRules(namespace, promRuleName string, absentPR *monitoringv1.PrometheusRule) error {
+	old := absentPR.Spec.Groups
 	var new []monitoringv1.RuleGroup
-	for _, g := range pr.Spec.Groups {
-		// The rule groups for absent alert PrometheusRules have the
-		// format: promRuleName/ruleGroupName.
+	for _, g := range old {
+		// The rule group names for absent PrometheusRule have the format:
+		// originPromRuleName/ruleGroupName.
 		if !strings.Contains(g.Name, promRuleName) {
 			new = append(new, g)
 		}
 	}
-	pr.Spec.Groups = new
+	if reflect.DeepEqual(old, new) {
+		return nil
+	}
 
 	var err error
-	if len(pr.Spec.Groups) == 0 {
-		err = c.promClientset.MonitoringV1().PrometheusRules(namespace).Delete(context.Background(), pr.Name, metav1.DeleteOptions{})
+	absentPR.Spec.Groups = new
+	if len(absentPR.Spec.Groups) == 0 {
+		err = c.promClientset.MonitoringV1().PrometheusRules(namespace).Delete(context.Background(), absentPR.Name, metav1.DeleteOptions{})
 		if err == nil {
 			c.logger.Info("msg", "successfully deleted orphaned absent PrometheusRule",
-				"key", fmt.Sprintf("%s/%s", namespace, pr.Name))
+				"key", fmt.Sprintf("%s/%s", namespace, absentPR.Name))
 		}
 	} else {
-		_, err = c.promClientset.MonitoringV1().PrometheusRules(namespace).Update(context.Background(), pr, metav1.UpdateOptions{})
+		_, err = c.promClientset.MonitoringV1().PrometheusRules(namespace).Update(context.Background(), absentPR, metav1.UpdateOptions{})
 		if err == nil {
 			c.logger.Info("msg", "successfully cleaned up orphaned absent metric alert rules",
-				"key", fmt.Sprintf("%s/%s", namespace, pr.Name))
+				"key", fmt.Sprintf("%s/%s", namespace, absentPR.Name))
 		}
 	}
 	if err != nil {
