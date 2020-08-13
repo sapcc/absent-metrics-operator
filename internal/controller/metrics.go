@@ -30,7 +30,7 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 				Name: "absent_metrics_operator_successful_reconcile_time",
 				Help: "The time at which a specific PrometheusRule was successfully reconciled by the operator.",
 			},
-			[]string{"namespace", "name"},
+			[]string{"prometheusrule_namespace", "prometheusrule_name"},
 		),
 	}
 	r.MustRegister(m.SuccessfulPrometheusRuleReconcileTime)
