@@ -1,0 +1,10 @@
+# We use this additional file instead of the other Dockerfile because
+# GoReleaser already compiles a static binary and we can just copy it over
+# compared to the other Dockerfile which first compiles it.
+#
+# This saves extra work and time in our CI release workflow.
+FROM alpine:latest
+
+RUN apk add --no-cache ca-certificates
+COPY absent-metrics-operator /usr/bin/
+ENTRYPOINT [ "/usr/bin/absent-metrics-operator" ]
