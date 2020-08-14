@@ -5,13 +5,13 @@ GOOS   = $(shell go env GOOS)
 GOARCH = $(shell go env GOARCH)
 KUBEBUILDER_RELEASE_VERSION = $(shell cat test/.kubebuilder-version)
 
-# TODO: uncomment when at least one tag exists
-# VERSION         := $(shell git describe --long --abbrev=7)
-GIT_COMMIT_HASH := $(shell git rev-parse --verify HEAD)
+VERSION     := $(shell git describe --abbrev=7)
+COMMIT_HASH := $(shell git rev-parse --verify HEAD)
+BUILD_DATE  := $(shell date -u +"%Y-%m-%dT%H:%M:%S%Z")
 
 GO            := GOBIN=$(CURDIR)/build go
 GO_BUILDFLAGS :=
-GO_LDFLAGS    := -s -w -X main.version=$(VERSION) -X main.gitCommitHash=$(GIT_COMMIT_HASH)
+GO_LDFLAGS    := -s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT_HASH) -X main.date=$(BUILD_DATE)
 
 all: FORCE build/absent-metrics-operator
 
@@ -44,7 +44,7 @@ build/cover.html: build/cover.out
 	$(GO) tool cover -html $< -o $@
 
 build/release-info: CHANGELOG.md | build
-	$(GO) run $(GO_BUILDFLAGS) tools/releaseinfo.go $< $(shell git describe --tags --abbrev=0) > $@
+	$(GO) run $(GO_BUILDFLAGS) tools/releaseinfo.go $< $(shell git describe --abbrev=0) > $@
 
 build:
 	mkdir $@

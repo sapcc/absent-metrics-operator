@@ -20,7 +20,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -33,12 +32,11 @@ import (
 	"github.com/sapcc/absent-metrics-operator/internal/signals"
 )
 
-// This info identifies a specific build of the app.
-// version and gitCommitHash are set at compile time.
+// This info identifies a specific build of the app. It is set at compile time.
 var (
-	version       = "dev"
-	gitCommitHash = "unknown"
-	buildDate     = time.Now().UTC().Format(time.RFC3339)
+	version = "dev"
+	commit  = "unknown"
+	date    = "now"
 )
 
 var (
@@ -74,7 +72,7 @@ func main() {
 	}
 
 	logger.Info("msg", "starting absent-metrics-operator",
-		"version", version, "git-commit", gitCommitHash, "build-date", buildDate)
+		"version", version, "git-commit", commit, "build-date", date)
 
 	r := prometheus.NewRegistry()
 
