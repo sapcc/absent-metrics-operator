@@ -1,9 +1,10 @@
 # Absent Metrics Operator
 
 [![GitHub Release](https://img.shields.io/github/v/release/sapcc/absent-metrics-operator)](https://github.com/sapcc/absent-metrics-operator/releases/latest)
-![Build and Test](https://github.com/sapcc/absent-metrics-operator/workflows/Build%20and%20Test/badge.svg)
+[![Build and Test](https://github.com/sapcc/absent-metrics-operator/workflows/Build%20and%20Test/badge.svg)](https://github.com/sapcc/absent-metrics-operator/actions?query=workflow%3A%22Build+and+Test%22)
 [![Coverage Status](https://coveralls.io/repos/github/sapcc/absent-metrics-operator/badge.svg?branch=master)](https://coveralls.io/github/sapcc/absent-metrics-operator?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/sapcc/absent-metrics-operator)](https://goreportcard.com/report/github.com/sapcc/absent-metrics-operator)
+[![Docker Pulls](https://img.shields.io/docker/pulls/sapcc/absent-metrics-operator)](https://hub.docker.com/r/sapcc/absent-metrics-operator)
 
 > Project status: **alpha**. The API and user facing objects may change.
 
@@ -67,10 +68,9 @@ annotations:
 
 ## Installation
 
-### Pre-compiled binaries
+### Pre-compiled binaries and Docker images
 
-Pre-compiled binaries for Linux are available on the [releases
-page](https://github.com/sapcc/absent-metrics-operator/releases/latest).
+See the latest [release](https://github.com/sapcc/absent-metrics-operator/releases/latest).
 
 ### Building from source
 
