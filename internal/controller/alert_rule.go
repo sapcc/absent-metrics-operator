@@ -76,7 +76,7 @@ func parseRuleGroups(promRuleName, defaultTier, defaultService string, in []moni
 				continue
 			}
 			// Do not parse alert rule if it has disable label.
-			if r.Labels != nil && r.Labels[labelDisable] == "true" {
+			if r.Labels != nil && mustParseBool(r.Labels[labelDisable]) {
 				continue
 			}
 
