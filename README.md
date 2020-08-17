@@ -19,7 +19,7 @@
 - [Absent metric alert definition](#absent-metric-alert-definition)
   - [Template](#template)
   - [Labels](#labels)
-    - [Caveat](#caveat)
+    - [Default tier and service](#default-tier-and-service)
 
 The absent metrics operator is a companion operator for the [Prometheus
 Operator](https://github.com/prometheus-operator/prometheus-operator).
@@ -196,25 +196,16 @@ Then the alert name would be `AbsentOsLimesSuccessfulScrapesRate5m`.
 
 ### Labels
 
-**Note**: There should be at least one alert rule for a specific Prometheus
-server in a namespace that has the `tier` and `service` label defined without
-templating, i.e. does not use `$labels`. See caveat below.
-
 - `tier` and `service` labels are carried over from the original alert rule
-  unless the alert rule uses templating for these labels, in which case the
+  unless those labels use templating (i.e. use `$labels`), in which case the
   default `tier` and `service` values for that Prometheus server in that
   namespace will be used.
 - `severity` is always `info`.
 
-#### Caveat
+#### Default tier and service
 
 The operator determines a default `tier` and `service` for a specific
 Prometheus server in a namespace by traversing through all the alert rule
 definitions for that Prometheus server in that namespace. It chooses the most
-common `tier` and `service` label combination that is used across these alerts
+common `tier` and `service` label combination that is used across those alerts
 as the default values.
-
-It is important that the operator finds a default `tier` and `service`
-otherwise the operator will print an error and it will not create absent alert
-rules for that specific `PrometheusRule`. It will instead requeue that resource
-for later processing.
