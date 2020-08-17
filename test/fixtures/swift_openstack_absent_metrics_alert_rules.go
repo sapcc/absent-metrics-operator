@@ -76,6 +76,17 @@ var SwiftOSAbsentPromRule = monitoringv1.PrometheusRule{
 								"'OpenstackSwiftHealthCheck' alert using it may not fire as intended.",
 						},
 					},
+					{
+						Alert:  "AbsentOsSwiftClusterMd5NotMatched",
+						Expr:   intstr.FromString("absent(swift_cluster_md5_not_matched)"),
+						For:    "10m",
+						Labels: swiftLab,
+						Annotations: map[string]string{
+							"summary": "missing swift_cluster_md5_not_matched",
+							"description": "The metric 'swift_cluster_md5_not_matched' is missing. " +
+								"'OpenstackSwiftMismatchedConfig' alert using it may not fire as intended.",
+						},
+					},
 				},
 			},
 		},

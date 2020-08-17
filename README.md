@@ -13,6 +13,8 @@
   - [Pre\-compiled binaries and Docker images](#pre-compiled-binaries-and-docker-images)
   - [Building from source](#building-from-source)
 - [Usage](#usage)
+  - [Disable for specific alerts](#disable-for-specific-alerts)
+    - [Caveat](#caveat)
   - [Metrics](#metrics)
 - [Absent metric alert definition](#absent-metric-alert-definition)
   - [Template](#template)
@@ -117,6 +119,8 @@ For detailed usage instructions:
 $ absent-metrics-operator --help
 ```
 
+### Disable for specific alerts
+
 You can disable the operator for a specific `PrometheusRule` resource by adding
 the following label to it:
 
@@ -124,9 +128,29 @@ the following label to it:
 absent-metrics-operator/disable: true
 ```
 
+If you want to disable the operator for only a specific alert rule instead of
+all the alerts in a `PrometheusRule`, you can use the same label at the
+rule-level:
+
+```yaml
+alert: ImportantAlert
+expr: foo_bar > 0
+for: 5m
+labels:
+  absent-metrics-operator/disable: true
+  ...
+```
+
+#### Caveat
+
+If you disable the operator for a specific alert or a specific
+`PrometheusRule`, however there are other alerts or `PrometheusRules` which
+have alert definitions that use the same metric(s) then the absent metric
+alerts for those metric(s) will be created regardless.
+
 ### Metrics
 
-Metric are exposed at port `9659`. This port has been
+Metrics are exposed at port `9659`. This port has been
 [allocated](https://github.com/prometheus/prometheus/wiki/Default-port-allocations)
 for the operator.
 
