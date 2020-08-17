@@ -8,6 +8,17 @@
 
 > Project status: **alpha**. The API and user facing objects may change.
 
+- [Motivation](#motivation)
+- [Installation](#installation)
+  - [Pre\-compiled binaries and Docker images](#pre-compiled-binaries-and-docker-images)
+  - [Building from source](#building-from-source)
+- [Usage](#usage)
+  - [Metrics](#metrics)
+- [Absent metric alert definition](#absent-metric-alert-definition)
+  - [Template](#template)
+  - [Labels](#labels)
+    - [Caveat](#caveat)
+
 The absent metrics operator is a companion operator for the [Prometheus
 Operator](https://github.com/prometheus-operator/prometheus-operator).
 
@@ -112,6 +123,16 @@ the following label to it:
 ```yaml
 absent-metrics-operator/disable: true
 ```
+
+### Metrics
+
+Metric are exposed at port `9659`. This port has been
+[allocated](https://github.com/prometheus/prometheus/wiki/Default-port-allocations)
+for the operator.
+
+| Metric                                              | Labels                                            |
+| --------------------------------------------------- | ------------------------------------------------- |
+| `absent_metrics_operator_successful_reconcile_time` | `prometheusrule_namespace`, `prometheusrule_name` |
 
 ## Absent metric alert definition
 
