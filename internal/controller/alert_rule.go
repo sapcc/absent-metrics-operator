@@ -75,11 +75,15 @@ func parseRuleGroups(promRuleName, defaultTier, defaultService string, in []moni
 			if r.Record != "" {
 				continue
 			}
+			// Do not parse alert rule if it has disable label.
+			if r.Labels != nil && mustParseBool(r.Labels[labelDisable]) {
+				continue
+			}
+
 			rules, err := ParseAlertRule(defaultTier, defaultService, r)
 			if err != nil {
 				return nil, err
 			}
-
 			if len(rules) > 0 {
 				absentRules = append(absentRules, rules...)
 			}

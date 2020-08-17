@@ -15,6 +15,7 @@
 package controller
 
 import (
+	"strconv"
 	"strings"
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
@@ -57,4 +58,12 @@ func getTierAndService(rg []monitoringv1.RuleGroup) (tier, service string) {
 		}
 	}
 	return tier, service
+}
+
+func mustParseBool(str string) bool {
+	v, err := strconv.ParseBool(str)
+	if err != nil {
+		return false
+	}
+	return v
 }

@@ -171,10 +171,10 @@ func (c *Controller) enqueuePromRule(obj interface{}) {
 	// the operator itself or if the annotation for disabling the operator is
 	// present.
 	l := obj.(*monitoringv1.PrometheusRule).GetLabels()
-	if l[labelManagedBy] == "true" {
+	if mustParseBool(l[labelManagedBy]) {
 		return
 	}
-	if l[labelDisable] == "true" {
+	if mustParseBool(l[labelDisable]) {
 		c.logger.Info("msg", "operator disabled, skipping", "key", key)
 		return
 	}

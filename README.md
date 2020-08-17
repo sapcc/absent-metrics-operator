@@ -8,6 +8,19 @@
 
 > Project status: **alpha**. The API and user facing objects may change.
 
+- [Motivation](#motivation)
+- [Installation](#installation)
+  - [Pre\-compiled binaries and Docker images](#pre-compiled-binaries-and-docker-images)
+  - [Building from source](#building-from-source)
+- [Usage](#usage)
+  - [Disable for specific alerts](#disable-for-specific-alerts)
+    - [Caveat](#caveat)
+  - [Metrics](#metrics)
+- [Absent metric alert definition](#absent-metric-alert-definition)
+  - [Template](#template)
+  - [Labels](#labels)
+    - [Default tier and service](#default-tier-and-service)
+
 The absent metrics operator is a companion operator for the [Prometheus
 Operator](https://github.com/prometheus-operator/prometheus-operator).
 
@@ -106,12 +119,44 @@ For detailed usage instructions:
 $ absent-metrics-operator --help
 ```
 
+### Disable for specific alerts
+
 You can disable the operator for a specific `PrometheusRule` resource by adding
 the following label to it:
 
 ```yaml
 absent-metrics-operator/disable: true
 ```
+
+If you want to disable the operator for only a specific alert rule instead of
+all the alerts in a `PrometheusRule`, you can use the same label at the
+rule-level:
+
+```yaml
+alert: ImportantAlert
+expr: foo_bar > 0
+for: 5m
+labels:
+  absent-metrics-operator/disable: true
+  ...
+```
+
+#### Caveat
+
+If you disable the operator for a specific alert or a specific
+`PrometheusRule`, however there are other alerts or `PrometheusRules` which
+have alert definitions that use the same metric(s) then the absent metric
+alerts for those metric(s) will be created regardless.
+
+### Metrics
+
+Metrics are exposed at port `9659`. This port has been
+[allocated](https://github.com/prometheus/prometheus/wiki/Default-port-allocations)
+for the operator.
+
+| Metric                                              | Labels                                            |
+| --------------------------------------------------- | ------------------------------------------------- |
+| `absent_metrics_operator_successful_reconcile_time` | `prometheusrule_namespace`, `prometheusrule_name` |
 
 ## Absent metric alert definition
 
@@ -151,25 +196,16 @@ Then the alert name would be `AbsentOsLimesSuccessfulScrapesRate5m`.
 
 ### Labels
 
-**Note**: There should be at least one alert rule for a specific Prometheus
-server in a namespace that has the `tier` and `service` label defined without
-templating, i.e. does not use `$labels`. See caveat below.
-
 - `tier` and `service` labels are carried over from the original alert rule
-  unless the alert rule uses templating for these labels, in which case the
+  unless those labels use templating (i.e. use `$labels`), in which case the
   default `tier` and `service` values for that Prometheus server in that
   namespace will be used.
 - `severity` is always `info`.
 
-#### Caveat
+#### Default tier and service
 
 The operator determines a default `tier` and `service` for a specific
 Prometheus server in a namespace by traversing through all the alert rule
 definitions for that Prometheus server in that namespace. It chooses the most
-common `tier` and `service` label combination that is used across these alerts
+common `tier` and `service` label combination that is used across those alerts
 as the default values.
-
-It is important that the operator finds a default `tier` and `service`
-otherwise the operator will print an error and it will not create absent alert
-rules for that specific `PrometheusRule`. It will instead requeue that resource
-for later processing.
