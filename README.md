@@ -99,7 +99,7 @@ For usage instructions:
 $ absent-metrics-operator --help
 ```
 
-You can disable the the operator for a specific `PrometheusRule` or a specific alert definition, refer to the [operator's Playbook](./doc/playbook.md) for more info.
+You can disable the the operator for a specific `PrometheusRule` or a specific alert definition, refer to the [operator's playbook](./doc/playbook.md) for more info.
 
 ### Metrics
 
