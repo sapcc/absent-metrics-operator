@@ -21,8 +21,9 @@ import (
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 )
 
-// getTierAndService returns the most common tier and service combination
-// for a namespace.
+// getTierAndService returns the most common tier and service combination used
+// in the alert definitions.
+//
 // See parseRuleGroups() for info on why we need this.
 func getTierAndService(rg []monitoringv1.RuleGroup) (tier, service string) {
 	// Map of tier to service to number of occurrences.
@@ -32,11 +33,11 @@ func getTierAndService(rg []monitoringv1.RuleGroup) (tier, service string) {
 			if r.Record != "" {
 				continue
 			}
-			t, ok := r.Labels["tier"]
+			t, ok := r.Labels[labelTier]
 			if !ok || strings.Contains(t, "$labels") {
 				continue
 			}
-			s, ok := r.Labels["service"]
+			s, ok := r.Labels[labelService]
 			if !ok || strings.Contains(s, "$labels") {
 				continue
 			}
@@ -60,6 +61,8 @@ func getTierAndService(rg []monitoringv1.RuleGroup) (tier, service string) {
 	return tier, service
 }
 
+// mustParseBool is a wrapper for strconv.ParseBool() that returns false in
+// case of an error.
 func mustParseBool(str string) bool {
 	v, err := strconv.ParseBool(str)
 	if err != nil {

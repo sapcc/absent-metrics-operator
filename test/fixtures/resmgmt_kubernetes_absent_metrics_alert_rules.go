@@ -36,6 +36,8 @@ var ResMgmtK8sAbsentPromRule = monitoringv1.PrometheusRule{
 			"prometheus":                         "kubernetes",
 			"type":                               "alerting-rules",
 			"absent-metrics-operator/managed-by": "true",
+			"tier":                               "os",
+			"service":                            "keppel",
 		},
 	},
 	Spec: monitoringv1.PrometheusRuleSpec{

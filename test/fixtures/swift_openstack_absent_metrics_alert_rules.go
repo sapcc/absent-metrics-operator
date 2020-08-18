@@ -36,6 +36,8 @@ var SwiftOSAbsentPromRule = monitoringv1.PrometheusRule{
 			"prometheus":                         "openstack",
 			"type":                               "alerting-rules",
 			"absent-metrics-operator/managed-by": "true",
+			"tier":                               "os",
+			"service":                            "swift",
 		},
 	},
 	Spec: monitoringv1.PrometheusRuleSpec{

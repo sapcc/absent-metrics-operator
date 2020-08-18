@@ -42,8 +42,13 @@ import (
 )
 
 const (
-	labelManagedBy = "absent-metrics-operator/managed-by"
-	labelDisable   = "absent-metrics-operator/disable"
+	labelOperatorManagedBy = "absent-metrics-operator/managed-by"
+	labelOperatorDisable   = "absent-metrics-operator/disable"
+
+	labelNoAlertOnAbsence = "no_alert_on_absence"
+
+	labelTier    = "tier"
+	labelService = "service"
 )
 
 const (
@@ -64,8 +69,9 @@ const (
 // Controller is the controller implementation for acting on PrometheusRule
 // resources.
 type Controller struct {
-	logger  *log.Logger
-	metrics *Metrics
+	logger    *log.Logger
+	metrics   *Metrics
+	keepLabel map[string]bool
 
 	kubeClientset kubernetes.Interface
 	promClientset monitoringclient.Interface
@@ -76,7 +82,13 @@ type Controller struct {
 }
 
 // New creates a new Controller.
-func New(cfg *rest.Config, resyncPeriod time.Duration, r prometheus.Registerer, logger *log.Logger) (*Controller, error) {
+func New(
+	cfg *rest.Config,
+	resyncPeriod time.Duration,
+	r prometheus.Registerer,
+	keepLabel map[string]bool,
+	logger *log.Logger) (*Controller, error) {
+
 	kClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return nil, errors.Wrap(err, "instantiating kubernetes client failed")
@@ -90,6 +102,7 @@ func New(cfg *rest.Config, resyncPeriod time.Duration, r prometheus.Registerer, 
 	c := &Controller{
 		logger:        logger,
 		metrics:       NewMetrics(r),
+		keepLabel:     keepLabel,
 		kubeClientset: kClient,
 		promClientset: pClient,
 		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "prometheusrules"),
@@ -171,10 +184,10 @@ func (c *Controller) enqueuePromRule(obj interface{}) {
 	// the operator itself or if the annotation for disabling the operator is
 	// present.
 	l := obj.(*monitoringv1.PrometheusRule).GetLabels()
-	if mustParseBool(l[labelManagedBy]) {
+	if mustParseBool(l[labelOperatorManagedBy]) {
 		return
 	}
-	if mustParseBool(l[labelDisable]) {
+	if mustParseBool(l[labelOperatorDisable]) {
 		c.logger.Info("msg", "operator disabled, skipping", "key", key)
 		return
 	}
@@ -274,65 +287,40 @@ func (c *Controller) syncHandler(key string) error {
 		// The resource may no longer exist, in which case we clean up any
 		// orphaned absent alert rules.
 		c.logger.Info("msg", "PrometheusRule no longer exists", "key", key)
-		return c.deleteAbsentAlertRulesNamespace(namespace, name)
+		return c.cleanUpOrphanedAbsentAlertsNamespace(namespace, name)
 	default:
 		// Requeue object for later processing.
 		return err
 	}
 
 	// Find the Prometheus server for this resource.
-	promServerName, ok := promRule.Labels["prometheus"]
+	prometheusServer, ok := promRule.Labels["prometheus"]
 	if !ok {
 		// This shouldn't happen but just in case it does.
 		c.logger.ErrorWithBackoff("msg", "no 'prometheus' label found on the PrometheusRule", "key", key)
 		return nil
 	}
 
-	// Default tier and service label values to use for absent metric alerts.
-	// See parseRuleGroups() for info on why we need this.
-	var tier, service string
-
-	// Get the PrometheusRule resource that defines the absent metric alert
-	// rules for this namespace.
-	ctx := context.Background()
-	absentPromRuleExists := false
-	absentPromRuleName := fmt.Sprintf("%s-absent-metric-alert-rules", promServerName)
-	absentPromRule, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).Get(ctx, absentPromRuleName, metav1.GetOptions{})
+	// Get the corresponding AbsentPrometheusRule.
+	existingAbsentPromRule := false
+	absentPromRule, err := c.getAbsentPrometheusRule(namespace, prometheusServer)
 	switch {
 	case err == nil:
-		absentPromRuleExists = true
-		tier, service = getTierAndService(absentPromRule.Spec.Groups)
+		existingAbsentPromRule = true
 	case apierrors.IsNotFound(err):
-		// Try to get a value for tier and service by traversing through all the
-		// PrometheusRules for the specific Prometheus server in this namespace.
-		prList, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).List(ctx, metav1.ListOptions{})
+		absentPromRule, err = c.newAbsentPrometheusRule(namespace, prometheusServer)
 		if err != nil {
-			// Requeue object for later processing.
-			return errors.Wrap(err, "could not list PrometheusRules")
+			return errors.Wrap(err, "could not create new AbsentPrometheusRule")
 		}
-		var rg []monitoringv1.RuleGroup
-		for _, pr := range prList.Items {
-			if v := pr.Labels["prometheus"]; v == promServerName {
-				rg = append(rg, pr.Spec.Groups...)
-			}
-		}
-		tier, service = getTierAndService(rg)
 	default:
 		// This could have been caused by a temporary network failure, or any
-		// other transient reason. Requeue object for later processing.
-		return errors.Wrap(err, "could not get absent PrometheusRule "+absentPromRuleName)
-	}
-	if tier == "" || service == "" {
-		// Ideally, we shouldn't arrive at this point because this would mean
-		// that there was not a single alert rule for the prometheus server in
-		// this namespace that did not use templating for its tier and service
-		// labels.
-		c.logger.Info("msg", fmt.Sprintf("could not find default tier and service for Prometheus server '%s'", promServerName),
-			"key", key)
+		// other transient reason therefore we requeue object for later
+		// processing.
+		return errors.Wrap(err, "could not get AbsentPrometheusRule")
 	}
 
 	// Parse alert rules into absent metric alert rules.
-	rg, err := parseRuleGroups(name, tier, service, promRule.Spec.Groups)
+	rg, err := c.parseRuleGroups(name, absentPromRule.Tier, absentPromRule.Service, promRule.Spec.Groups)
 	if err != nil {
 		// We choose to absorb the error here as the worker would requeue the
 		// resource otherwise and we'll be stuck parsing broken alert rules.
@@ -343,15 +331,18 @@ func (c *Controller) syncHandler(key string) error {
 	}
 
 	switch lenRg := len(rg); {
-	case lenRg == 0 && absentPromRuleExists:
-		// This can happen when changes have been made to a PrometheusRule that
-		// result in no absent alert rules. E.g. absent() operator was used. In
-		// this case we clean up orphaned absent alert rules.
-		err = c.deleteAbsentAlertRules(namespace, name, absentPromRule)
-	case lenRg > 0 && absentPromRuleExists:
-		err = c.updateAbsentPrometheusRule(namespace, absentPromRule, rg)
+	case lenRg == 0 && existingAbsentPromRule:
+		// This can happen when changes have been made to a PrometheusRule
+		// that result in no absent alert rules. E.g. absent()
+		// operator was used.
+		// In this case we clean up orphaned absent alert rules.
+		err = c.cleanUpOrphanedAbsentAlerts(name, absentPromRule)
+	case lenRg > 0 && existingAbsentPromRule:
+		err = c.updateAbsentPrometheusRule(absentPromRule, rg)
 	case lenRg > 0:
-		err = c.createAbsentPrometheusRule(namespace, absentPromRuleName, promServerName, rg)
+		absentPromRule.Spec.Groups = rg
+		_, err = c.promClientset.MonitoringV1().PrometheusRules(namespace).
+			Create(context.Background(), absentPromRule.PrometheusRule, metav1.CreateOptions{})
 	}
 	if err != nil {
 		return err

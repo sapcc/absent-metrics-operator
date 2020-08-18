@@ -55,13 +55,14 @@ var (
 )
 
 func main() {
-	var logLevel, logFormat, kubeconfig string
+	var logLevel, logFormat, kubeconfig, keepLabels string
 	flagset := flag.CommandLine
 	flagset.StringVar(&logLevel, "log-level", log.LevelInfo,
 		fmt.Sprintf("Log level to use. Possible values: %s", strings.Join(availableLogLevels, ", ")))
 	flagset.StringVar(&logFormat, "log-format", log.FormatLogfmt,
 		fmt.Sprintf("Log format to use. Possible values: %s", strings.Join(availableLogFormats, ", ")))
 	flagset.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster")
+	flagset.StringVar(&keepLabels, "keep-labels", "service,tier", "A comma separated list of labels to keep from the original alert rule")
 	if err := flagset.Parse(os.Args[1:]); err != nil {
 		logFatalf("could not parse flagset: %s", err.Error())
 	}
@@ -77,11 +78,16 @@ func main() {
 	r := prometheus.NewRegistry()
 
 	// Create controller
+	keepLabelMap := make(map[string]bool)
+	kL := strings.Split(keepLabels, ",")
+	for _, v := range kL {
+		keepLabelMap[strings.TrimSpace(v)] = true
+	}
 	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
 		logger.Fatal("msg", "instantiating cluster config failed", "err", err)
 	}
-	c, err := controller.New(cfg, controller.DefaultResyncPeriod, r, log.With(*logger, "component", "controller"))
+	c, err := controller.New(cfg, controller.DefaultResyncPeriod, r, keepLabelMap, log.With(*logger, "component", "controller"))
 	if err != nil {
 		logger.Fatal("msg", "could not instantiate controller", "err", err)
 	}

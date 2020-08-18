@@ -23,54 +23,135 @@ import (
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
-// createAbsentPrometheusRule creates a new PrometheusRule with the given
-// RuleGroup and name for the given namespace and prometheus server.
-func (c *Controller) createAbsentPrometheusRule(namespace, name, promServerName string, rg []monitoringv1.RuleGroup) error {
-	// Add a label that identifies that this PrometheusRule is created
-	// and managed by this operator.
-	labels := map[string]string{
-		"prometheus":   promServerName,
-		"type":         "alerting-rules",
-		labelManagedBy: "true",
-	}
-	pr := &monitoringv1.PrometheusRule{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-			Labels:    labels,
-		},
-		Spec: monitoringv1.PrometheusRuleSpec{
-			Groups: rg,
-		},
-	}
-
-	_, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).Create(context.Background(), pr, metav1.CreateOptions{})
-	if err != nil {
-		return errors.Wrap(err, "could not create new absent PrometheusRule")
-	}
-
-	c.logger.Info("msg", "successfully created new absent PrometheusRule",
-		"key", fmt.Sprintf("%s/%s", namespace, name))
-	return nil
+// AbsentPrometheusRuleName returns the name of an AbsentPrometheusRule.
+func AbsentPrometheusRuleName(prometheusServer string) string {
+	return fmt.Sprintf("%s-absent-metric-alert-rules", prometheusServer)
 }
 
-// updateAbsentPrometheusRule takes a PrometheusRule and updates it with the
-// provided slice of RuleGroup.
-func (c *Controller) updateAbsentPrometheusRule(
-	namespace string,
-	absentPR *monitoringv1.PrometheusRule,
-	rg []monitoringv1.RuleGroup) error {
+// absentPrometheusRule is a wrapper around *monitoringv1.PrometheusRule with
+// some additional info that we use for working with AbsentPrometheusRules.
+//
+// An absentPrometheusRule is the corresponding resource that is generated for
+// a PrometheusRule resource for defining the absent metric alerts.
+type absentPrometheusRule struct {
+	*monitoringv1.PrometheusRule
 
-	// Check if the absent PrometheusRule already has these rule groups.
+	// Default values to use for absent metric alerts.
+	// See parseRuleGroups() on why we need this.
+	Tier    string
+	Service string
+}
+
+// TODO: add tier and service as labels.
+func (c *Controller) getAbsentPrometheusRule(namespace, prometheusServer string) (*absentPrometheusRule, error) {
+	n := AbsentPrometheusRuleName(prometheusServer)
+	pr, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).Get(context.Background(), n, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	aPR := absentPrometheusRule{
+		PrometheusRule: pr,
+	}
+
+	// Find default tier and service values for this Prometheus server in this
+	// namespace.
+	if c.keepLabel[labelTier] || c.keepLabel[labelService] {
+		// Fast path: get values from resource labels
+		t, s := aPR.Labels[labelTier], aPR.Labels[labelService]
+		if t == "" || s == "" {
+			// If we can't get the values from resource then we fall back to
+			// the slower method of getting them by checking alert rules.
+			t, s = getTierAndService(aPR.Spec.Groups)
+		}
+		if t == "" || s == "" {
+			c.logger.Info("msg", fmt.Sprintf("could not find default tier and service for Prometheus server '%s' in namespace '%s'",
+				prometheusServer, namespace))
+		}
+		if c.keepLabel[labelTier] {
+			aPR.Tier = t
+			aPR.Labels[labelTier] = t
+		}
+		if c.keepLabel[labelService] {
+			aPR.Service = s
+			aPR.Labels[labelService] = s
+		}
+	}
+
+	return &aPR, nil
+}
+
+func (c *Controller) newAbsentPrometheusRule(namespace, prometheusServer string) (*absentPrometheusRule, error) {
+	n := AbsentPrometheusRuleName(prometheusServer)
+	aPR := absentPrometheusRule{
+		PrometheusRule: &monitoringv1.PrometheusRule{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      n,
+				Namespace: namespace,
+				Labels: map[string]string{
+					// Add a label that identifies that this PrometheusRule is
+					// created and managed by this operator.
+					labelOperatorManagedBy: "true",
+					"prometheus":           prometheusServer,
+					"type":                 "alerting-rules",
+				},
+			},
+		},
+	}
+
+	// Find default tier and service values for this Prometheus server in this
+	// namespace.
+	if c.keepLabel[labelTier] || c.keepLabel[labelService] {
+		prList, err := c.promRuleLister.List(labels.Everything())
+		if err != nil {
+			return nil, errors.Wrap(err, "could not list PrometheusRules")
+		}
+		var rg []monitoringv1.RuleGroup
+		for _, pr := range prList {
+			s := pr.Labels["prometheus"]
+			if pr.Namespace == namespace && s == prometheusServer {
+				rg = append(rg, pr.Spec.Groups...)
+			}
+		}
+		t, s := getTierAndService(rg)
+		if t == "" || s == "" {
+			// Ideally, we shouldn't arrive at this point because this would
+			// mean that there was not a single alert rule for the prometheus
+			// server in this namespace that did not use templating for its
+			// tier and service labels.
+			c.logger.Info("msg", fmt.Sprintf("could not find default tier and service for Prometheus server '%s' in namespace '%s'",
+				prometheusServer, namespace))
+		}
+		if c.keepLabel[labelTier] {
+			aPR.Tier = t
+			aPR.Labels[labelTier] = t
+		}
+		if c.keepLabel[labelService] {
+			aPR.Service = s
+			aPR.Labels[labelService] = s
+		}
+	}
+
+	return &aPR, nil
+}
+
+// updateAbsentPrometheusRule updates an AbsentPrometheusRule with the provided
+// slice of RuleGroup.
+func (c *Controller) updateAbsentPrometheusRule(
+	absentPromRule *absentPrometheusRule,
+	absentAlertRuleGroups []monitoringv1.RuleGroup) error {
+
+	// Check if the AbsentPrometheusRule already has these rule groups.
 	// Update if it does, otherwise append.
-	old := absentPR.Spec.Groups
+	old := absentPromRule.Spec.Groups
 	var new []monitoringv1.RuleGroup
 	updated := make(map[string]bool)
 OuterLoop:
 	for _, oldG := range old {
-		for _, g := range rg {
+		for _, g := range absentAlertRuleGroups {
 			if oldG.Name == g.Name {
 				// Add the new updated RuleGroup.
 				new = append(new, g)
@@ -82,7 +163,7 @@ OuterLoop:
 		new = append(new, oldG)
 	}
 	// Add the pending RuleGroups.
-	for _, g := range rg {
+	for _, g := range absentAlertRuleGroups {
 		if !updated[g.Name] {
 			new = append(new, g)
 		}
@@ -93,29 +174,31 @@ OuterLoop:
 		return nil
 	}
 
-	absentPR.Spec.Groups = new
-	_, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).Update(context.Background(), absentPR, metav1.UpdateOptions{})
+	absentPromRule.Spec.Groups = new
+	_, err := c.promClientset.MonitoringV1().PrometheusRules(absentPromRule.Namespace).
+		Update(context.Background(), absentPromRule.PrometheusRule, metav1.UpdateOptions{})
 	if err != nil {
-		return errors.Wrap(err, "could not update absent PrometheusRule")
+		return errors.Wrap(err, "could not update AbsentPrometheusRule")
 	}
 
 	c.logger.Info("msg", "successfully updated absent metric alert rules",
-		"key", fmt.Sprintf("%s/%s", namespace, absentPR.Name))
+		"key", fmt.Sprintf("%s/%s", absentPromRule.Namespace, absentPromRule.Name))
 	return nil
 }
 
-// deleteAbsentAlertRulesNamespace deletes absent alert rules concerning
-// a specific PrometheusRule from all absent alert PrometheusRule resources
-// across a namespace.
-func (c *Controller) deleteAbsentAlertRulesNamespace(namespace, promRuleName string) error {
+// cleanUpOrphanedAbsentAlertsNamespace deletes orphaned absent alert rules
+// concerning a specific PrometheusRule from a namespace.
+func (c *Controller) cleanUpOrphanedAbsentAlertsNamespace(namespace, promRuleName string) error {
 	prList, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).
-		List(context.Background(), metav1.ListOptions{LabelSelector: labelManagedBy})
+		List(context.Background(), metav1.ListOptions{LabelSelector: labelOperatorManagedBy})
 	if err != nil {
-		return errors.Wrap(err, "could not list absent PrometheusRules")
+		return errors.Wrap(err, "could not list AbsentPrometheusRules")
 	}
 
 	for _, pr := range prList.Items {
-		if err := c.deleteAbsentAlertRules(namespace, promRuleName, pr); err != nil {
+		aPR := &absentPrometheusRule{PrometheusRule: pr}
+		err := c.cleanUpOrphanedAbsentAlerts(promRuleName, aPR)
+		if err != nil {
 			return err
 		}
 	}
@@ -123,35 +206,39 @@ func (c *Controller) deleteAbsentAlertRulesNamespace(namespace, promRuleName str
 	return nil
 }
 
-// deleteAbsentAlertRules deletes absent alert rules concerning a specific
-// PrometheusRule from a specific absent PrometheusRule.
-func (c *Controller) deleteAbsentAlertRules(namespace, promRuleName string, absentPR *monitoringv1.PrometheusRule) error {
-	old := absentPR.Spec.Groups
-	var new []monitoringv1.RuleGroup
+// cleanUpOrphanedAbsentAlerts deletes orphaned absent alert rules concerning a
+// specific PrometheusRule from a specific AbsentPrometheusRule.
+func (c *Controller) cleanUpOrphanedAbsentAlerts(promRuleName string, absentPromRule *absentPrometheusRule) error {
+	old := absentPromRule.Spec.Groups
+	new := make([]monitoringv1.RuleGroup, 0, len(old))
 	for _, g := range old {
-		// The rule group names for absent PrometheusRule have the format:
+		// The rule group names for AbsentPrometheusRule have the format:
 		// originPromRuleName/ruleGroupName.
-		if !strings.Contains(g.Name, promRuleName) {
-			new = append(new, g)
+		sL := strings.Split(g.Name, "/")
+		if len(sL) > 0 && sL[0] == promRuleName {
+			continue
 		}
+		new = append(new, g)
 	}
 	if reflect.DeepEqual(old, new) {
 		return nil
 	}
 
 	var err error
-	absentPR.Spec.Groups = new
-	if len(absentPR.Spec.Groups) == 0 {
-		err = c.promClientset.MonitoringV1().PrometheusRules(namespace).Delete(context.Background(), absentPR.Name, metav1.DeleteOptions{})
+	absentPromRule.Spec.Groups = new
+	if len(absentPromRule.Spec.Groups) == 0 {
+		err = c.promClientset.MonitoringV1().PrometheusRules(absentPromRule.Namespace).
+			Delete(context.Background(), absentPromRule.Name, metav1.DeleteOptions{})
 		if err == nil {
-			c.logger.Info("msg", "successfully deleted orphaned absent PrometheusRule",
-				"key", fmt.Sprintf("%s/%s", namespace, absentPR.Name))
+			c.logger.Info("msg", "successfully deleted orphaned AbsentPrometheusRule",
+				"key", fmt.Sprintf("%s/%s", absentPromRule.Namespace, absentPromRule.Name))
 		}
 	} else {
-		_, err = c.promClientset.MonitoringV1().PrometheusRules(namespace).Update(context.Background(), absentPR, metav1.UpdateOptions{})
+		_, err = c.promClientset.MonitoringV1().PrometheusRules(absentPromRule.Namespace).
+			Update(context.Background(), absentPromRule.PrometheusRule, metav1.UpdateOptions{})
 		if err == nil {
 			c.logger.Info("msg", "successfully cleaned up orphaned absent metric alert rules",
-				"key", fmt.Sprintf("%s/%s", namespace, absentPR.Name))
+				"key", fmt.Sprintf("%s/%s", absentPromRule.Namespace, absentPromRule.Name))
 		}
 	}
 	if err != nil {

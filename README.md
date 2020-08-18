@@ -19,7 +19,9 @@
 - [Absent metric alert definition](#absent-metric-alert-definition)
   - [Template](#template)
   - [Labels](#labels)
-    - [Default tier and service](#default-tier-and-service)
+    - [Defaults](#defaults)
+    - [Carry over from original alert rule](#carry-over-from-original-alert-rule)
+      - [Tier and service](#tier-and-service)
 
 The absent metrics operator is a companion operator for the [Prometheus
 Operator](https://github.com/prometheus-operator/prometheus-operator).
@@ -76,7 +78,7 @@ labels:
   severity: info
 annotations:
   summary: missing foo_bar
-  description: The metric 'foo_bar' is missing. Alerts using it may not fire as intended.
+  description: The metric 'foo_bar' is missing. 'ImportantAlert' alert using it may not fire as intended.
 ```
 
 ## Installation
@@ -129,15 +131,15 @@ absent-metrics-operator/disable: true
 ```
 
 If you want to disable the operator for only a specific alert rule instead of
-all the alerts in a `PrometheusRule`, you can use the same label at the
-rule-level:
+all the alerts in a `PrometheusRule`, you can add the following label to the
+alert rule:
 
 ```yaml
 alert: ImportantAlert
 expr: foo_bar > 0
 for: 5m
 labels:
-  absent-metrics-operator/disable: true
+  no_alert_on_absence: true
   ...
 ```
 
@@ -186,7 +188,7 @@ labels:
   severity: info
 annotations:
   summary: missing $metric
-  description: The metric '$metric' is missing. Alerts using it may not fire as intended.
+  description: The metric '$metric' is missing. '$alert-name' alert using it may not fire as intended.
 ```
 
 Consider the metric `limes_successful_scrapes:rate5m` with tier `os` and
@@ -196,13 +198,23 @@ Then the alert name would be `AbsentOsLimesSuccessfulScrapesRate5m`.
 
 ### Labels
 
-- `tier` and `service` labels are carried over from the original alert rule
-  unless those labels use templating (i.e. use `$labels`), in which case the
-  default `tier` and `service` values for that Prometheus server in that
-  namespace will be used.
-- `severity` is always `info`.
+#### Defaults
 
-#### Default tier and service
+The following labels are always present on every absent metric alert rule:
+
+- `severity` is alway `info`.
+
+#### Carry over from original alert rule
+
+You can specify which labels to carry over from the original alert rule by
+specifying a comma-separated list of labels to the `--keep-labels` flag. The
+default value for this flag is `service,tier`.
+
+##### Tier and service
+
+`tier` and `service` labels are carried over from the original alert rule
+unless those labels use templating (i.e. use `$labels`), in which case the
+default `tier` and `service` values will be used.
 
 The operator determines a default `tier` and `service` for a specific
 Prometheus server in a namespace by traversing through all the alert rule

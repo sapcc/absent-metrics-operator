@@ -15,8 +15,10 @@
 // Package fixtures contains Go struct fixtures that are used by the tests.
 package fixtures
 
-// Common constants for reusability.
-const (
-	K8sAbsentPromRuleName = "kubernetes-absent-metric-alert-rules"
-	OSAbsentPromRuleName  = "openstack-absent-metric-alert-rules"
+import "github.com/sapcc/absent-metrics-operator/internal/controller"
+
+// Common variables for reusability.
+var (
+	K8sAbsentPromRuleName = controller.AbsentPrometheusRuleName("kubernetes")
+	OSAbsentPromRuleName  = controller.AbsentPrometheusRuleName("openstack")
 )

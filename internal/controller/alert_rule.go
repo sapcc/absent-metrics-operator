@@ -66,7 +66,10 @@ func (mex *metricNameExtractor) Visit(node parser.Node, path []parser.Node) (par
 //
 // The rule group names for the absent metric alerts have the format:
 //   promRuleName/originalGroupName.
-func parseRuleGroups(promRuleName, defaultTier, defaultService string, in []monitoringv1.RuleGroup) ([]monitoringv1.RuleGroup, error) {
+func (c *Controller) parseRuleGroups(
+	promRuleName, defaultTier, defaultService string,
+	in []monitoringv1.RuleGroup) ([]monitoringv1.RuleGroup, error) {
+
 	out := make([]monitoringv1.RuleGroup, 0, len(in))
 	for _, g := range in {
 		var absentRules []monitoringv1.Rule
@@ -75,12 +78,12 @@ func parseRuleGroups(promRuleName, defaultTier, defaultService string, in []moni
 			if r.Record != "" {
 				continue
 			}
-			// Do not parse alert rule if it has disable label.
-			if r.Labels != nil && mustParseBool(r.Labels[labelDisable]) {
+			// Do not parse alert rule if it has the no alert on absence label.
+			if r.Labels != nil && mustParseBool(r.Labels[labelNoAlertOnAbsence]) {
 				continue
 			}
 
-			rules, err := ParseAlertRule(defaultTier, defaultService, r)
+			rules, err := c.ParseAlertRule(defaultTier, defaultService, r)
 			if err != nil {
 				return nil, err
 			}
@@ -103,7 +106,7 @@ func parseRuleGroups(promRuleName, defaultTier, defaultService string, in []moni
 // Since an original alert expression can reference multiple time series therefore
 // a slice of []monitoringv1.Rule is returned as the result would be multiple
 // absent metric alert rules (one for each time series).
-func ParseAlertRule(tier, service string, in monitoringv1.Rule) ([]monitoringv1.Rule, error) {
+func (c *Controller) ParseAlertRule(tier, service string, in monitoringv1.Rule) ([]monitoringv1.Rule, error) {
 	exprStr := in.Expr.String()
 	mex := &metricNameExtractor{expr: exprStr, found: map[string]struct{}{}}
 	exprNode, err := parser.ParseExpr(exprStr)
@@ -119,19 +122,26 @@ func ParseAlertRule(tier, service string, in monitoringv1.Rule) ([]monitoringv1.
 		return nil, nil
 	}
 
+	// Default labels
+	lab := map[string]string{
+		"severity": "info",
+	}
+
 	// Carry over labels from the original alert
 	if origLab := in.Labels; origLab != nil {
-		if v, ok := origLab["tier"]; ok && !strings.Contains(v, "$labels") {
-			tier = v
+		for k := range c.keepLabel {
+			v := origLab[k]
+			emptyOrTmplVal := v == "" || strings.Contains(v, "$labels")
+			if k == labelTier && emptyOrTmplVal {
+				v = tier
+			}
+			if k == labelService && emptyOrTmplVal {
+				v = service
+			}
+			if v != "" {
+				lab[k] = v
+			}
 		}
-		if v, ok := origLab["service"]; ok && !strings.Contains(v, "$labels") {
-			service = v
-		}
-	}
-	lab := map[string]string{
-		"tier":     tier,
-		"service":  service,
-		"severity": "info",
 	}
 
 	// Sort metric names alphabetically for consistent test results.
@@ -145,7 +155,7 @@ func ParseAlertRule(tier, service string, in monitoringv1.Rule) ([]monitoringv1.
 	for _, m := range metrics {
 		// Generate an alert name from metric name:
 		//   network:tis_a_metric:rate5m -> AbsentTierServiceNetworkTisAMetricRate5m
-		words := []string{"absent", tier, service}
+		words := []string{"absent", lab[labelTier], lab[labelService]}
 		sL1 := strings.Split(m, "_")
 		for _, v := range sL1 {
 			sL2 := strings.Split(v, ":")

@@ -45,6 +45,7 @@ var (
 	testEnv   *envtest.Environment
 	k8sClient client.Client
 
+	c      *controller.Controller
 	wg     *errgroup.Group
 	cancel context.CancelFunc
 )
@@ -86,7 +87,11 @@ var _ = BeforeSuite(func() {
 	By("starting controller")
 	l, err := log.New(GinkgoWriter, log.FormatLogfmt, log.LevelAll)
 	Expect(err).ToNot(HaveOccurred())
-	c, err := controller.New(cfg, 1*time.Second, prometheus.NewRegistry(), l)
+	kL := map[string]bool{
+		"tier":    true,
+		"service": true,
+	}
+	c, err = controller.New(cfg, 1*time.Second, prometheus.NewRegistry(), kL, l)
 	Expect(err).ToNot(HaveOccurred())
 
 	ctx := context.Background()
