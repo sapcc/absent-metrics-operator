@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Operator can be disabled for a specific alert rule.
+- `playbook` label to absent metric alerts.
+- `keep-labels` flag for specifying which labels to carry over from alert
+  rules.
 
 ## [0.1.0] - 2020-08-13
 

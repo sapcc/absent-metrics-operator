@@ -27,7 +27,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/sapcc/absent-metrics-operator/internal/controller"
 	"github.com/sapcc/absent-metrics-operator/test/fixtures"
 )
 
@@ -37,7 +36,7 @@ var waitForControllerToProcess = func() { time.Sleep(500 * time.Millisecond) }
 var _ = Describe("Controller", func() {
 	ctx := context.Background()
 
-	Describe("Absent PrometheusRule creation", func() {
+	Describe("AbsentPrometheusRule creation", func() {
 		It("should create "+fixtures.K8sAbsentPromRuleName+" in resmgmt namespace", func() {
 			expected := fixtures.ResMgmtK8sAbsentPromRule
 			var actual monitoringv1.PrometheusRule
@@ -90,7 +89,7 @@ var _ = Describe("Controller", func() {
 		})
 	})
 
-	Describe("Absent PrometheusRule update", func() {
+	Describe("AbsentPrometheusRule update", func() {
 		objKey := client.ObjectKey{Namespace: "swift", Name: "openstack-swift.alerts"}
 		prObjKey := client.ObjectKey{Namespace: "swift", Name: fixtures.OSAbsentPromRuleName}
 		tier, service := "os", "swift"
@@ -118,9 +117,9 @@ var _ = Describe("Controller", func() {
 				err = k8sClient.Update(ctx, &pr)
 				Expect(err).ToNot(HaveOccurred())
 
-				// Check if the corresponding Absent PrometheusRule was updated.
+				// Check if the corresponding AbsentPrometheusRule was updated.
 				expected := fixtures.SwiftOSAbsentPromRule
-				rL, err := controller.ParseAlertRule(tier, service, rule)
+				rL, err := c.ParseAlertRule(tier, service, rule)
 				Expect(err).ToNot(HaveOccurred())
 				i = len(expected.Spec.Groups) - 1
 				expected.Spec.Groups[i].Rules = append(expected.Spec.Groups[i].Rules, rL...)
@@ -144,9 +143,9 @@ var _ = Describe("Controller", func() {
 				err = k8sClient.Update(ctx, &pr)
 				Expect(err).ToNot(HaveOccurred())
 
-				// Check if the corresponding Absent PrometheusRule was updated.
+				// Check if the corresponding AbsentPrometheusRule was updated.
 				expected := fixtures.SwiftOSAbsentPromRule
-				rL, err := controller.ParseAlertRule(tier, service, rule)
+				rL, err := c.ParseAlertRule(tier, service, rule)
 				Expect(err).ToNot(HaveOccurred())
 				expected.Spec.Groups[0].Rules[0] = rL[0]
 
@@ -159,7 +158,7 @@ var _ = Describe("Controller", func() {
 		})
 	})
 
-	Describe("Absent PrometheusRule cleanup", func() {
+	Describe("AbsentPrometheusRule cleanup", func() {
 		Context("with PrometheusRule deletion", func() {
 			It("should delete the "+fixtures.K8sAbsentPromRuleName+" from resmgmt namespace", func() {
 				var pr monitoringv1.PrometheusRule
@@ -180,7 +179,7 @@ var _ = Describe("Controller", func() {
 				// the "openstack-limes-api.alerts" and
 				// "openstack-limes-roleassign.alerts", deleting one resource
 				// should only result in cleanup of its corresponding alerts,
-				// not the deletion of the entire absent PrometheusRule
+				// not the deletion of the entire AbsentPrometheusRule
 				// resource.
 				var pr monitoringv1.PrometheusRule
 				pr.Name = "openstack-limes-roleassign.alerts"

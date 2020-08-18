@@ -8,18 +8,24 @@
 
 > Project status: **alpha**. The API and user facing objects may change.
 
+In this document:
+
+- [Overview](#overview)
 - [Motivation](#motivation)
-- [Installation](#installation)
-  - [Pre\-compiled binaries and Docker images](#pre-compiled-binaries-and-docker-images)
-  - [Building from source](#building-from-source)
 - [Usage](#usage)
-  - [Disable for specific alerts](#disable-for-specific-alerts)
-    - [Caveat](#caveat)
   - [Metrics](#metrics)
 - [Absent metric alert definition](#absent-metric-alert-definition)
   - [Template](#template)
   - [Labels](#labels)
-    - [Default tier and service](#default-tier-and-service)
+    - [Defaults](#defaults)
+    - [Carry over from original alert rule](#carry-over-from-original-alert-rule)
+    - [Tier and service](#tier-and-service)
+
+In other documents:
+
+- [Operator's Playbook](./doc/playbook.md)
+
+## Overview
 
 The absent metrics operator is a companion operator for the [Prometheus
 Operator](https://github.com/prometheus-operator/prometheus-operator).
@@ -76,77 +82,24 @@ labels:
   severity: info
 annotations:
   summary: missing foo_bar
-  description: The metric 'foo_bar' is missing. Alerts using it may not fire as intended.
+  description: The metric 'foo_bar' is missing. 'ImportantAlert' alert using it may not fire as intended.
 ```
-
-## Installation
-
-### Pre-compiled binaries and Docker images
-
-See the latest [release](https://github.com/sapcc/absent-metrics-operator/releases/latest).
-
-### Building from source
-
-The only required build dependency is [Go](https://golang.org/).
-
-```
-$ git clone https://github.com/sapcc/absent-metrics-operator.git
-$ cd absent-metrics-operator
-$ make install
-```
-
-This will put the binary in `/usr/bin/`.
-
-Alternatively, you can also build directly with the `go get` command:
-
-```
-$ go get -u github.com/sapcc/absent-metrics-operator
-```
-
-This will put the binary in `$GOPATH/bin/`.
 
 ## Usage
 
-```
-$ absent-metrics-operator --kubeconfig="$KUBECONFIG"
-```
+We provide pre-compiled binaries and container images. See the latest
+[release](https://github.com/sapcc/absent-metrics-operator/releases/latest).
 
-`kubeconfig` flag is only required if running outside a cluster.
+Alternatively, you can build with `make`, install with `make install`, `go get`, or
+`docker build`.
 
-For detailed usage instructions:
+For usage instructions:
 
 ```
 $ absent-metrics-operator --help
 ```
 
-### Disable for specific alerts
-
-You can disable the operator for a specific `PrometheusRule` resource by adding
-the following label to it:
-
-```yaml
-absent-metrics-operator/disable: true
-```
-
-If you want to disable the operator for only a specific alert rule instead of
-all the alerts in a `PrometheusRule`, you can use the same label at the
-rule-level:
-
-```yaml
-alert: ImportantAlert
-expr: foo_bar > 0
-for: 5m
-labels:
-  absent-metrics-operator/disable: true
-  ...
-```
-
-#### Caveat
-
-If you disable the operator for a specific alert or a specific
-`PrometheusRule`, however there are other alerts or `PrometheusRules` which
-have alert definitions that use the same metric(s) then the absent metric
-alerts for those metric(s) will be created regardless.
+You can disable the the operator for a specific `PrometheusRule` or a specific alert definition, refer to the [operator's playbook](./doc/playbook.md) for more info.
 
 ### Metrics
 
@@ -186,7 +139,7 @@ labels:
   severity: info
 annotations:
   summary: missing $metric
-  description: The metric '$metric' is missing. Alerts using it may not fire as intended.
+  description: The metric '$metric' is missing. '$alert-name' alert using it may not fire as intended.
 ```
 
 Consider the metric `limes_successful_scrapes:rate5m` with tier `os` and
@@ -196,16 +149,31 @@ Then the alert name would be `AbsentOsLimesSuccessfulScrapesRate5m`.
 
 ### Labels
 
-- `tier` and `service` labels are carried over from the original alert rule
-  unless those labels use templating (i.e. use `$labels`), in which case the
-  default `tier` and `service` values for that Prometheus server in that
-  namespace will be used.
-- `severity` is always `info`.
+#### Defaults
 
-#### Default tier and service
+The following labels are always present on every absent metric alert rule:
+
+- `severity` is alway `info`.
+- `playbook` provides a [link](./doc/playbook.md) to documentation that can be
+  referenced on how to deal with an absent metric alert.
+
+#### Carry over from original alert rule
+
+You can specify which labels to carry over from the original alert rule by
+specifying a comma-separated list of labels to the `--keep-labels` flag. The
+default value for this flag is `service,tier`.
+
+#### Tier and service
+
+`tier` and `service` labels are a special case they are carried over from the
+original alert rule unless those labels use templating (i.e. use `$labels`), in
+which case the default `tier` and `service` values will be used.
 
 The operator determines a default `tier` and `service` for a specific
 Prometheus server in a namespace by traversing through all the alert rule
 definitions for that Prometheus server in that namespace. It chooses the most
 common `tier` and `service` label combination that is used across those alerts
 as the default values.
+
+The value of these labels are also for used (if enabled with `keep-labels`) in
+the name for the absent metric alert. See [template](#Template).

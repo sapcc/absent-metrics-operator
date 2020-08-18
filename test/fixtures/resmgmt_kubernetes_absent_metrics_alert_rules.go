@@ -24,6 +24,7 @@ var kepLab = map[string]string{
 	"tier":     "os",
 	"service":  "keppel",
 	"severity": "info",
+	"playbook": "https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md",
 }
 
 // ResMgmtK8sAbsentPromRule represents the PrometheusRule that should be
@@ -36,6 +37,8 @@ var ResMgmtK8sAbsentPromRule = monitoringv1.PrometheusRule{
 			"prometheus":                         "kubernetes",
 			"type":                               "alerting-rules",
 			"absent-metrics-operator/managed-by": "true",
+			"tier":                               "os",
+			"service":                            "keppel",
 		},
 	},
 	Spec: monitoringv1.PrometheusRuleSpec{

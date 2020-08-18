@@ -72,7 +72,7 @@
               "tier": "os",
               "playbook": "docs/support/playbook/swift/rings.html",
               "meta": "Rings are not equal on all Swift nodes",
-              "absent-metrics-operator/disable": "true"
+              "no_alert_on_absence": "true"
             },
             "annotations": {
               "description": "Rings are not equal on all nodes",

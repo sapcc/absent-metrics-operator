@@ -24,6 +24,7 @@ var limesLab = map[string]string{
 	"tier":     "os",
 	"service":  "limes",
 	"severity": "info",
+	"playbook": "https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md",
 }
 
 // ResMgmtOSAbsentPromRule represents the PrometheusRule that should be
@@ -36,6 +37,8 @@ var ResMgmtOSAbsentPromRule = monitoringv1.PrometheusRule{
 			"prometheus":                         "openstack",
 			"type":                               "alerting-rules",
 			"absent-metrics-operator/managed-by": "true",
+			"tier":                               "os",
+			"service":                            "limes",
 		},
 	},
 	Spec: monitoringv1.PrometheusRuleSpec{
