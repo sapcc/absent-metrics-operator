@@ -125,6 +125,7 @@ func (c *Controller) ParseAlertRule(tier, service string, in monitoringv1.Rule) 
 	// Default labels
 	lab := map[string]string{
 		"severity": "info",
+		"playbook": "https://git.io/absent-metrics-operator-playbook",
 	}
 
 	// Carry over labels from the original alert

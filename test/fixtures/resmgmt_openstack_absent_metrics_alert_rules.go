@@ -24,6 +24,7 @@ var limesLab = map[string]string{
 	"tier":     "os",
 	"service":  "limes",
 	"severity": "info",
+	"playbook": "https://git.io/absent-metrics-operator-playbook",
 }
 
 // ResMgmtOSAbsentPromRule represents the PrometheusRule that should be
