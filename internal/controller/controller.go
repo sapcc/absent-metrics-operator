@@ -301,7 +301,7 @@ func (c *Controller) syncHandler(key string) error {
 		return nil
 	}
 
-	// Get the corresponding AbsentPrometheusRule.
+	// Get the corresponding absentPrometheusRule.
 	existingAbsentPromRule := false
 	absentPromRule, err := c.getAbsentPrometheusRule(namespace, prometheusServer)
 	switch {

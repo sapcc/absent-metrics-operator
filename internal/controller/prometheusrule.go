@@ -26,13 +26,13 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-// AbsentPrometheusRuleName returns the name of an AbsentPrometheusRule.
+// AbsentPrometheusRuleName returns the name of an absentPrometheusRule.
 func AbsentPrometheusRuleName(prometheusServer string) string {
 	return fmt.Sprintf("%s-absent-metric-alert-rules", prometheusServer)
 }
 
 // absentPrometheusRule is a wrapper around *monitoringv1.PrometheusRule with
-// some additional info that we use for working with AbsentPrometheusRules.
+// some additional info that we use for working with absentPrometheusRules.
 //
 // An absentPrometheusRule is the corresponding resource that is generated for
 // a PrometheusRule resource for defining the absent metric alerts.
@@ -45,7 +45,6 @@ type absentPrometheusRule struct {
 	Service string
 }
 
-// TODO: add tier and service as labels.
 func (c *Controller) getAbsentPrometheusRule(namespace, prometheusServer string) (*absentPrometheusRule, error) {
 	n := AbsentPrometheusRuleName(prometheusServer)
 	pr, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).Get(context.Background(), n, metav1.GetOptions{})
@@ -138,13 +137,13 @@ func (c *Controller) newAbsentPrometheusRule(namespace, prometheusServer string)
 	return &aPR, nil
 }
 
-// updateAbsentPrometheusRule updates an AbsentPrometheusRule with the provided
+// updateAbsentPrometheusRule updates an absentPrometheusRule with the provided
 // slice of RuleGroup.
 func (c *Controller) updateAbsentPrometheusRule(
 	absentPromRule *absentPrometheusRule,
 	absentAlertRuleGroups []monitoringv1.RuleGroup) error {
 
-	// Check if the AbsentPrometheusRule already has these rule groups.
+	// Check if the absentPrometheusRule already has these rule groups.
 	// Update if it does, otherwise append.
 	old := absentPromRule.Spec.Groups
 	var new []monitoringv1.RuleGroup
@@ -207,12 +206,12 @@ func (c *Controller) cleanUpOrphanedAbsentAlertsNamespace(namespace, promRuleNam
 }
 
 // cleanUpOrphanedAbsentAlerts deletes orphaned absent alert rules concerning a
-// specific PrometheusRule from a specific AbsentPrometheusRule.
+// specific PrometheusRule from a specific absentPrometheusRule.
 func (c *Controller) cleanUpOrphanedAbsentAlerts(promRuleName string, absentPromRule *absentPrometheusRule) error {
 	old := absentPromRule.Spec.Groups
 	new := make([]monitoringv1.RuleGroup, 0, len(old))
 	for _, g := range old {
-		// The rule group names for AbsentPrometheusRule have the format:
+		// The rule group names for absentPrometheusRule have the format:
 		// originPromRuleName/ruleGroupName.
 		sL := strings.Split(g.Name, "/")
 		if len(sL) > 0 && sL[0] == promRuleName {
