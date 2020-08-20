@@ -54,7 +54,8 @@ var SwiftOSAbsentPromRule = monitoringv1.PrometheusRule{
 						Annotations: map[string]string{
 							"summary": "missing global:swift_cluster_storage_used_percent_average",
 							"description": "The metric 'global:swift_cluster_storage_used_percent_average' is missing. " +
-								"'OpenstackSwiftUsedSpace' alert using it may not fire as intended.",
+								"'OpenstackSwiftUsedSpace' alert using it may not fire as intended. " +
+								"See <https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md|the operator playbook>.",
 						},
 					},
 					{
@@ -65,7 +66,8 @@ var SwiftOSAbsentPromRule = monitoringv1.PrometheusRule{
 						Annotations: map[string]string{
 							"summary": "missing swift_dispersion_task_exit_code",
 							"description": "The metric 'swift_dispersion_task_exit_code' is missing. " +
-								"'OpenstackSwiftHealthCheck' alert using it may not fire as intended.",
+								"'OpenstackSwiftHealthCheck' alert using it may not fire as intended. " +
+								"See <https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md|the operator playbook>.",
 						},
 					},
 					{
@@ -76,7 +78,8 @@ var SwiftOSAbsentPromRule = monitoringv1.PrometheusRule{
 						Annotations: map[string]string{
 							"summary": "missing swift_recon_task_exit_code",
 							"description": "The metric 'swift_recon_task_exit_code' is missing. " +
-								"'OpenstackSwiftHealthCheck' alert using it may not fire as intended.",
+								"'OpenstackSwiftHealthCheck' alert using it may not fire as intended. " +
+								"See <https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md|the operator playbook>.",
 						},
 					},
 					{
@@ -87,7 +90,8 @@ var SwiftOSAbsentPromRule = monitoringv1.PrometheusRule{
 						Annotations: map[string]string{
 							"summary": "missing swift_cluster_md5_not_matched",
 							"description": "The metric 'swift_cluster_md5_not_matched' is missing. " +
-								"'OpenstackSwiftMismatchedConfig' alert using it may not fire as intended.",
+								"'OpenstackSwiftMismatchedConfig' alert using it may not fire as intended. " +
+								"See <https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md|the operator playbook>.",
 						},
 					},
 				},

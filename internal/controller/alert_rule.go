@@ -221,8 +221,12 @@ func (c *Controller) ParseAlertRule(defaultTier, defaultService string, in monit
 		}
 
 		ann := map[string]string{
-			"summary":     fmt.Sprintf("missing %s", m),
-			"description": fmt.Sprintf("The metric '%s' is missing. '%s' alert using it may not fire as intended.", m, in.Alert),
+			"summary": fmt.Sprintf("missing %s", m),
+			// TODO: remove the link from description when our upstream
+			// solution gets the ability to process hardcoded links in the
+			// 'playbook' label.
+			"description": fmt.Sprintf("The metric '%s' is missing. '%s' alert using it may not fire as intended. "+
+				"See <https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md|the operator playbook>.", m, in.Alert),
 		}
 
 		out = append(out, monitoringv1.Rule{

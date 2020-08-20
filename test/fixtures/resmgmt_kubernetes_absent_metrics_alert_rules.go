@@ -54,7 +54,8 @@ var ResMgmtK8sAbsentPromRule = monitoringv1.PrometheusRule{
 						Annotations: map[string]string{
 							"summary": "missing kube_pod_failed_scheduling_memory_total",
 							"description": "The metric 'kube_pod_failed_scheduling_memory_total' is missing. " +
-								"'OpenstackKeppelPodSchedulingInsufficientMemory' alert using it may not fire as intended.",
+								"'OpenstackKeppelPodSchedulingInsufficientMemory' alert using it may not fire as intended. " +
+								"See <https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md|the operator playbook>.",
 						},
 					},
 					{
@@ -65,7 +66,8 @@ var ResMgmtK8sAbsentPromRule = monitoringv1.PrometheusRule{
 						Annotations: map[string]string{
 							"summary": "missing keppel_container_memory_usage_percent",
 							"description": "The metric 'keppel_container_memory_usage_percent' is missing. " +
-								"'OpenstackKeppelPodOOMExceedingLimits' alert using it may not fire as intended.",
+								"'OpenstackKeppelPodOOMExceedingLimits' alert using it may not fire as intended. " +
+								"See <https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md|the operator playbook>.",
 						},
 					},
 				},
