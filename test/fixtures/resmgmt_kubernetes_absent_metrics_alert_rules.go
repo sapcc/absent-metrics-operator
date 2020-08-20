@@ -24,7 +24,6 @@ var kepLab = map[string]string{
 	"tier":     "os",
 	"service":  "keppel",
 	"severity": "info",
-	"playbook": "https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md",
 }
 
 // ResMgmtK8sAbsentPromRule represents the PrometheusRule that should be

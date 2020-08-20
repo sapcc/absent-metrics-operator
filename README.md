@@ -77,7 +77,6 @@ expr: absent(foo_bar)
 for: 10m
 labels:
   severity: info
-  playbook: https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md
   tier: network
   service: foo
 annotations:
@@ -137,7 +136,6 @@ expr: absent($metric)
 for: 10m
 labels:
   severity: info
-  playbook: https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md
   tier: $tier
   service: $service
 annotations:
@@ -152,6 +150,9 @@ service `limes`. The corresponding absent metric alert name would be
 The values of `tier` and `service` labels are only included in the name if the
 labels are specified in the `keep-labels` flag. See below.
 
+The description also includes a [link](./doc/playbook.md) to documentation that
+can be referenced on how to deal with absent metric alerts.
+
 ### Labels
 
 #### Defaults
@@ -159,8 +160,6 @@ labels are specified in the `keep-labels` flag. See below.
 The following labels are always present on every absent metric alert rule:
 
 - `severity` is alway `info`.
-- `playbook` provides a [link](./doc/playbook.md) to documentation that can be
-  referenced on how to deal with absent metric alerts.
 
 #### Carry over from original alert rule
 

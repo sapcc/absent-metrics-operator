@@ -24,7 +24,6 @@ var swiftLab = map[string]string{
 	"tier":     "os",
 	"service":  "swift",
 	"severity": "info",
-	"playbook": "https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md",
 }
 
 // SwiftOSAbsentPromRule represents the PrometheusRule that should be generated
