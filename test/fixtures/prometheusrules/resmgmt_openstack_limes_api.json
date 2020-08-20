@@ -49,7 +49,7 @@
           },
           {
             "alert": "OpenstackLimesSuspendedScrapes",
-            "expr": "sum(increase(limes_suspended_scrapes[15m])) BY (os_cluster, service, service_name) > 0",
+            "expr": "sum(increase({__name__=~'limes_suspended_scrapes'}[15m])) BY (os_cluster, service, service_name) > 0",
             "for": "1h",
             "labels": {
               "context": "failedscrapes",

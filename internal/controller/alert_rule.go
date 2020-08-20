@@ -16,17 +16,22 @@ package controller
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
+	promlabels "github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 	"k8s.io/apimachinery/pkg/util/intstr"
+
+	"github.com/sapcc/absent-metrics-operator/internal/log"
 )
 
 // metricNameExtractor is used to walk through a promql expression and extract
 // time series names.
 type metricNameExtractor struct {
+	logger *log.Logger
 	// expr is the promql expression that the metricNameExtractor is working on.
 	expr string
 	// This map contains metric names that were extracted from a promql.Node.
@@ -44,6 +49,44 @@ func (mex *metricNameExtractor) Visit(node parser.Node, path []parser.Node) (par
 	}
 
 	name := vs.Name
+	if name == "" {
+		// Check if the VectorSelector uses label matching against the 'name'
+		// label.
+		for _, v := range vs.LabelMatchers {
+			if v.Name != "__name__" {
+				continue
+			}
+
+			switch v.Type {
+			case promlabels.MatchEqual, promlabels.MatchNotEqual:
+				name = v.Value
+			case promlabels.MatchRegexp, promlabels.MatchNotRegexp:
+				// Currently, we don't create absent metric alerts for regex
+				// name label matching.
+				// However, there are cases where some alert expressions use
+				// the regexp matching even though an equality would suffice.
+				// E.g.:
+				//   {__name__=~"http_requests_total"}
+				rx, err := regexp.Compile(v.Value)
+				if err != nil {
+					// We do not return on error so that any subsequent
+					// VectorSelector(s) get a chance to be processed.
+					mex.logger.ErrorWithBackoff("msg", fmt.Sprintf("could not compile regex '%s'", v.Value),
+						"expr", mex.expr)
+					continue
+				}
+				if rx.MatchString(v.Value) {
+					name = v.Value
+				}
+			}
+		}
+	}
+	if name == "" {
+		mex.logger.ErrorWithBackoff("msg", fmt.Sprintf("could not find metric name for VectorSelector '%s'", vs.String()),
+			"expr", mex.expr)
+		return mex, nil
+	}
+
 	switch {
 	case strings.Contains(mex.expr, fmt.Sprintf("absent(%s", name)):
 		// Skip this metric if the there is already an
@@ -108,7 +151,11 @@ func (c *Controller) parseRuleGroups(
 // absent metric alert rules (one for each time series).
 func (c *Controller) ParseAlertRule(defaultTier, defaultService string, in monitoringv1.Rule) ([]monitoringv1.Rule, error) {
 	exprStr := in.Expr.String()
-	mex := &metricNameExtractor{expr: exprStr, found: map[string]struct{}{}}
+	mex := &metricNameExtractor{
+		logger: c.logger,
+		expr:   exprStr,
+		found:  map[string]struct{}{},
+	}
 	exprNode, err := parser.ParseExpr(exprStr)
 	if err == nil {
 		err = parser.Walk(mex, exprNode, nil)
