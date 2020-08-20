@@ -19,7 +19,6 @@ In this document:
   - [Labels](#labels)
     - [Defaults](#defaults)
     - [Carry over from original alert rule](#carry-over-from-original-alert-rule)
-    - [Tier and service](#tier-and-service)
 
 In other documents:
 
@@ -77,9 +76,10 @@ alert: AbsentFooBar
 expr: absent(foo_bar)
 for: 10m
 labels:
+  severity: info
+  playbook: https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md
   tier: network
   service: foo
-  severity: info
 annotations:
   summary: missing foo_bar
   description: The metric 'foo_bar' is missing. 'ImportantAlert' alert using it may not fire as intended.
@@ -99,7 +99,9 @@ For usage instructions:
 $ absent-metrics-operator --help
 ```
 
-You can disable the the operator for a specific `PrometheusRule` or a specific alert definition, refer to the [operator's playbook](./doc/playbook.md) for more info.
+The operator can be disabled for a specific `PrometheusRule` or a specific
+alert definition. Refer to the [operator's playbook](./doc/playbook.md) for
+more info.
 
 ### Metrics
 
@@ -134,18 +136,21 @@ alert: $name
 expr: absent($metric)
 for: 10m
 labels:
+  severity: info
+  playbook: https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md
   tier: $tier
   service: $service
-  severity: info
 annotations:
   summary: missing $metric
   description: The metric '$metric' is missing. '$alert-name' alert using it may not fire as intended.
 ```
 
 Consider the metric `limes_successful_scrapes:rate5m` with tier `os` and
-service `limes`.
+service `limes`. The corresponding absent metric alert name would be
+`AbsentOsLimesSuccessfulScrapesRate5m`.
 
-Then the alert name would be `AbsentOsLimesSuccessfulScrapesRate5m`.
+The values of `tier` and `service` labels are only included in the name if the
+labels are specified in the `keep-labels` flag. See below.
 
 ### Labels
 
@@ -155,7 +160,7 @@ The following labels are always present on every absent metric alert rule:
 
 - `severity` is alway `info`.
 - `playbook` provides a [link](./doc/playbook.md) to documentation that can be
-  referenced on how to deal with an absent metric alert.
+  referenced on how to deal with absent metric alerts.
 
 #### Carry over from original alert rule
 
@@ -163,17 +168,5 @@ You can specify which labels to carry over from the original alert rule by
 specifying a comma-separated list of labels to the `--keep-labels` flag. The
 default value for this flag is `service,tier`.
 
-#### Tier and service
-
-`tier` and `service` labels are a special case they are carried over from the
-original alert rule unless those labels use templating (i.e. use `$labels`), in
-which case the default `tier` and `service` values will be used.
-
-The operator determines a default `tier` and `service` for a specific
-Prometheus server in a namespace by traversing through all the alert rule
-definitions for that Prometheus server in that namespace. It chooses the most
-common `tier` and `service` label combination that is used across those alerts
-as the default values.
-
-The value of these labels are also for used (if enabled with `keep-labels`) in
-the name for the absent metric alert. See [template](#Template).
+The `tier` and `service` are a special case, they are co-dependent. See the
+[playbook](./doc/playbook.md) for details.

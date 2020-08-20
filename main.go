@@ -52,6 +52,10 @@ var (
 		log.FormatLogfmt,
 		log.FormatJSON,
 	}
+	defaultKeepLabels = []string{
+		controller.LabelService,
+		controller.LabelTier,
+	}
 )
 
 func main() {
@@ -62,7 +66,8 @@ func main() {
 	flagset.StringVar(&logFormat, "log-format", log.FormatLogfmt,
 		fmt.Sprintf("Log format to use. Possible values: %s", strings.Join(availableLogFormats, ", ")))
 	flagset.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster")
-	flagset.StringVar(&keepLabels, "keep-labels", "service,tier", "A comma separated list of labels to keep from the original alert rule")
+	flagset.StringVar(&keepLabels, "keep-labels", strings.Join(defaultKeepLabels, ","),
+		"A comma separated list of labels to keep from the original alert rule")
 	if err := flagset.Parse(os.Args[1:]); err != nil {
 		logFatalf("could not parse flagset: %s", err.Error())
 	}
@@ -77,12 +82,18 @@ func main() {
 
 	r := prometheus.NewRegistry()
 
-	// Create controller
 	keepLabelMap := make(map[string]bool)
 	kL := strings.Split(keepLabels, ",")
 	for _, v := range kL {
 		keepLabelMap[strings.TrimSpace(v)] = true
 	}
+	if keepLabelMap[controller.LabelTier] || keepLabelMap[controller.LabelService] {
+		if !keepLabelMap[controller.LabelTier] && !keepLabelMap[controller.LabelService] {
+			logger.Fatal("msg", "labels 'tier' and 'service' are co-dependent, i.e. use both or neither")
+		}
+	}
+
+	// Create controller
 	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
 		logger.Fatal("msg", "instantiating cluster config failed", "err", err)

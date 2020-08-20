@@ -6,7 +6,8 @@
     "namespace": "resmgmt",
     "labels": {
       "type": "alerting-rules",
-      "prometheus": "kubernetes"
+      "prometheus": "kubernetes",
+      "tier": "os"
     }
   },
   "spec": {
@@ -20,7 +21,7 @@
             "for": "15m",
             "labels": {
               "severity": "warning",
-              "tier": "os",
+              "tier": "{{ $labels.somelabel }}",
               "service": "keppel",
               "context": "memory",
               "dashboard": "keppel-overview",

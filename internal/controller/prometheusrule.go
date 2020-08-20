@@ -58,25 +58,22 @@ func (c *Controller) getAbsentPrometheusRule(namespace, prometheusServer string)
 
 	// Find default tier and service values for this Prometheus server in this
 	// namespace.
-	if c.keepLabel[labelTier] || c.keepLabel[labelService] {
+	if c.keepTierServiceLabels {
 		// Fast path: get values from resource labels
-		t, s := aPR.Labels[labelTier], aPR.Labels[labelService]
-		if t == "" || s == "" {
+		aPR.Tier = aPR.Labels[LabelTier]
+		aPR.Service = aPR.Labels[LabelService]
+		if aPR.Tier == "" || aPR.Service == "" {
 			// If we can't get the values from resource then we fall back to
 			// the slower method of getting them by checking alert rules.
-			t, s = getTierAndService(aPR.Spec.Groups)
-		}
-		if t == "" || s == "" {
-			c.logger.Info("msg", fmt.Sprintf("could not find default tier and service for Prometheus server '%s' in namespace '%s'",
-				prometheusServer, namespace))
-		}
-		if c.keepLabel[labelTier] {
-			aPR.Tier = t
-			aPR.Labels[labelTier] = t
-		}
-		if c.keepLabel[labelService] {
-			aPR.Service = s
-			aPR.Labels[labelService] = s
+			t, s := getTierAndService(aPR.Spec.Groups)
+			if t != "" {
+				aPR.Tier = t
+				aPR.Labels[LabelTier] = t
+			}
+			if s != "" {
+				aPR.Service = s
+				aPR.Labels[LabelService] = s
+			}
 		}
 	}
 
@@ -103,7 +100,7 @@ func (c *Controller) newAbsentPrometheusRule(namespace, prometheusServer string)
 
 	// Find default tier and service values for this Prometheus server in this
 	// namespace.
-	if c.keepLabel[labelTier] || c.keepLabel[labelService] {
+	if c.keepTierServiceLabels {
 		prList, err := c.promRuleLister.List(labels.Everything())
 		if err != nil {
 			return nil, errors.Wrap(err, "could not list PrometheusRules")
@@ -116,21 +113,13 @@ func (c *Controller) newAbsentPrometheusRule(namespace, prometheusServer string)
 			}
 		}
 		t, s := getTierAndService(rg)
-		if t == "" || s == "" {
-			// Ideally, we shouldn't arrive at this point because this would
-			// mean that there was not a single alert rule for the prometheus
-			// server in this namespace that did not use templating for its
-			// tier and service labels.
-			c.logger.Info("msg", fmt.Sprintf("could not find default tier and service for Prometheus server '%s' in namespace '%s'",
-				prometheusServer, namespace))
-		}
-		if c.keepLabel[labelTier] {
+		if t != "" {
 			aPR.Tier = t
-			aPR.Labels[labelTier] = t
+			aPR.Labels[LabelTier] = t
 		}
-		if c.keepLabel[labelService] {
+		if s != "" {
 			aPR.Service = s
-			aPR.Labels[labelService] = s
+			aPR.Labels[LabelService] = s
 		}
 	}
 

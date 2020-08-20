@@ -1,9 +1,15 @@
 # Operator's Playbook
 
+In this document:
+
+- [Disable for specific alerts](#disable-for-specific-alerts)
+  - [Caveat](#caveat)
+- [Tier and service labels](#tier-and-service-labels)
+
 This document assumes that you have already read and understood the [general
 README](../README.md). If not, start reading there.
 
-### Disable for specific alerts
+## Disable for specific alerts
 
 You can disable the operator for a specific `PrometheusRule` resource by adding
 the following label to it:
@@ -13,8 +19,8 @@ absent-metrics-operator/disable: "true"
 ```
 
 If you want to disable the operator for only a specific alert rule instead of
-all the alerts in a `PrometheusRule`, you can add the `no_alert_on_absence`
-label to the alert rule. For example:
+all the alerts in a `PrometheusRule` then you can add the `no_alert_on_absence`
+label to a specific alert rule. For example:
 
 ```yaml
 alert: ImportantAlert
@@ -27,9 +33,27 @@ labels:
 
 **Note**: make sure that you use `"true"` and not `true`.
 
-#### Caveat
+### Caveat
 
 If you disable the operator for a specific alert or a specific
-`PrometheusRule`, however there are other alerts or `PrometheusRules` which
-have alert definitions that use the same metric(s) then the absent metric
-alerts for those metric(s) will be created regardless.
+`PrometheusRule` but there are other alerts or `PrometheusRules` which
+have alert definitions that use the same metrics then the absent metric
+alerts for those metrics will be created regardless.
+
+## Tier and service labels
+
+`tier` and `service` labels are a special case. We (SAP CCloudEE) use them for
+posting alert notifications to different Slack channels.
+
+These labels are defined in the following order (highest to lowest priority):
+
+1. If the alert rule has the `tier` **OR** `service` label and the label
+   doesn't use templating (e.g. `$labels.some_label`) then carry over that
+   label as is.
+2. If the `tier` **OR** `service` labels are defined at the resource (i.e.
+   `PrometheusRule`) level then use their values.
+3. Try to find a default value for the `tier` and `service` labels by
+   traversing through all the alert rule definitions for a specific Prometheus
+   server in a specific namespace. The `tier` **AND** `service` label
+   combination that is the most common amongst all those alerts will be used as
+   the default.

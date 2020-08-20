@@ -33,11 +33,11 @@ func getTierAndService(rg []monitoringv1.RuleGroup) (tier, service string) {
 			if r.Record != "" {
 				continue
 			}
-			t, ok := r.Labels[labelTier]
+			t, ok := r.Labels[LabelTier]
 			if !ok || strings.Contains(t, "$labels") {
 				continue
 			}
-			s, ok := r.Labels[labelService]
+			s, ok := r.Labels[LabelService]
 			if !ok || strings.Contains(s, "$labels") {
 				continue
 			}

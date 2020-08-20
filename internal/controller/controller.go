@@ -46,9 +46,12 @@ const (
 	labelOperatorDisable   = "absent-metrics-operator/disable"
 
 	labelNoAlertOnAbsence = "no_alert_on_absence"
+)
 
-	labelTier    = "tier"
-	labelService = "service"
+// Common constants for reusability.
+const (
+	LabelTier    = "tier"
+	LabelService = "service"
 )
 
 const (
@@ -69,9 +72,13 @@ const (
 // Controller is the controller implementation for acting on PrometheusRule
 // resources.
 type Controller struct {
-	logger    *log.Logger
-	metrics   *Metrics
+	logger  *log.Logger
+	metrics *Metrics
+
 	keepLabel map[string]bool
+	// keepTierServiceLabels is a shorthand for:
+	//   c.keepLabel[LabelTier] && c.keepLabel[LabelService]
+	keepTierServiceLabels bool
 
 	kubeClientset kubernetes.Interface
 	promClientset monitoringclient.Interface
@@ -107,6 +114,7 @@ func New(
 		promClientset: pClient,
 		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "prometheusrules"),
 	}
+	c.keepTierServiceLabels = c.keepLabel[LabelTier] && c.keepLabel[LabelService]
 	ruleInf := informers.NewSharedInformerFactory(pClient, resyncPeriod).Monitoring().V1().PrometheusRules()
 	c.promRuleLister = ruleInf.Lister()
 	c.promRuleInformer = ruleInf.Informer()
@@ -297,7 +305,7 @@ func (c *Controller) syncHandler(key string) error {
 	prometheusServer, ok := promRule.Labels["prometheus"]
 	if !ok {
 		// This shouldn't happen but just in case it does.
-		c.logger.ErrorWithBackoff("msg", "no 'prometheus' label found on the PrometheusRule", "key", key)
+		c.logger.ErrorWithBackoff("msg", "no 'prometheus' label found", "key", key)
 		return nil
 	}
 
@@ -319,8 +327,26 @@ func (c *Controller) syncHandler(key string) error {
 		return errors.Wrap(err, "could not get AbsentPrometheusRule")
 	}
 
+	defaultTier := absentPromRule.Tier
+	defaultService := absentPromRule.Service
+	if c.keepTierServiceLabels {
+		// If the PrometheusRule has tier and service labels then use those as
+		// the defaults.
+		if t := promRule.Labels[LabelTier]; t != "" {
+			defaultTier = t
+		}
+		if s := promRule.Labels[LabelService]; s != "" {
+			defaultService = s
+		}
+		if defaultTier == "" {
+			c.logger.ErrorWithBackoff("msg", "could not find a value for 'tier' label", "key", key)
+		}
+		if defaultService == "" {
+			c.logger.ErrorWithBackoff("msg", "could not find a value for 'service' label", "key", key)
+		}
+	}
 	// Parse alert rules into absent metric alert rules.
-	rg, err := c.parseRuleGroups(name, absentPromRule.Tier, absentPromRule.Service, promRule.Spec.Groups)
+	rg, err := c.parseRuleGroups(name, defaultTier, defaultService, promRule.Spec.Groups)
 	if err != nil {
 		// We choose to absorb the error here as the worker would requeue the
 		// resource otherwise and we'll be stuck parsing broken alert rules.

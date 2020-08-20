@@ -88,8 +88,8 @@ var _ = BeforeSuite(func() {
 	l, err := log.New(GinkgoWriter, log.FormatLogfmt, log.LevelAll)
 	Expect(err).ToNot(HaveOccurred())
 	kL := map[string]bool{
-		"tier":    true,
-		"service": true,
+		controller.LabelTier:    true,
+		controller.LabelService: true,
 	}
 	c, err = controller.New(cfg, 1*time.Second, prometheus.NewRegistry(), kL, l)
 	Expect(err).ToNot(HaveOccurred())
