@@ -330,17 +330,12 @@ func (c *Controller) syncHandler(key string) error {
 	rg := promRule.Spec.Groups
 	// Fast path: check that the PrometheusRule contains at least one alert
 	// rule; no need to continue further otherwise.
-	hasAlerts := false
-	for _, g := range rg {
-		for _, r := range g.Rules {
-			if r.Alert != "" {
-				hasAlerts = true
-			}
+	if !hasAlerts(rg) {
+		if existingAbsentPromRule {
+			// We still need to clean up any orphaned absent alerts that may exist.
+			return c.cleanUpOrphanedAbsentAlerts(name, absentPromRule)
 		}
-	}
-	if !hasAlerts {
-		// We still need to clean up any orphaned absent alerts that may exist.
-		return c.cleanUpOrphanedAbsentAlerts(name, absentPromRule)
+		return nil
 	}
 
 	defaultTier := absentPromRule.Tier
@@ -392,4 +387,16 @@ func (c *Controller) syncHandler(key string) error {
 
 	c.metrics.SuccessfulPrometheusRuleReconcileTime.WithLabelValues(namespace, name).SetToCurrentTime()
 	return nil
+}
+
+// hasAlerts checks if a slice RuleGroup has any alert definitions.
+func hasAlerts(rg []monitoringv1.RuleGroup) bool {
+	for _, g := range rg {
+		for _, r := range g.Rules {
+			if r.Alert != "" {
+				return true
+			}
+		}
+	}
+	return false
 }
