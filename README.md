@@ -76,6 +76,7 @@ alert: AbsentFooBar
 expr: absent(foo_bar)
 for: 10m
 labels:
+  context: absent-metrics
   severity: info
   tier: network
   service: foo
@@ -135,6 +136,7 @@ alert: $name
 expr: absent($metric)
 for: 10m
 labels:
+  context: absent-metrics
   severity: info
   tier: $tier
   service: $service
@@ -159,7 +161,8 @@ can be referenced on how to deal with absent metric alerts.
 
 The following labels are always present on every absent metric alert rule:
 
-- `severity` is alway `info`.
+- `severity` is `info`.
+- `context` is `absent-metrics`.
 
 #### Carry over from original alert rule
 

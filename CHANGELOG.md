@@ -7,11 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2020-08-21
+
+## Added
+
+- `context` label to absent alerts.
+
 ## [0.4.0] - 2020-08-20
 
 ## Removed
 
-- `playbook` label.
+- `playbook` label from absent alerts.
 
 ## [0.3.0] - 2020-08-20
 
@@ -35,7 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release.
 
-[unreleased]: https://github.com/sapcc/absent-metrics-operator/compare/v0.4.0...HEAD
+[unreleased]: https://github.com/sapcc/absent-metrics-operator/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/sapcc/absent-metrics-operator/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/sapcc/absent-metrics-operator/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/sapcc/absent-metrics-operator/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/sapcc/absent-metrics-operator/compare/v0.1.0...v0.2.0

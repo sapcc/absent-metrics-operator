@@ -171,6 +171,7 @@ func (c *Controller) ParseAlertRule(defaultTier, defaultService string, in monit
 
 	// Default labels
 	lab := map[string]string{
+		"context":  "absent-metrics",
 		"severity": "info",
 	}
 

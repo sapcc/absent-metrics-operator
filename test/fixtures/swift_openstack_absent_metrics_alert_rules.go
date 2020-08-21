@@ -24,6 +24,7 @@ var swiftLab = map[string]string{
 	"tier":     "os",
 	"service":  "swift",
 	"severity": "info",
+	"context":  "absent-metrics",
 }
 
 // SwiftOSAbsentPromRule represents the PrometheusRule that should be generated
