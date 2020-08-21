@@ -35,11 +35,11 @@ func AbsentPrometheusRuleName(prometheusServer string) string {
 // some additional info that we use for working with absentPrometheusRules.
 //
 // An absentPrometheusRule is the corresponding resource that is generated for
-// a PrometheusRule resource for defining the absent metric alerts.
+// a PrometheusRule resource for defining the absent alerts.
 type absentPrometheusRule struct {
 	*monitoringv1.PrometheusRule
 
-	// Default values to use for absent metric alerts.
+	// Default values to use for absent alerts.
 	// See parseRuleGroups() on why we need this.
 	Tier    string
 	Service string
@@ -174,7 +174,7 @@ OuterLoop:
 	return nil
 }
 
-// cleanUpOrphanedAbsentAlertsNamespace deletes orphaned absent alert rules
+// cleanUpOrphanedAbsentAlertsNamespace deletes orphaned absent alerts
 // concerning a specific PrometheusRule from a namespace.
 func (c *Controller) cleanUpOrphanedAbsentAlertsNamespace(namespace, promRuleName string) error {
 	prList, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).
@@ -194,7 +194,7 @@ func (c *Controller) cleanUpOrphanedAbsentAlertsNamespace(namespace, promRuleNam
 	return nil
 }
 
-// cleanUpOrphanedAbsentAlerts deletes orphaned absent alert rules concerning a
+// cleanUpOrphanedAbsentAlerts deletes orphaned absent alerts concerning a
 // specific PrometheusRule from a specific absentPrometheusRule.
 func (c *Controller) cleanUpOrphanedAbsentAlerts(promRuleName string, absentPromRule *absentPrometheusRule) error {
 	old := absentPromRule.Spec.Groups

@@ -277,7 +277,7 @@ func (c *Controller) processNextWorkItem() bool {
 }
 
 // syncHandler gets a PrometheusRule from the queue and updates the
-// corresponding absent metric alert PrometheusRule for it.
+// corresponding absentPrometheusRule for it.
 func (c *Controller) syncHandler(key string) error {
 	// Convert the namespace/name string into a distinct namespace and name.
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
@@ -293,7 +293,7 @@ func (c *Controller) syncHandler(key string) error {
 		// continue processing down below
 	case apierrors.IsNotFound(err):
 		// The resource may no longer exist, in which case we clean up any
-		// orphaned absent alert rules.
+		// orphaned absent alerts.
 		c.logger.Info("msg", "PrometheusRule no longer exists", "key", key)
 		return c.cleanUpOrphanedAbsentAlertsNamespace(namespace, name)
 	default:
@@ -318,13 +318,29 @@ func (c *Controller) syncHandler(key string) error {
 	case apierrors.IsNotFound(err):
 		absentPromRule, err = c.newAbsentPrometheusRule(namespace, prometheusServer)
 		if err != nil {
-			return errors.Wrap(err, "could not create new AbsentPrometheusRule")
+			return errors.Wrap(err, "could not initialize new AbsentPrometheusRule")
 		}
 	default:
 		// This could have been caused by a temporary network failure, or any
 		// other transient reason therefore we requeue object for later
 		// processing.
-		return errors.Wrap(err, "could not get AbsentPrometheusRule")
+		return errors.Wrap(err, "could not get existing AbsentPrometheusRule")
+	}
+
+	rg := promRule.Spec.Groups
+	// Fast path: check that the PrometheusRule contains at least one alert
+	// rule; no need to continue further otherwise.
+	hasAlerts := false
+	for _, g := range rg {
+		for _, r := range g.Rules {
+			if r.Alert != "" {
+				hasAlerts = true
+			}
+		}
+	}
+	if !hasAlerts {
+		// We still need to clean up any orphaned absent alerts that may exist.
+		return c.cleanUpOrphanedAbsentAlerts(name, absentPromRule)
 	}
 
 	defaultTier := absentPromRule.Tier
@@ -345,8 +361,8 @@ func (c *Controller) syncHandler(key string) error {
 			c.logger.ErrorWithBackoff("msg", "could not find a value for 'service' label", "key", key)
 		}
 	}
-	// Parse alert rules into absent metric alert rules.
-	rg, err := c.parseRuleGroups(name, defaultTier, defaultService, promRule.Spec.Groups)
+	// Parse alert rules into absent alert rules.
+	absentRg, err := c.parseRuleGroups(name, defaultTier, defaultService, rg)
 	if err != nil {
 		// We choose to absorb the error here as the worker would requeue the
 		// resource otherwise and we'll be stuck parsing broken alert rules.
@@ -356,17 +372,17 @@ func (c *Controller) syncHandler(key string) error {
 		return nil
 	}
 
-	switch lenRg := len(rg); {
-	case lenRg == 0 && existingAbsentPromRule:
-		// This can happen when changes have been made to a PrometheusRule
-		// that result in no absent alert rules. E.g. absent()
-		// operator was used.
-		// In this case we clean up orphaned absent alert rules.
+	switch l := len(absentRg); {
+	case l == 0 && existingAbsentPromRule:
+		// This can happen when changes have been made to alert rules that
+		// result in no absent alerts.
+		// E.g. absent() or the 'no_alert_on_absence' label was used.
+		// In this case we clean up orphaned absent alerts.
 		err = c.cleanUpOrphanedAbsentAlerts(name, absentPromRule)
-	case lenRg > 0 && existingAbsentPromRule:
-		err = c.updateAbsentPrometheusRule(absentPromRule, rg)
-	case lenRg > 0:
-		absentPromRule.Spec.Groups = rg
+	case l > 0 && existingAbsentPromRule:
+		err = c.updateAbsentPrometheusRule(absentPromRule, absentRg)
+	case l > 0:
+		absentPromRule.Spec.Groups = absentRg
 		_, err = c.promClientset.MonitoringV1().PrometheusRules(namespace).
 			Create(context.Background(), absentPromRule.PrometheusRule, metav1.CreateOptions{})
 	}

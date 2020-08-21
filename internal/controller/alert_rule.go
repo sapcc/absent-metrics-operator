@@ -61,8 +61,8 @@ func (mex *metricNameExtractor) Visit(node parser.Node, path []parser.Node) (par
 			case promlabels.MatchEqual, promlabels.MatchNotEqual:
 				name = v.Value
 			case promlabels.MatchRegexp, promlabels.MatchNotRegexp:
-				// Currently, we don't create absent metric alerts for regex
-				// name label matching.
+				// Currently, we don't create absent alerts for regex name
+				// label matching.
 				// However, there are cases where some alert expressions use
 				// the regexp matching even though an equality would suffice.
 				// E.g.:
@@ -101,13 +101,14 @@ func (mex *metricNameExtractor) Visit(node parser.Node, path []parser.Node) (par
 }
 
 // parseRuleGroups takes a slice of RuleGroup that has alert rules and returns
-// a new slice of RuleGroup that has the corresponding absent metric alert rules.
+// a new slice of RuleGroup that has the corresponding absent alert rules.
 //
 // The original tier and service labels of alert rules will be carried over to
-// the corresponding absent alert rule unless templating was used (i.e. $labels)
-// for these labels in which case the provided default tier and service will be used.
+// the corresponding absent alerts unless templating was used (i.e. $labels)
+// for these labels in which case the provided default tier and service will be
+// used.
 //
-// The rule group names for the absent metric alerts have the format:
+// The rule group names for the absent alerts have the format:
 //   promRuleName/originalGroupName.
 func (c *Controller) parseRuleGroups(
 	promRuleName, defaultTier, defaultService string,
@@ -145,7 +146,7 @@ func (c *Controller) parseRuleGroups(
 	return out, nil
 }
 
-// ParseAlertRule converts an alert rule to absent metric alert rules.
+// ParseAlertRule converts an alert rule to absent metric alert rule.
 // Since an original alert expression can reference multiple time series therefore
 // a slice of []monitoringv1.Rule is returned as the result would be multiple
 // absent metric alert rules (one for each time series).
