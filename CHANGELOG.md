@@ -9,13 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.0] - 2020-08-21
 
-## Added
+### Added
 
 - `context` label to absent alerts.
 
 ## [0.4.0] - 2020-08-20
 
-## Removed
+### Removed
 
 - `playbook` label from absent alerts.
 
