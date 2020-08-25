@@ -45,7 +45,7 @@ type absentPrometheusRule struct {
 	Service string
 }
 
-func (c *Controller) getAbsentPrometheusRule(namespace, prometheusServer string) (*absentPrometheusRule, error) {
+func (c *Controller) getExistingAbsentPrometheusRule(namespace, prometheusServer string) (*absentPrometheusRule, error) {
 	n := AbsentPrometheusRuleName(prometheusServer)
 	pr, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).Get(context.Background(), n, metav1.GetOptions{})
 	if err != nil {

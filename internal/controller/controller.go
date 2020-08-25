@@ -290,98 +290,25 @@ func (c *Controller) syncHandler(key string) error {
 	promRule, err := c.promRuleLister.PrometheusRules(namespace).Get(name)
 	switch {
 	case err == nil:
-		// continue processing down below
+		err = c.updateAbsentAlerts(namespace, name, promRule)
 	case apierrors.IsNotFound(err):
 		// The resource may no longer exist, in which case we clean up any
 		// orphaned absent alerts.
 		c.logger.Info("msg", "PrometheusRule no longer exists", "key", key)
-		return c.cleanUpOrphanedAbsentAlertsNamespace(namespace, name)
+		err = c.cleanUpOrphanedAbsentAlertsNamespace(namespace, name)
 	default:
 		// Requeue object for later processing.
 		return err
 	}
-
-	// Find the Prometheus server for this resource.
-	prometheusServer, ok := promRule.Labels["prometheus"]
-	if !ok {
-		// This shouldn't happen but just in case it does.
-		c.logger.ErrorWithBackoff("msg", "no 'prometheus' label found", "key", key)
-		return nil
-	}
-
-	// Get the corresponding absentPrometheusRule.
-	existingAbsentPromRule := false
-	absentPromRule, err := c.getAbsentPrometheusRule(namespace, prometheusServer)
-	switch {
-	case err == nil:
-		existingAbsentPromRule = true
-	case apierrors.IsNotFound(err):
-		absentPromRule, err = c.newAbsentPrometheusRule(namespace, prometheusServer)
-		if err != nil {
-			return errors.Wrap(err, "could not initialize new AbsentPrometheusRule")
-		}
-	default:
-		// This could have been caused by a temporary network failure, or any
-		// other transient reason therefore we requeue object for later
-		// processing.
-		return errors.Wrap(err, "could not get existing AbsentPrometheusRule")
-	}
-
-	rg := promRule.Spec.Groups
-	// Fast path: check that the PrometheusRule contains at least one alert
-	// rule; no need to continue further otherwise.
-	if !hasAlerts(rg) {
-		if existingAbsentPromRule {
-			// We still need to clean up any orphaned absent alerts that may exist.
-			return c.cleanUpOrphanedAbsentAlerts(name, absentPromRule)
-		}
-		return nil
-	}
-
-	defaultTier := absentPromRule.Tier
-	defaultService := absentPromRule.Service
-	if c.keepTierServiceLabels {
-		// If the PrometheusRule has tier and service labels then use those as
-		// the defaults.
-		if t := promRule.Labels[LabelTier]; t != "" {
-			defaultTier = t
-		}
-		if s := promRule.Labels[LabelService]; s != "" {
-			defaultService = s
-		}
-		if defaultTier == "" {
-			c.logger.ErrorWithBackoff("msg", "could not find a value for 'tier' label", "key", key)
-		}
-		if defaultService == "" {
-			c.logger.ErrorWithBackoff("msg", "could not find a value for 'service' label", "key", key)
-		}
-	}
-	// Parse alert rules into absent alert rules.
-	absentRg, err := c.parseRuleGroups(name, defaultTier, defaultService, rg)
 	if err != nil {
-		// We choose to absorb the error here as the worker would requeue the
-		// resource otherwise and we'll be stuck parsing broken alert rules.
-		// Instead we wait for the next time the resource is updated and
-		// requeued.
-		c.logger.ErrorWithBackoff("msg", "could not parse rule groups", "key", key, "err", err)
-		return nil
-	}
-
-	switch l := len(absentRg); {
-	case l == 0 && existingAbsentPromRule:
-		// This can happen when changes have been made to alert rules that
-		// result in no absent alerts.
-		// E.g. absent() or the 'no_alert_on_absence' label was used.
-		// In this case we clean up orphaned absent alerts.
-		err = c.cleanUpOrphanedAbsentAlerts(name, absentPromRule)
-	case l > 0 && existingAbsentPromRule:
-		err = c.updateAbsentPrometheusRule(absentPromRule, absentRg)
-	case l > 0:
-		absentPromRule.Spec.Groups = absentRg
-		_, err = c.promClientset.MonitoringV1().PrometheusRules(namespace).
-			Create(context.Background(), absentPromRule.PrometheusRule, metav1.CreateOptions{})
-	}
-	if err != nil {
+		if e, ok := err.(*errParseRuleGroups); ok {
+			// We choose to absorb the error here as the worker would requeue
+			// the resource otherwise and we'll be stuck parsing broken alert
+			// rules. Instead we wait for the next time the resource is updated
+			// and requeued.
+			c.logger.ErrorWithBackoff("msg", "could not parse rule groups", "key", key, "err", e)
+			return nil
+		}
 		return err
 	}
 
@@ -389,14 +316,84 @@ func (c *Controller) syncHandler(key string) error {
 	return nil
 }
 
-// hasAlerts checks if a slice RuleGroup has any alert definitions.
-func hasAlerts(rg []monitoringv1.RuleGroup) bool {
-	for _, g := range rg {
-		for _, r := range g.Rules {
-			if r.Alert != "" {
-				return true
-			}
+type errParseRuleGroups struct {
+	cause error
+}
+
+func (e *errParseRuleGroups) Error() string {
+	return e.cause.Error()
+}
+
+func (c *Controller) updateAbsentAlerts(namespace, name string, promRule *monitoringv1.PrometheusRule) error {
+	promRuleLabels := promRule.GetLabels()
+	// Find the Prometheus server for this resource.
+	promServer, ok := promRuleLabels["prometheus"]
+	if !ok {
+		// This shouldn't happen but just in case it does.
+		return errors.New("no 'prometheus' label found")
+	}
+
+	// Get the corresponding absentPrometheusRule.
+	existingAbsentPromRule := false
+	absentPromRule, err := c.getExistingAbsentPrometheusRule(namespace, promServer)
+	switch {
+	case err == nil:
+		existingAbsentPromRule = true
+	case apierrors.IsNotFound(err):
+		absentPromRule, err = c.newAbsentPrometheusRule(namespace, promServer)
+		if err != nil {
+			return errors.Wrap(err, "could not initialize new AbsentPrometheusRule")
+		}
+	default:
+		// This could have been caused by a temporary network failure, or any
+		// other transient reason.
+		return errors.Wrap(err, "could not get existing AbsentPrometheusRule")
+	}
+
+	defaultTier := absentPromRule.Tier
+	defaultService := absentPromRule.Service
+	if c.keepTierServiceLabels {
+		// If the PrometheusRule has tier and service labels then use those as
+		// the defaults.
+		if t := promRuleLabels[LabelTier]; t != "" {
+			defaultTier = t
+		}
+		if s := promRuleLabels[LabelService]; s != "" {
+			defaultService = s
 		}
 	}
-	return false
+	// Parse alert rules into absent alert rules.
+	absentRg, err := c.parseRuleGroups(name, defaultTier, defaultService, promRule.Spec.Groups)
+	if err != nil {
+		return &errParseRuleGroups{cause: err}
+	}
+
+	if len(absentRg) == 0 {
+		if existingAbsentPromRule {
+			// This can happen when changes have been made to alert rules that
+			// result in no absent alerts.
+			// E.g. absent() or the 'no_alert_on_absence' label was used.
+			// In this case we clean up orphaned absent alerts.
+			return c.cleanUpOrphanedAbsentAlerts(name, absentPromRule)
+		}
+		return nil
+	}
+
+	if c.keepTierServiceLabels {
+		key := fmt.Sprintf("%s/%s", namespace, name)
+		if defaultTier == "" {
+			c.logger.Info("msg", "could not find a value for 'tier' label", "key", key)
+		}
+		if defaultService == "" {
+			c.logger.Info("msg", "could not find a value for 'service' label", "key", key)
+		}
+	}
+	if existingAbsentPromRule {
+		err = c.updateAbsentPrometheusRule(absentPromRule, absentRg)
+	} else {
+		absentPromRule.Spec.Groups = absentRg
+		_, err = c.promClientset.MonitoringV1().PrometheusRules(namespace).
+			Create(context.Background(), absentPromRule.PrometheusRule, metav1.CreateOptions{})
+	}
+	return err
 }
