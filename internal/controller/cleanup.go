@@ -25,9 +25,82 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// getPromRulefromAbsentRuleGroup takes the name of a RuleGroup name that holds
+// absent alerts and returns the name of the origin PrometheusRule that holds
+// the corresponding alert definitions. An empty string is returned if the name
+// can't be determined.
+//
+// Absent alert RuleGroups names have the format:
+//   originPrometheusRuleName/RuleGroupName
+func getPromRulefromAbsentRuleGroup(group string) string {
+	sL := strings.Split(group, "/")
+	if len(sL) != 2 {
+		return ""
+	}
+	return sL[0]
+}
+
+// cleanUpOrphanedAbsentAlertsNamespace deletes orphaned absent alerts across a
+// cluster.
+func (c *Controller) cleanUpOrphanedAbsentAlertsCluster() error {
+	// Get names of all PrometheusRules that exist in the informer's cache:
+	//   map of namespace to map[promRuleName]bool
+	promRules := make(map[string]map[string]bool)
+	objs := c.promRuleInformer.GetStore().List()
+	for _, v := range objs {
+		pr, ok := v.(*monitoringv1.PrometheusRule)
+		if !ok {
+			continue
+		}
+		ns := pr.GetNamespace()
+		if _, ok = promRules[ns]; !ok {
+			promRules[ns] = make(map[string]bool)
+		}
+		promRules[ns][pr.GetName()] = true
+	}
+
+	for namespace, promRuleNames := range promRules {
+		// Get all absentPrometheusRules for this namespace.
+		prList, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).
+			List(context.Background(), metav1.ListOptions{LabelSelector: labelOperatorManagedBy})
+		if err != nil {
+			return errors.Wrap(err, "could not list AbsentPrometheusRules")
+		}
+
+		for _, pr := range prList.Items {
+			// Check if there are any alerts in this absentPrometheusRule that
+			// don't belong to any PrometheusRule in promRuleNames.
+			//
+			// cleanup map is used because there could be multiple RuleGroups
+			// that contain absent alerts concerning a single PrometheusRule
+			// therefore we check all the groups before doing any cleanup.
+			cleanup := make(map[string]struct{})
+			for _, g := range pr.Spec.Groups {
+				n := getPromRulefromAbsentRuleGroup(g.Name)
+				if n != "" && !promRuleNames[n] {
+					cleanup[n] = struct{}{}
+				}
+			}
+
+			aPR := &absentPrometheusRule{PrometheusRule: pr}
+			for n := range cleanup {
+				if err := c.cleanUpOrphanedAbsentAlerts(n, aPR); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 // cleanUpOrphanedAbsentAlertsNamespace deletes orphaned absent alerts
 // concerning a specific PrometheusRule from a namespace.
-func (c *Controller) cleanUpOrphanedAbsentAlertsNamespace(namespace, promRuleName string) error {
+//
+// This is used when we don't know the prometheus server name of the
+// PrometheusRule so we list all the AbsentPrometheusRules in a namespace and
+// find the one that has the corresponding absent alerts.
+func (c *Controller) cleanUpOrphanedAbsentAlertsNamespace(promRuleName, namespace string) error {
 	prList, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).
 		List(context.Background(), metav1.ListOptions{LabelSelector: labelOperatorManagedBy})
 	if err != nil {
@@ -35,14 +108,16 @@ func (c *Controller) cleanUpOrphanedAbsentAlertsNamespace(namespace, promRuleNam
 	}
 
 	for _, pr := range prList.Items {
-		aPR := &absentPrometheusRule{PrometheusRule: pr}
-		err := c.cleanUpOrphanedAbsentAlerts(promRuleName, aPR)
-		if err != nil {
-			return err
+		for _, g := range pr.Spec.Groups {
+			n := getPromRulefromAbsentRuleGroup(g.Name)
+			if n != "" && n == promRuleName {
+				aPR := &absentPrometheusRule{PrometheusRule: pr}
+				err = c.cleanUpOrphanedAbsentAlerts(promRuleName, aPR)
+				break
+			}
 		}
 	}
-
-	return nil
+	return err
 }
 
 // cleanUpOrphanedAbsentAlerts deletes orphaned absent alerts concerning a
@@ -51,10 +126,8 @@ func (c *Controller) cleanUpOrphanedAbsentAlerts(promRuleName string, absentProm
 	old := absentPromRule.Spec.Groups
 	new := make([]monitoringv1.RuleGroup, 0, len(old))
 	for _, g := range old {
-		// The rule group names for absentPrometheusRule have the format:
-		// originPromRuleName/ruleGroupName.
-		sL := strings.Split(g.Name, "/")
-		if len(sL) > 0 && sL[0] == promRuleName {
+		n := getPromRulefromAbsentRuleGroup(g.Name)
+		if n != "" && n == promRuleName {
 			continue
 		}
 		new = append(new, g)
