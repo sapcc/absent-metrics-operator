@@ -169,7 +169,7 @@ OuterLoop:
 		return errors.Wrap(err, "could not update AbsentPrometheusRule")
 	}
 
-	c.logger.Info("msg", "successfully updated absent metric alert rules",
+	c.logger.Debug("msg", "successfully updated absent metric alert rules",
 		"key", fmt.Sprintf("%s/%s", absentPromRule.Namespace, absentPromRule.Name))
 	return nil
 }
@@ -218,14 +218,14 @@ func (c *Controller) cleanUpOrphanedAbsentAlerts(promRuleName string, absentProm
 		err = c.promClientset.MonitoringV1().PrometheusRules(absentPromRule.Namespace).
 			Delete(context.Background(), absentPromRule.Name, metav1.DeleteOptions{})
 		if err == nil {
-			c.logger.Info("msg", "successfully deleted orphaned AbsentPrometheusRule",
+			c.logger.Debug("msg", "successfully deleted orphaned AbsentPrometheusRule",
 				"key", fmt.Sprintf("%s/%s", absentPromRule.Namespace, absentPromRule.Name))
 		}
 	} else {
 		_, err = c.promClientset.MonitoringV1().PrometheusRules(absentPromRule.Namespace).
 			Update(context.Background(), absentPromRule.PrometheusRule, metav1.UpdateOptions{})
 		if err == nil {
-			c.logger.Info("msg", "successfully cleaned up orphaned absent metric alert rules",
+			c.logger.Debug("msg", "successfully cleaned up orphaned absent metric alert rules",
 				"key", fmt.Sprintf("%s/%s", absentPromRule.Namespace, absentPromRule.Name))
 		}
 	}

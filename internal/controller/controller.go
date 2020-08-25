@@ -196,7 +196,7 @@ func (c *Controller) enqueuePromRule(obj interface{}) {
 		return
 	}
 	if mustParseBool(l[labelOperatorDisable]) {
-		c.logger.Info("msg", "operator disabled, skipping", "key", key)
+		c.logger.Debug("msg", "operator disabled, skipping", "key", key)
 		return
 	}
 
@@ -272,7 +272,7 @@ func (c *Controller) processNextWorkItem() bool {
 	// Finally, if no errors occurred we Forget this item so it does not
 	// get queued again until another change happens.
 	c.workqueue.Forget(obj)
-	c.logger.Info("msg", "sync successful", "key", key)
+	c.logger.Debug("msg", "sync successful", "key", key)
 	return true
 }
 
@@ -294,7 +294,7 @@ func (c *Controller) syncHandler(key string) error {
 	case apierrors.IsNotFound(err):
 		// The resource may no longer exist, in which case we clean up any
 		// orphaned absent alerts.
-		c.logger.Info("msg", "PrometheusRule no longer exists", "key", key)
+		c.logger.Debug("msg", "PrometheusRule no longer exists", "key", key)
 		err = c.cleanUpOrphanedAbsentAlertsNamespace(namespace, name)
 	default:
 		// Requeue object for later processing.

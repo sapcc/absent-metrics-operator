@@ -85,7 +85,7 @@ var _ = BeforeSuite(func() {
 	// queued by the controller sequentially and we depend on this behavior in
 	// our mock assertion.
 	By("starting controller")
-	l, err := log.New(GinkgoWriter, log.FormatLogfmt, log.LevelAll)
+	l := log.New(GinkgoWriter, log.FormatLogfmt, true)
 	Expect(err).ToNot(HaveOccurred())
 	kL := map[string]bool{
 		controller.LabelTier:    true,

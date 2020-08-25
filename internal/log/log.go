@@ -15,22 +15,11 @@
 package log
 
 import (
-	"fmt"
 	"io"
 	"os"
 
 	gokitlog "github.com/go-kit/kit/log"
 	gokitlevel "github.com/go-kit/kit/log/level"
-)
-
-// Different types of log Level.
-const (
-	LevelAll   = "all"
-	LevelDebug = "debug"
-	LevelInfo  = "info"
-	LevelWarn  = "warn"
-	LevelError = "error"
-	LevelNone  = "none"
 )
 
 // Different types of log Format.
@@ -42,61 +31,55 @@ const (
 // Logger wraps a go-kit/kit/log.Logger. We use it to define custom methods.
 // The Logger is safe for concurrent use by multiple goroutines.
 type Logger struct {
-	gokitlog.Logger
+	gokitlogger gokitlog.Logger
 }
 
 // New returns a new Logger.
-func New(w io.Writer, format, lvl string) (*Logger, error) {
+func New(w io.Writer, format string, showDebug bool) *Logger {
 	sw := gokitlog.NewSyncWriter(w)
 	l := gokitlog.NewLogfmtLogger(sw)
 	if format == FormatJSON {
 		l = gokitlog.NewJSONLogger(sw)
 	}
-	switch lvl {
-	case LevelAll:
-		l = gokitlevel.NewFilter(l, gokitlevel.AllowAll())
-	case LevelDebug:
+	if showDebug {
 		l = gokitlevel.NewFilter(l, gokitlevel.AllowDebug())
-	case LevelInfo:
+	} else {
 		l = gokitlevel.NewFilter(l, gokitlevel.AllowInfo())
-	case LevelWarn:
-		l = gokitlevel.NewFilter(l, gokitlevel.AllowWarn())
-	case LevelError:
-		l = gokitlevel.NewFilter(l, gokitlevel.AllowError())
-	case LevelNone:
-		l = gokitlevel.NewFilter(l, gokitlevel.AllowNone())
-	default:
-		return nil, fmt.Errorf("unexpected value for log level: %q, see --help", lvl)
 	}
 	l = gokitlog.With(l,
 		"ts", gokitlog.DefaultTimestampUTC,
 		"caller", gokitlog.Caller(4),
 	)
-	return &Logger{l}, nil
+	return &Logger{l}
 }
 
 // With returns a new contextual logger with keyvals prepended to those passed
 // to calls to Log.
-func With(l Logger, keyvals ...interface{}) *Logger {
-	return &Logger{gokitlog.With(l.Logger, keyvals...)}
+func With(l *Logger, keyvals ...interface{}) *Logger {
+	return &Logger{gokitlog.With(l.gokitlogger, keyvals...)}
+}
+
+// Debug logs at the debug level.
+func (l *Logger) Debug(keyvals ...interface{}) {
+	gokitlevel.Debug(l.gokitlogger).Log(keyvals...)
 }
 
 // Info logs at the info level.
 func (l *Logger) Info(keyvals ...interface{}) {
-	gokitlevel.Info(l.Logger).Log(keyvals...)
+	gokitlevel.Info(l.gokitlogger).Log(keyvals...)
 }
 
 // ErrorWithBackoff logs at the error level and also blocks if it is called
 // quite often (1000 times in a second). This behavior is helpful when it used
 // in overly tight hot error loops.
 func (l *Logger) ErrorWithBackoff(keyvals ...interface{}) {
-	gokitlevel.Error(l.Logger).Log(keyvals...)
+	gokitlevel.Error(l.gokitlogger).Log(keyvals...)
 	errorBackoff()
 }
 
 // Fatal logs the given key values and calls os.Exit(1). This should only be
 // used by main() function in package main.
 func (l *Logger) Fatal(keyvals ...interface{}) {
-	l.Logger.Log(keyvals...)
+	l.gokitlogger.Log(keyvals...)
 	os.Exit(1)
 }

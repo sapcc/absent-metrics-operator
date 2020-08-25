@@ -40,14 +40,6 @@ var (
 )
 
 var (
-	availableLogLevels = []string{
-		log.LevelAll,
-		log.LevelDebug,
-		log.LevelInfo,
-		log.LevelWarn,
-		log.LevelError,
-		log.LevelNone,
-	}
 	availableLogFormats = []string{
 		log.FormatLogfmt,
 		log.FormatJSON,
@@ -59,24 +51,21 @@ var (
 )
 
 func main() {
-	var logLevel, logFormat, kubeconfig, keepLabels string
+	var showDebug bool
+	var logFormat, kubeconfig, keepLabels string
 	flagset := flag.CommandLine
-	flagset.StringVar(&logLevel, "log-level", log.LevelInfo,
-		fmt.Sprintf("Log level to use. Possible values: %s", strings.Join(availableLogLevels, ", ")))
+	flagset.BoolVar(&showDebug, "debug", false, "Print debug level logs")
 	flagset.StringVar(&logFormat, "log-format", log.FormatLogfmt,
 		fmt.Sprintf("Log format to use. Possible values: %s", strings.Join(availableLogFormats, ", ")))
 	flagset.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster")
 	flagset.StringVar(&keepLabels, "keep-labels", strings.Join(defaultKeepLabels, ","),
 		"A comma separated list of labels to keep from the original alert rule")
 	if err := flagset.Parse(os.Args[1:]); err != nil {
-		logFatalf("could not parse flagset: %s", err.Error())
+		fmt.Fprintf(os.Stderr, "FATAL: could not parse flagset: %s", err.Error())
+		os.Exit(1)
 	}
 
-	logger, err := log.New(os.Stdout, logFormat, logLevel)
-	if err != nil {
-		logFatalf(err.Error())
-	}
-
+	logger := log.New(os.Stdout, logFormat, showDebug)
 	logger.Info("msg", "starting absent-metrics-operator",
 		"version", version, "git-commit", commit, "build-date", date)
 
@@ -98,7 +87,7 @@ func main() {
 	if err != nil {
 		logger.Fatal("msg", "instantiating cluster config failed", "err", err)
 	}
-	c, err := controller.New(cfg, controller.DefaultResyncPeriod, r, keepLabelMap, log.With(*logger, "component", "controller"))
+	c, err := controller.New(cfg, controller.DefaultResyncPeriod, r, keepLabelMap, log.With(logger, "component", "controller"))
 	if err != nil {
 		logger.Fatal("msg", "could not instantiate controller", "err", err)
 	}
@@ -121,12 +110,6 @@ func main() {
 	if err := wg.Wait(); err != nil {
 		logger.Fatal("msg", "unhandled error received", "err", err)
 	}
-}
-
-// logFatalf is used when there is no log.Logger.
-func logFatalf(format string, a ...interface{}) {
-	fmt.Fprintf(os.Stderr, "FATAL: "+format+"\n", a...)
-	os.Exit(1)
 }
 
 func landingPageHandler(logger *log.Logger) func(w http.ResponseWriter, r *http.Request) {
