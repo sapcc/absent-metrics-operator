@@ -87,6 +87,7 @@ func (c *Controller) cleanUpOrphanedAbsentAlertsCluster() error {
 				if err := c.cleanUpOrphanedAbsentAlerts(n, aPR); err != nil {
 					return err
 				}
+				c.metrics.SuccessfulPrometheusRuleReconcileTime.DeleteLabelValues(namespace, n)
 			}
 		}
 	}

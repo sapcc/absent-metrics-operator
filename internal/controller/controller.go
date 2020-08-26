@@ -316,6 +316,9 @@ func (c *Controller) syncHandler(key string) error {
 		// orphaned absent alerts.
 		c.logger.Debug("msg", "PrometheusRule no longer exists", "key", key)
 		err = c.cleanUpOrphanedAbsentAlertsNamespace(name, namespace)
+		if err == nil {
+			c.metrics.SuccessfulPrometheusRuleReconcileTime.DeleteLabelValues(namespace, name)
+		}
 	default:
 		// Requeue object for later processing.
 		return err
