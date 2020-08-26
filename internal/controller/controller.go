@@ -59,14 +59,21 @@ const (
 	// refresh its cache.
 	DefaultResyncPeriod = 10 * time.Minute
 
-	// DefaultReconciliationPeriod is the period after which all the objects in
-	// the informer's cache will be added to the workqueue so that they can be
+	// reconciliationPeriod is the period after which all the objects in the
+	// informer's cache will be added to the workqueue so that they can be
 	// processed by the syncHandler().
 	//
 	// The informer calls the event handlers only if the resource state
-	// changes. We force this additional reconciliation as a liveness check to
-	// see if the operator is working as intended.
-	DefaultReconciliationPeriod = 5 * time.Minute
+	// changes. We do this additional reconciliation as a liveness check to see
+	// if the operator is working as intended.
+	reconciliationPeriod = 5 * time.Minute
+
+	// maintenancePeriod is the period after which the worker will clean up any
+	// orphaned absent alerts across the entire cluster.
+	//
+	// We do this manual cleanup in case a PrometheusRule is deleted and the
+	// update of the shared informer's cache has missed it.
+	maintenancePeriod = 1 * time.Hour
 )
 
 // Controller is the controller implementation for acting on PrometheusRule
@@ -218,16 +225,29 @@ func (c *Controller) enqueueAllObjects() {
 // processNextWorkItem function in order to read and process a message on the
 // workqueue.
 func (c *Controller) runWorker() {
-	ticker := time.NewTicker(DefaultReconciliationPeriod)
-	defer ticker.Stop()
+	// Run maintenance at start up.
+	if err := c.cleanUpOrphanedAbsentAlertsCluster(); err != nil {
+		c.logger.ErrorWithBackoff("msg", "could not cleanup orphaned absent alerts from cluster",
+			"err", err)
+	}
+
+	reconcileT := time.NewTicker(reconciliationPeriod)
+	defer reconcileT.Stop()
+	maintenanceT := time.NewTicker(maintenancePeriod)
+	defer maintenanceT.Stop()
 	done := make(chan struct{})
 	go func() {
 		for {
 			select {
 			case <-done:
 				return
-			case <-ticker.C:
+			case <-reconcileT.C:
 				c.enqueueAllObjects()
+			case <-maintenanceT.C:
+				if err := c.cleanUpOrphanedAbsentAlertsCluster(); err != nil {
+					c.logger.ErrorWithBackoff("msg", "could not cleanup orphaned absent alerts from cluster",
+						"err", err)
+				}
 			}
 		}
 	}()
@@ -295,7 +315,10 @@ func (c *Controller) syncHandler(key string) error {
 		// The resource may no longer exist, in which case we clean up any
 		// orphaned absent alerts.
 		c.logger.Debug("msg", "PrometheusRule no longer exists", "key", key)
-		err = c.cleanUpOrphanedAbsentAlertsNamespace(namespace, name)
+		err = c.cleanUpOrphanedAbsentAlertsNamespace(name, namespace)
+		if err == nil {
+			c.metrics.SuccessfulPrometheusRuleReconcileTime.DeleteLabelValues(namespace, name)
+		}
 	default:
 		// Requeue object for later processing.
 		return err
@@ -320,6 +343,7 @@ type errParseRuleGroups struct {
 	cause error
 }
 
+// Error implements the error interface.
 func (e *errParseRuleGroups) Error() string {
 	return e.cause.Error()
 }
