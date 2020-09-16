@@ -235,27 +235,21 @@ func (c *Controller) runWorker() {
 	defer reconcileT.Stop()
 	maintenanceT := time.NewTicker(maintenancePeriod)
 	defer maintenanceT.Stop()
-	done := make(chan struct{})
-	go func() {
-		for {
-			select {
-			case <-done:
+	for {
+		select {
+		case <-reconcileT.C:
+			c.enqueueAllObjects()
+		case <-maintenanceT.C:
+			if err := c.cleanUpOrphanedAbsentAlertsCluster(); err != nil {
+				c.logger.ErrorWithBackoff("msg", "could not cleanup orphaned absent alerts from cluster",
+					"err", err)
+			}
+		default:
+			if ok := c.processNextWorkItem(); !ok {
 				return
-			case <-reconcileT.C:
-				c.enqueueAllObjects()
-			case <-maintenanceT.C:
-				if err := c.cleanUpOrphanedAbsentAlertsCluster(); err != nil {
-					c.logger.ErrorWithBackoff("msg", "could not cleanup orphaned absent alerts from cluster",
-						"err", err)
-				}
 			}
 		}
-	}()
-
-	for c.processNextWorkItem() {
 	}
-
-	done <- struct{}{}
 }
 
 // processNextWorkItem will read a single work item off the workqueue and
