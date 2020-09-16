@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.1] - 2020-09-16
 
+### Changed
+
+- Delete the reconcile time metric for orphaned `PrometheusRule` in advance,
+  regardless of the cleanup error status.
+
 ### Fixed
 
 - Use a single loop for controller worker.

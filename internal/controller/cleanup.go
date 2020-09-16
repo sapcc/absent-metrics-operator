@@ -84,10 +84,10 @@ func (c *Controller) cleanUpOrphanedAbsentAlertsCluster() error {
 
 			aPR := &absentPrometheusRule{PrometheusRule: pr}
 			for n := range cleanup {
+				c.metrics.SuccessfulPrometheusRuleReconcileTime.DeleteLabelValues(namespace, n)
 				if err := c.cleanUpOrphanedAbsentAlerts(n, aPR); err != nil {
 					return err
 				}
-				c.metrics.SuccessfulPrometheusRuleReconcileTime.DeleteLabelValues(namespace, n)
 			}
 		}
 	}
