@@ -83,19 +83,24 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	By("starting controller")
+	reg = prometheus.NewPedanticRegistry()
+	opts := controller.Opts{
+		IsTest:             true,
+		Logger:             log.New(GinkgoWriter, log.FormatLogfmt, true),
+		PrometheusRegistry: reg,
+		Config:             cfg,
+		ResyncPeriod:       1 * time.Second,
+		KeepLabel: map[string]bool{
+			controller.LabelTier:    true,
+			controller.LabelService: true,
+		},
+	}
+	c, err = controller.New(opts)
+	Expect(err).ToNot(HaveOccurred())
+
 	// NOTE: We start the controller before adding objects since the items are
 	// queued by the controller sequentially and we depend on this behavior in
 	// our mock assertion.
-	l := log.New(GinkgoWriter, log.FormatLogfmt, true)
-	Expect(err).ToNot(HaveOccurred())
-	kL := map[string]bool{
-		controller.LabelTier:    true,
-		controller.LabelService: true,
-	}
-	reg = prometheus.NewPedanticRegistry()
-	c, err = controller.New(true, cfg, 1*time.Second, reg, kL, l)
-	Expect(err).ToNot(HaveOccurred())
-
 	ctx := context.Background()
 	ctx, cancel = context.WithCancel(ctx)
 	wg, ctx = errgroup.WithContext(ctx)

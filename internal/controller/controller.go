@@ -96,36 +96,39 @@ type Controller struct {
 	workqueue        workqueue.RateLimitingInterface
 }
 
-// New creates a new Controller.
-func New(
-	isTest bool,
-	cfg *rest.Config,
-	resyncPeriod time.Duration,
-	r prometheus.Registerer,
-	keepLabel map[string]bool,
-	logger *log.Logger) (*Controller, error) {
+// Opts holds the data required for instantiating a Controller.
+type Opts struct {
+	IsTest             bool
+	Logger             *log.Logger
+	KeepLabel          map[string]bool
+	PrometheusRegistry prometheus.Registerer
+	Config             *rest.Config
+	ResyncPeriod       time.Duration
+}
 
-	kClient, err := kubernetes.NewForConfig(cfg)
+// New creates a new Controller.
+func New(opts Opts) (*Controller, error) {
+	kClient, err := kubernetes.NewForConfig(opts.Config)
 	if err != nil {
 		return nil, errors.Wrap(err, "instantiating kubernetes client failed")
 	}
 
-	pClient, err := monitoringclient.NewForConfig(cfg)
+	pClient, err := monitoringclient.NewForConfig(opts.Config)
 	if err != nil {
 		return nil, errors.Wrap(err, "instantiating monitoring client failed")
 	}
 
 	c := &Controller{
-		isTest:        isTest,
-		logger:        logger,
-		metrics:       NewMetrics(r),
-		keepLabel:     keepLabel,
+		isTest:        opts.IsTest,
+		logger:        opts.Logger,
+		metrics:       NewMetrics(opts.PrometheusRegistry),
+		keepLabel:     opts.KeepLabel,
 		kubeClientset: kClient,
 		promClientset: pClient,
 		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "prometheusrules"),
 	}
 	c.keepTierServiceLabels = c.keepLabel[LabelTier] && c.keepLabel[LabelService]
-	ruleInf := informers.NewSharedInformerFactory(pClient, resyncPeriod).Monitoring().V1().PrometheusRules()
+	ruleInf := informers.NewSharedInformerFactory(pClient, opts.ResyncPeriod).Monitoring().V1().PrometheusRules()
 	c.promRuleLister = ruleInf.Lister()
 	c.promRuleInformer = ruleInf.Informer()
 	c.promRuleInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
