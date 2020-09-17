@@ -29,7 +29,6 @@ linters:
     - ineffassign
     - interfacer
     - lll
-    - maligned
     - misspell
     - nakedret
     - prealloc
@@ -70,10 +69,6 @@ linters-settings:
 
   lll:
     line-length: 140
-
-  maligned:
-    # Print struct with more effective memory layout.
-    suggest-new: true
 
   unused:
     # Treat code as a program (not a library) and report unused exported
