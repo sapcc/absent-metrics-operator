@@ -149,7 +149,6 @@ OuterLoop:
 		// This RuleGroup should be carried over as is.
 		new = append(new, oldG)
 	}
-
 	// Add the pending RuleGroups.
 	for _, g := range absentAlertRuleGroups {
 		if !updated[g.Name] {
