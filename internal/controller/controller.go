@@ -79,6 +79,7 @@ const (
 // Controller is the controller implementation for acting on PrometheusRule
 // resources.
 type Controller struct {
+	isTest  bool
 	logger  *log.Logger
 	metrics *Metrics
 
@@ -97,6 +98,7 @@ type Controller struct {
 
 // New creates a new Controller.
 func New(
+	isTest bool,
 	cfg *rest.Config,
 	resyncPeriod time.Duration,
 	r prometheus.Registerer,
@@ -114,6 +116,7 @@ func New(
 	}
 
 	c := &Controller{
+		isTest:        isTest,
 		logger:        logger,
 		metrics:       NewMetrics(r),
 		keepLabel:     keepLabel,
@@ -335,7 +338,13 @@ func (c *Controller) syncHandler(key string) error {
 		return err
 	}
 
-	c.metrics.SuccessfulPrometheusRuleReconcileTime.WithLabelValues(namespace, name).SetToCurrentTime()
+	gauge := c.metrics.SuccessfulPrometheusRuleReconcileTime.WithLabelValues(namespace, name)
+	if c.isTest {
+		gauge.Set(float64(1))
+	} else {
+		gauge.SetToCurrentTime()
+	}
+
 	return nil
 }
 

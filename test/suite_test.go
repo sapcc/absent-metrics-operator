@@ -46,6 +46,7 @@ var (
 	k8sClient client.Client
 
 	c      *controller.Controller
+	reg    *prometheus.Registry
 	wg     *errgroup.Group
 	cancel context.CancelFunc
 )
@@ -81,17 +82,18 @@ var _ = BeforeSuite(func() {
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	Expect(err).ToNot(HaveOccurred())
 
+	By("starting controller")
 	// NOTE: We start the controller before adding objects since the items are
 	// queued by the controller sequentially and we depend on this behavior in
 	// our mock assertion.
-	By("starting controller")
 	l := log.New(GinkgoWriter, log.FormatLogfmt, true)
 	Expect(err).ToNot(HaveOccurred())
 	kL := map[string]bool{
 		controller.LabelTier:    true,
 		controller.LabelService: true,
 	}
-	c, err = controller.New(cfg, 1*time.Second, prometheus.NewRegistry(), kL, l)
+	reg = prometheus.NewPedanticRegistry()
+	c, err = controller.New(true, cfg, 1*time.Second, reg, kL, l)
 	Expect(err).ToNot(HaveOccurred())
 
 	ctx := context.Background()

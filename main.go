@@ -87,7 +87,7 @@ func main() {
 	if err != nil {
 		logger.Fatal("msg", "instantiating cluster config failed", "err", err)
 	}
-	c, err := controller.New(cfg, controller.DefaultResyncPeriod, r, keepLabelMap, log.With(logger, "component", "controller"))
+	c, err := controller.New(false, cfg, controller.DefaultResyncPeriod, r, keepLabelMap, log.With(logger, "component", "controller"))
 	if err != nil {
 		logger.Fatal("msg", "could not instantiate controller", "err", err)
 	}

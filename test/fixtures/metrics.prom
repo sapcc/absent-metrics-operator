@@ -1,0 +1,4 @@
+# HELP absent_metrics_operator_successful_reconcile_time The time at which a specific PrometheusRule was successfully reconciled by the operator.
+# TYPE absent_metrics_operator_successful_reconcile_time gauge
+absent_metrics_operator_successful_reconcile_time{prometheusrule_name="openstack-limes-api.alerts",prometheusrule_namespace="resmgmt"} 1
+absent_metrics_operator_successful_reconcile_time{prometheusrule_name="openstack-swift.alerts",prometheusrule_namespace="swift"} 1
