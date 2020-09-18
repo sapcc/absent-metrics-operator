@@ -324,6 +324,7 @@ func (c *Controller) syncHandler(key string) error {
 		err = c.cleanUpOrphanedAbsentAlertsNamespace(name, namespace)
 		if err == nil {
 			c.metrics.SuccessfulPrometheusRuleReconcileTime.DeleteLabelValues(namespace, name)
+			return nil
 		}
 	default:
 		// Requeue object for later processing.
