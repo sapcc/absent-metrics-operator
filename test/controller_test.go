@@ -246,7 +246,7 @@ var _ = Describe("Controller", func() {
 			fixturePath, err := filepath.Abs("fixtures/metrics.prom")
 			Expect(err).ToNot(HaveOccurred())
 			actualPath := fixturePath + ".actual"
-			err = ioutil.WriteFile(actualPath, responseBytes, 0644)
+			err = ioutil.WriteFile(actualPath, responseBytes, 0600)
 			Expect(err).ToNot(HaveOccurred())
 
 			cmd := exec.Command("diff", "-u", fixturePath, actualPath)
