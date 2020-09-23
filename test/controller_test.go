@@ -17,12 +17,20 @@ package test
 import (
 	"context"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -215,6 +223,39 @@ var _ = Describe("Controller", func() {
 				Expect(err).To(HaveOccurred())
 				Expect(apierrors.IsNotFound(err)).To(Equal(true))
 			})
+		})
+
+		It("should cleanup orphaned gauge metrics", func() {
+			handler := promhttp.HandlerFor(reg, promhttp.HandlerOpts{})
+			method := http.MethodGet
+			path := "/metrics"
+			var requestBody io.Reader
+			request := httptest.NewRequest(method, path, requestBody)
+
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, request)
+
+			response := recorder.Result()
+			Expect(response.StatusCode).To(Equal(200))
+			responseBytes, err := ioutil.ReadAll(response.Body)
+			Expect(err).ToNot(HaveOccurred())
+
+			// Write actual content to file to make it easy to copy the
+			// computed result over to the fixture path when a new test is
+			// added or an existing one is modified.
+			fixturePath, err := filepath.Abs("fixtures/metrics.prom")
+			Expect(err).ToNot(HaveOccurred())
+			actualPath := fixturePath + ".actual"
+			err = ioutil.WriteFile(actualPath, responseBytes, 0600)
+			Expect(err).ToNot(HaveOccurred())
+
+			cmd := exec.Command("diff", "-u", fixturePath, actualPath)
+			cmd.Stdin = nil
+			cmd.Stdout = GinkgoWriter
+			cmd.Stderr = os.Stderr
+			if err = cmd.Run(); err != nil {
+				Fail(fmt.Sprintf("%s %s: body does not match", method, path))
+			}
 		})
 	})
 })

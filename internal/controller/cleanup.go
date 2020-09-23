@@ -40,61 +40,6 @@ func getPromRulefromAbsentRuleGroup(group string) string {
 	return sL[0]
 }
 
-// cleanUpOrphanedAbsentAlertsNamespace deletes orphaned absent alerts across a
-// cluster.
-func (c *Controller) cleanUpOrphanedAbsentAlertsCluster() error {
-	// Get names of all PrometheusRules that exist in the informer's cache:
-	//   map of namespace to map[promRuleName]bool
-	promRules := make(map[string]map[string]bool)
-	objs := c.promRuleInformer.GetStore().List()
-	for _, v := range objs {
-		pr, ok := v.(*monitoringv1.PrometheusRule)
-		if !ok {
-			continue
-		}
-		ns := pr.GetNamespace()
-		if _, ok = promRules[ns]; !ok {
-			promRules[ns] = make(map[string]bool)
-		}
-		promRules[ns][pr.GetName()] = true
-	}
-
-	for namespace, promRuleNames := range promRules {
-		// Get all absentPrometheusRules for this namespace.
-		prList, err := c.promClientset.MonitoringV1().PrometheusRules(namespace).
-			List(context.Background(), metav1.ListOptions{LabelSelector: labelOperatorManagedBy})
-		if err != nil {
-			return errors.Wrap(err, "could not list AbsentPrometheusRules")
-		}
-
-		for _, pr := range prList.Items {
-			// Check if there are any alerts in this absentPrometheusRule that
-			// don't belong to any PrometheusRule in promRuleNames.
-			//
-			// cleanup map is used because there could be multiple RuleGroups
-			// that contain absent alerts concerning a single PrometheusRule
-			// therefore we check all the groups before doing any cleanup.
-			cleanup := make(map[string]struct{})
-			for _, g := range pr.Spec.Groups {
-				n := getPromRulefromAbsentRuleGroup(g.Name)
-				if n != "" && !promRuleNames[n] {
-					cleanup[n] = struct{}{}
-				}
-			}
-
-			aPR := &absentPrometheusRule{PrometheusRule: pr}
-			for n := range cleanup {
-				if err := c.cleanUpOrphanedAbsentAlerts(n, aPR); err != nil {
-					return err
-				}
-				c.metrics.SuccessfulPrometheusRuleReconcileTime.DeleteLabelValues(namespace, n)
-			}
-		}
-	}
-
-	return nil
-}
-
 // cleanUpOrphanedAbsentAlertsNamespace deletes orphaned absent alerts
 // concerning a specific PrometheusRule from a namespace.
 //

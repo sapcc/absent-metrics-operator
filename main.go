@@ -87,7 +87,16 @@ func main() {
 	if err != nil {
 		logger.Fatal("msg", "instantiating cluster config failed", "err", err)
 	}
-	c, err := controller.New(cfg, controller.DefaultResyncPeriod, r, keepLabelMap, log.With(logger, "component", "controller"))
+
+	opts := controller.Opts{
+		IsTest:             false,
+		Logger:             log.With(logger, "component", "controller"),
+		KeepLabel:          keepLabelMap,
+		PrometheusRegistry: r,
+		Config:             cfg,
+		ResyncPeriod:       controller.DefaultResyncPeriod,
+	}
+	c, err := controller.New(opts)
 	if err != nil {
 		logger.Fatal("msg", "could not instantiate controller", "err", err)
 	}
