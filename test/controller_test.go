@@ -224,8 +224,63 @@ var _ = Describe("Controller", func() {
 				Expect(apierrors.IsNotFound(err)).To(Equal(true))
 			})
 		})
+	})
 
-		It("should cleanup orphaned gauge metrics", func() {
+	Describe("Operator disable", func() {
+		objKey := client.ObjectKey{Namespace: "swift", Name: "openstack-swift.alerts"}
+		prObjKey := client.ObjectKey{Namespace: "swift", Name: fixtures.OSAbsentPromRuleName}
+
+		Context("with disabling operator for a specific alert rule", func() {
+			It("should delete the corresponding absent alert rule from "+fixtures.OSAbsentPromRuleName+" in swift namespace", func() {
+				// Add the no_alert_on_absence label to a specific alert rule.
+				// This should result in the deletion of the corresponding
+				// absent alert rule.
+				var expected monitoringv1.PrometheusRule
+				err := k8sClient.Get(ctx, prObjKey, &expected)
+				Expect(err).ToNot(HaveOccurred())
+				// Remove first rule of first group
+				expected.Spec.Groups[0].Rules = expected.Spec.Groups[0].Rules[1:]
+
+				var pr monitoringv1.PrometheusRule
+				err = k8sClient.Get(ctx, objKey, &pr)
+				Expect(err).ToNot(HaveOccurred())
+				// Add no_alert_on_absence label to first rule of first group.
+				pr.Spec.Groups[0].Rules[0].Labels["no_alert_on_absence"] = "true"
+				err = k8sClient.Update(ctx, &pr)
+				Expect(err).ToNot(HaveOccurred())
+
+				waitForControllerToProcess()
+				var actual monitoringv1.PrometheusRule
+				err = k8sClient.Get(ctx, prObjKey, &actual)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(actual.Spec).To(Equal(expected.Spec))
+			})
+		})
+
+		Context("with disabling operator for a PrometheusRule", func() {
+			It("should delete the "+fixtures.OSAbsentPromRuleName+" in swift namespace", func() {
+				// Add the disable label to the original PrometheusRule
+				// resource. This should result in the deletion of the
+				// corresponding AbsentPrometheusRule.
+				var pr monitoringv1.PrometheusRule
+				err := k8sClient.Get(ctx, objKey, &pr)
+				Expect(err).ToNot(HaveOccurred())
+				pr.Labels["absent-metrics-operator/disable"] = "true"
+				// pr.Spec.Groups = []monitoringv1.RuleGroup{}
+				err = k8sClient.Update(ctx, &pr)
+				Expect(err).ToNot(HaveOccurred())
+
+				c.EnqueueAllPrometheusRules() // Force reconciliation
+				waitForControllerToProcess()
+				err = k8sClient.Get(ctx, prObjKey, &pr)
+				Expect(err).To(HaveOccurred())
+				Expect(apierrors.IsNotFound(err)).To(Equal(true))
+			})
+		})
+	})
+
+	Describe("AbsentPrometheusRule orphaned gauge metrics", func() {
+		It("should be cleaned up", func() {
 			handler := promhttp.HandlerFor(reg, promhttp.HandlerOpts{})
 			method := http.MethodGet
 			path := "/metrics"

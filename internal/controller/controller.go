@@ -196,22 +196,18 @@ func (c *Controller) enqueuePromRule(obj interface{}) {
 	}
 
 	// Do not enqueue object to workqueue if it is managed (read: created) by
-	// the operator itself or if the annotation for disabling the operator is
-	// present.
+	// the operator itself.
 	l := obj.(*monitoringv1.PrometheusRule).GetLabels()
 	if mustParseBool(l[labelOperatorManagedBy]) {
-		return
-	}
-	if mustParseBool(l[labelOperatorDisable]) {
-		c.logger.Debug("msg", "operator disabled, skipping", "key", key)
 		return
 	}
 
 	c.workqueue.Add(key)
 }
 
-// enqueueAllPrometheusRules adds all PrometheusRules to the workqueue.
-func (c *Controller) enqueueAllPrometheusRules() {
+// EnqueueAllPrometheusRules adds all PrometheusRules to the workqueue.
+// This method is exported because it is used in the unit tests to force reconciliation.
+func (c *Controller) EnqueueAllPrometheusRules() {
 	// promRules is a map of namespace to map[promRuleName]bool.
 	promRules := make(map[string]map[string]bool)
 	// absentPromRules is a map of namespace to a slice of absentPrometheusRule.
@@ -240,8 +236,8 @@ func (c *Controller) enqueueAllPrometheusRules() {
 		}
 	}
 
-	// Add the PrometheusRules which no longer exist but their corresponding
-	// absent alerts have been added to an absentPrometheusRule.
+	// Enqueue the PrometheusRules which no longer exist but their corresponding
+	// absent alerts still exist in an absentPrometheusRule.
 	// The syncHandler() will perform the appropriate cleanup for them.
 	for ns, promRuleNames := range promRules {
 		// Check all absentPrometheusRules for this namespace for alerts that
@@ -279,7 +275,7 @@ func (c *Controller) runWorker() {
 			case <-done:
 				return
 			case <-reconcileT.C:
-				c.enqueueAllPrometheusRules()
+				c.EnqueueAllPrometheusRules()
 			}
 		}
 	}()
@@ -342,7 +338,16 @@ func (c *Controller) syncHandler(key string) error {
 	promRule, err := c.promRuleLister.PrometheusRules(namespace).Get(name)
 	switch {
 	case err == nil:
-		err = c.updateAbsentAlerts(namespace, name, promRule)
+		if l := promRule.GetLabels(); mustParseBool(l[labelOperatorDisable]) {
+			c.logger.Debug("msg", "operator disabled for this PrometheusRule, cleaning up any corresponding absent alerts", "key", key)
+			err = c.cleanUpOrphanedAbsentAlertsNamespace(name, namespace)
+			if err == nil {
+				c.metrics.SuccessfulPrometheusRuleReconcileTime.DeleteLabelValues(namespace, name)
+				return nil
+			}
+		} else {
+			err = c.updateAbsentAlerts(namespace, name, promRule)
+		}
 	case apierrors.IsNotFound(err):
 		// The resource may no longer exist, in which case we clean up any
 		// orphaned absent alerts.
