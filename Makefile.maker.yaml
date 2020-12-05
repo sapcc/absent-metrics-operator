@@ -33,4 +33,4 @@ verbatim: |
 
   build/release-info: CHANGELOG.md
     @mkdir -p build
-    go run $(GO_BUILDFLAGS) tools/releaseinfo/main.go $< $(shell git describe --tags --abbrev=0) > $@
+    go run $(GO_BUILDFLAGS) tools/releaseinfo.go $< $(shell git describe --tags --abbrev=0) > $@

@@ -25,13 +25,13 @@ build/cover.out: test/bin
 
 build/release-info: CHANGELOG.md
 	@mkdir -p build
-	go run $(GO_BUILDFLAGS) tools/releaseinfo/main.go $< $(shell git describe --tags --abbrev=0) > $@
+	go run $(GO_BUILDFLAGS) tools/releaseinfo.go $< $(shell git describe --tags --abbrev=0) > $@
 
 build-all: build/absent-metrics-operator
 
 GO_BUILDFLAGS = -mod vendor
 GO_LDFLAGS = -X main.version=$(VERSION) -X main.commit=$(COMMIT_HASH) -X main.date=$(BUILD_DATE)
-GO_TESTENV =
+GO_TESTENV = 
 
 build/absent-metrics-operator: FORCE
 	go build $(GO_BUILDFLAGS) -ldflags '-s -w $(GO_LDFLAGS)' -o build/absent-metrics-operator .
