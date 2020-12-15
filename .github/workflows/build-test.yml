@@ -30,7 +30,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.14
+          go-version: 1.15
 
       - name: Cache kubebuilder control plane binaries
         uses: actions/cache@v2
@@ -38,11 +38,8 @@ jobs:
           path: test/bin
           key: ${{ runner.os }}-kubebuilder-${{ hashFiles('test/.kubebuilder-version') }}
 
-      - name: Basic build
-        run: make
-
       - name: Run tests with coverage
-        run: make build/cover.out
+        run: make build/absent-metrics-operator build/cover.out
 
       - name: Upload coverage report to Coveralls
         run: |
