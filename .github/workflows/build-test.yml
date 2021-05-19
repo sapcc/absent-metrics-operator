@@ -33,7 +33,7 @@ jobs:
           go-version: 1.15
 
       - name: Cache kubebuilder control plane binaries
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: test/bin
           key: ${{ runner.os }}-kubebuilder-${{ hashFiles('test/.kubebuilder-version') }}
