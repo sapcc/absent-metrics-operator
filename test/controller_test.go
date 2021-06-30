@@ -127,7 +127,7 @@ var _ = Describe("Controller", func() {
 
 				// Check if the corresponding AbsentPrometheusRule was updated.
 				expected := fixtures.SwiftOSAbsentPromRule
-				rL, err := c.ParseAlertRule(tier, service, rule)
+				rL, err := c.ParseAlertRule(tier, service, rule) //nolint:typecheck
 				Expect(err).ToNot(HaveOccurred())
 				i = len(expected.Spec.Groups) - 1
 				expected.Spec.Groups[i].Rules = append(expected.Spec.Groups[i].Rules, rL...)

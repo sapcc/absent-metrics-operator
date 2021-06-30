@@ -102,7 +102,7 @@ type Opts struct {
 
 // New creates a new Controller.
 func New(opts Opts) (*Controller, error) {
-	kClient, err := kubernetes.NewForConfig(opts.Config)
+	kubeClient, err := kubernetes.NewForConfig(opts.Config)
 	if err != nil {
 		return nil, errors.Wrap(err, "instantiating kubernetes client failed")
 	}
@@ -117,7 +117,7 @@ func New(opts Opts) (*Controller, error) {
 		logger:        opts.Logger,
 		metrics:       NewMetrics(opts.PrometheusRegistry),
 		keepLabel:     opts.KeepLabel,
-		kubeClientset: kClient,
+		kubeClientset: kubeClient,
 		promClientset: pClient,
 		workqueue:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "prometheusrules"),
 	}
