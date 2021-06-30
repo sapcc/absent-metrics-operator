@@ -1,7 +1,7 @@
 # Absent Metrics Operator
 
 [![GitHub Release](https://img.shields.io/github/v/release/sapcc/absent-metrics-operator)](https://github.com/sapcc/absent-metrics-operator/releases/latest)
-[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/sapcc/absent-metrics-operator/Build%20and%20Test)](https://github.com/sapcc/absent-metrics-operator/actions?query=workflow%3A%22Build+and+Test%22)
+[![CI](https://github.com/sapcc/absent-metrics-operator/actions/workflows/ci.yaml/badge.svg)](https://github.com/sapcc/absent-metrics-operator/actions/workflows/ci.yaml)
 [![Coveralls github](https://img.shields.io/coveralls/github/sapcc/absent-metrics-operator)](https://coveralls.io/github/sapcc/absent-metrics-operator)
 [![Go Report Card](https://goreportcard.com/badge/github.com/sapcc/absent-metrics-operator)](https://goreportcard.com/report/github.com/sapcc/absent-metrics-operator)
 [![Docker Pulls](https://img.shields.io/docker/pulls/sapcc/absent-metrics-operator)](https://hub.docker.com/r/sapcc/absent-metrics-operator)
