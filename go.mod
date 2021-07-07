@@ -1,6 +1,6 @@
 module github.com/sapcc/absent-metrics-operator
 
-go 1.15
+go 1.16
 
 // Note: ensure that the "k8s.io/*" and "github.com/prometheus/*" dependencies
 // have the same versions as used by github.com/prometheus-operator/prometheus-operator.
