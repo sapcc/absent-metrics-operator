@@ -28,9 +28,19 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: "1.15"
+        go-version: "1.16"
+
+    - name: Cache Go modules
+      uses: actions/cache@v2
+      with:
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+        restore-keys: ${{ runner.os }}-go-
+
     - name: Make build
-      run: GO_BUILDFLAGS='-mod vendor' make build-all
+      run: make build-all
 
   lint:
     name: Lint
@@ -43,7 +53,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: "1.15"
+        go-version: "1.16"
 
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v2
@@ -63,7 +73,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: "1.15"
+        go-version: "1.16"
 
     - name: Cache kubebuilder control plane binaries
       uses: actions/cache@v2
@@ -71,8 +81,17 @@ jobs:
         path: test/bin
         key: ${{ runner.os }}-kubebuilder-${{ hashFiles('test/.kubebuilder-version') }}
 
+    - name: Cache Go modules
+      uses: actions/cache@v2
+      with:
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+        restore-keys: ${{ runner.os }}-go-
+
     - name: Run tests and generate coverage report
-      run: GO_BUILDFLAGS='-mod vendor' make build/cover.out
+      run: make build/cover.out
 
     - name: Upload coverage report to Coveralls
       env:

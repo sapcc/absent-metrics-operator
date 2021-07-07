@@ -1,5 +1,4 @@
 run:
-  modules-download-mode: vendor
   deadline: 2m # 1m by default
 
 linters:

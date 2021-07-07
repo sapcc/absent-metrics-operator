@@ -28,7 +28,7 @@ build/release-info: build CHANGELOG.md
 
 build-all: build/absent-metrics-operator
 
-GO_BUILDFLAGS = -mod vendor
+GO_BUILDFLAGS = 
 GO_LDFLAGS = -X main.version=$(VERSION) -X main.commit=$(COMMIT_HASH) -X main.date=$(BUILD_DATE)
 GO_TESTENV = 
 
@@ -72,9 +72,8 @@ build/cover.html: build/cover.out
 build:
 	@mkdir $@
 
-vendor: FORCE
+tidy-deps: FORCE
 	go mod tidy
-	go mod vendor
 	go mod verify
 
 license-headers: FORCE
