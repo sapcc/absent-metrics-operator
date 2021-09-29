@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
@@ -63,11 +64,14 @@ var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter)))
 
 	By("bootstrapping test environment")
-	// Use "bin" subdirectory for control plane binaries. By default, envtest
+	// Get directory for control plane binaries from setup-envtest. By default, envtest
 	// looks for these binaries in "/usr/local/kubebuilder/bin".
 	p, err := filepath.Abs("bin")
 	Expect(err).ToNot(HaveOccurred())
-	err = os.Setenv("KUBEBUILDER_ASSETS", p)
+	b, err := exec.Command("setup-envtest", "use", "--installed-only",
+		"--print", "path", "--bin-dir", p).CombinedOutput()
+	Expect(err).ToNot(HaveOccurred())
+	err = os.Setenv("KUBEBUILDER_ASSETS", string(b))
 	Expect(err).ToNot(HaveOccurred())
 
 	testEnv = &envtest.Environment{
