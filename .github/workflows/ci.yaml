@@ -1,5 +1,5 @@
 name: CI
-on:
+"on":
   pull_request:
     branches:
     - '*'
@@ -19,38 +19,27 @@ jobs:
     steps:
     - name: Check out code
       uses: actions/checkout@v2
-      with:
-        # Only a single commit is fetched by default, for the ref/SHA that
-        # triggered the workflow. We need `fetch-depth: 0` to fetch all
-        # history for all branches and tags.
-        fetch-depth: 0
-
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: "1.16"
+        go-version: "1.17"
     - name: Make build
       run: GO_BUILDFLAGS='-mod vendor' make build-all
-
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    if: '!contains(github.event.head_commit.message, ''[ci skip]'')'
     steps:
     - name: Check out code
       uses: actions/checkout@v2
-
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: "1.16"
-
+        go-version: "1.17"
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v2
       with:
         skip-go-installation: true
         version: latest
-
   test:
     name: Test
     needs:
@@ -59,25 +48,21 @@ jobs:
     steps:
     - name: Check out code
       uses: actions/checkout@v2
-
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: "1.16"
-
-    - name: Cache kubebuilder control plane binaries
+        go-version: "1.17"
+    - name: Cache envtest control plane binaries
       uses: actions/cache@v2
       with:
         path: test/bin
-        key: ${{ runner.os }}-kubebuilder-${{ hashFiles('test/.kubebuilder-version') }}
-
+        key: ${{ runner.os }}-kubebuilder-${{ hashFiles('test/.envtest-version') }}
     - name: Run tests and generate coverage report
       run: GO_BUILDFLAGS='-mod vendor' make build/cover.out
-
     - name: Upload coverage report to Coveralls
       env:
         COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GIT_BRANCH: ${{ github.head_ref }}
       run: |
-        GO111MODULE=off go get -u github.com/mattn/goveralls
+        go install github.com/mattn/goveralls@latest
         goveralls -service=github -coverprofile=build/cover.out
