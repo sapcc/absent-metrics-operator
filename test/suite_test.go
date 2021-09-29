@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
@@ -64,14 +63,19 @@ var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter)))
 
 	By("bootstrapping test environment")
-	// Get directory for control plane binaries from setup-envtest. By default, envtest
-	// looks for these binaries in "/usr/local/kubebuilder/bin".
-	p, err := filepath.Abs("bin")
+	// Get directory for control plane binaries.
+	// setup-envtest should have downloaded binaries in a directory inside bin/k8s.
+	files, err := ioutil.ReadDir("bin/k8s")
 	Expect(err).ToNot(HaveOccurred())
-	b, err := exec.Command("setup-envtest", "use", "--installed-only",
-		"--print", "path", "--bin-dir", p).CombinedOutput()
+	if len(files) != 1 || !files[0].IsDir() {
+		Fail("test/bin/k8s should only have one directory and that directory should contain control plane binaries")
+	}
+	p, err := filepath.Abs(filepath.Join("bin/k8s", files[0].Name()))
 	Expect(err).ToNot(HaveOccurred())
-	err = os.Setenv("KUBEBUILDER_ASSETS", string(b))
+
+	// Set "KUBEBUILDER_ASSETS" env var. By default, envtest looks for these binaries in
+	// "/usr/local/kubebuilder/bin".
+	err = os.Setenv("KUBEBUILDER_ASSETS", p)
 	Expect(err).ToNot(HaveOccurred())
 
 	testEnv = &envtest.Environment{
@@ -112,9 +116,9 @@ var _ = BeforeSuite(func() {
 
 	By("adding mock PrometheusRule resources")
 	mockDir := filepath.Join("fixtures", "prometheusrules")
-	files, err := ioutil.ReadDir(mockDir)
+	mockFiles, err := ioutil.ReadDir(mockDir)
 	Expect(err).ToNot(HaveOccurred())
-	for _, file := range files {
+	for _, file := range mockFiles {
 		b, err := ioutil.ReadFile(filepath.Join(mockDir, file.Name()))
 		Expect(err).ToNot(HaveOccurred())
 
