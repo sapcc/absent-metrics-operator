@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//nolint:errcheck
 package log
 
 import (
 	"io"
 	"os"
 
-	gokitlog "github.com/go-kit/kit/log"
-	gokitlevel "github.com/go-kit/kit/log/level"
+	gokitlog "github.com/go-kit/log"
+	gokitlevel "github.com/go-kit/log/level"
 )
 
 // Different types of log Format.

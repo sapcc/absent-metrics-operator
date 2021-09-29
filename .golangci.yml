@@ -31,7 +31,6 @@ linters:
     - misspell
     - nakedret
     - prealloc
-    - revive
     - rowserrcheck
     - staticcheck
     - structcheck
@@ -56,10 +55,6 @@ linters-settings:
     # Report about not checking of errors in type assertions:
     #   `a := b.(MyStruct)`;
     check-type-assertions: false
-
-    # Path to a file containing a list of functions to exclude from checking.
-    # See https://github.com/kisielk/errcheck#excluding-functions for details.
-    exclude: ./.errcheck-excludes
 
   goimports:
     # Put imports beginning with prefix after 3rd-party packages. It's a

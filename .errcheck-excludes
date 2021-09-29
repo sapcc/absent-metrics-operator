@@ -1,5 +1,0 @@
-// This files contains a list of functions to exclude from checking by the
-// errcheck linter. The file should contain one function signature per line.
-// See https://github.com/kisielk/errcheck#excluding-functions for details.
-
-(github.com/go-kit/kit/log.Logger).Log
