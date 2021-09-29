@@ -56,7 +56,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: test/bin
-        key: ${{ runner.os }}-kubebuilder-${{ hashFiles('test/.envtest-version') }}
+        key: ${{ runner.os }}-envtest-${{ hashFiles('test/.envtest-version') }}
     - name: Run tests and generate coverage report
       run: GO_BUILDFLAGS='-mod vendor' make build/cover.out
     - name: Upload coverage report to Coveralls

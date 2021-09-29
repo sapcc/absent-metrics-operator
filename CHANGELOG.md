@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2] - 2021-09-29
+
+### Changed
+
+- Updated Go to `1.17` and all dependencies to their latest version.
+
 ## [0.7.1] - 2020-11-17
 
 ### Fixed
@@ -75,7 +81,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release.
 
-[unreleased]: https://github.com/sapcc/absent-metrics-operator/compare/v0.7.1...HEAD
+[unreleased]: https://github.com/sapcc/absent-metrics-operator/compare/v0.7.2...HEAD
+[0.7.2]: https://github.com/sapcc/absent-metrics-operator/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/sapcc/absent-metrics-operator/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/sapcc/absent-metrics-operator/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/sapcc/absent-metrics-operator/compare/v0.5.2...v0.6.0

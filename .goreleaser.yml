@@ -5,6 +5,8 @@ builds:
       - linux
     goarch:
       - amd64
+    flags:
+      - -mod=vendor
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.FullCommit}} -X main.date={{.CommitDate}}
     mod_timestamp: "{{ .CommitTimestamp }}" # Ensure builds are reproducible
@@ -15,11 +17,8 @@ archives:
 dockers:
   - image_templates:
       - "sapcc/absent-metrics-operator:{{ .Tag }}"
-      - "sapcc/absent-metrics-operator:v{{ .Major }}.{{ .Minor }}"
       - "sapcc/absent-metrics-operator:latest"
     dockerfile: Dockerfile.goreleaser
-    binaries:
-      - absent-metrics-operator
     build_flag_templates:
       - "--pull"
       - "--label=org.opencontainers.image.created={{.Date}}"
@@ -27,6 +26,7 @@ dockers:
       - "--label=org.opencontainers.image.source={{.GitURL}}"
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=source_repository={{.GitURL}}" # this label is needed for Keppel
 
 checksum:
   name_template: "checksums.txt"

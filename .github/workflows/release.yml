@@ -4,7 +4,7 @@ name: goreleaser
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
   release:
@@ -21,7 +21,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.15
+          go-version: 1.17
 
       - name: Docker Login
         env:
