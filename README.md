@@ -2,7 +2,7 @@
 
 [![GitHub Release](https://img.shields.io/github/v/release/sapcc/absent-metrics-operator)](https://github.com/sapcc/absent-metrics-operator/releases/latest)
 [![CI](https://github.com/sapcc/absent-metrics-operator/actions/workflows/ci.yaml/badge.svg)](https://github.com/sapcc/absent-metrics-operator/actions/workflows/ci.yaml)
-[![Coveralls github](https://img.shields.io/coveralls/github/sapcc/absent-metrics-operator)](https://coveralls.io/github/sapcc/absent-metrics-operator)
+[![Coverage Status](https://coveralls.io/repos/github/sapcc/absent-metrics-operator/badge.svg?branch=master)](https://coveralls.io/github/sapcc/absent-metrics-operator?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/sapcc/absent-metrics-operator)](https://goreportcard.com/report/github.com/sapcc/absent-metrics-operator)
 [![Docker Pulls](https://img.shields.io/docker/pulls/sapcc/absent-metrics-operator)](https://hub.docker.com/r/sapcc/absent-metrics-operator)
 
