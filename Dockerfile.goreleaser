@@ -1,3 +1,5 @@
+# vim: set filetype=dockerfile:
+
 # This Dockerfile is used by GoReleaser.
 # We use this additional file instead of the regular Dockerfile because when GoReleaser
 # runs, it also compiles the required binary which can be subsequently used for this
