@@ -17,7 +17,6 @@ package test
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -65,7 +64,7 @@ var _ = BeforeSuite(func() {
 	By("bootstrapping test environment")
 	// Get directory for control plane binaries.
 	// setup-envtest should have downloaded binaries in a directory inside bin/k8s.
-	files, err := ioutil.ReadDir("bin/k8s")
+	files, err := os.ReadDir("bin/k8s")
 	Expect(err).ToNot(HaveOccurred())
 	if len(files) != 1 || !files[0].IsDir() {
 		Fail("test/bin/k8s should only have one directory and that directory should contain control plane binaries")
@@ -116,10 +115,10 @@ var _ = BeforeSuite(func() {
 
 	By("adding mock PrometheusRule resources")
 	mockDir := filepath.Join("fixtures", "prometheusrules")
-	mockFiles, err := ioutil.ReadDir(mockDir)
+	mockFiles, err := os.ReadDir(mockDir)
 	Expect(err).ToNot(HaveOccurred())
 	for _, file := range mockFiles {
-		b, err := ioutil.ReadFile(filepath.Join(mockDir, file.Name()))
+		b, err := os.ReadFile(filepath.Join(mockDir, file.Name()))
 		Expect(err).ToNot(HaveOccurred())
 
 		var pr monitoringv1.PrometheusRule

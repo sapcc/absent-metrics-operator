@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -292,7 +291,7 @@ var _ = Describe("Controller", func() {
 
 			response := recorder.Result()
 			Expect(response.StatusCode).To(Equal(200))
-			responseBytes, err := ioutil.ReadAll(response.Body)
+			responseBytes, err := io.ReadAll(response.Body)
 			Expect(err).ToNot(HaveOccurred())
 
 			// Write actual content to file to make it easy to copy the
@@ -301,7 +300,7 @@ var _ = Describe("Controller", func() {
 			fixturePath, err := filepath.Abs("fixtures/metrics.prom")
 			Expect(err).ToNot(HaveOccurred())
 			actualPath := fixturePath + ".actual"
-			err = ioutil.WriteFile(actualPath, responseBytes, 0600)
+			err = os.WriteFile(actualPath, responseBytes, 0600)
 			Expect(err).ToNot(HaveOccurred())
 
 			cmd := exec.Command("diff", "-u", fixturePath, actualPath)
