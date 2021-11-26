@@ -1,0 +1,2 @@
+# Mark go.sum as a generated file and suppress go.sum in diffs on GitHub.
+go.sum linguist-generated
