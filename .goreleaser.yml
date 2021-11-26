@@ -14,20 +14,6 @@ builds:
 archives:
   - name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
 
-dockers:
-  - image_templates:
-      - "sapcc/absent-metrics-operator:{{ .Tag }}"
-      - "sapcc/absent-metrics-operator:latest"
-    dockerfile: Dockerfile.goreleaser
-    build_flag_templates:
-      - "--pull"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.source={{.GitURL}}"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=source_repository={{.GitURL}}" # this label is needed for Keppel
-
 checksum:
   name_template: "checksums.txt"
 

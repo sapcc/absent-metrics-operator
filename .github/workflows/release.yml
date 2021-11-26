@@ -23,13 +23,6 @@ jobs:
         with:
           go-version: 1.17
 
-      - name: Docker Login
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
-        run: |
-          echo "${DOCKER_ACCESS_TOKEN}" | docker login --username "${DOCKER_USERNAME}" --password-stdin
-
       - name: Generate release info
         run: make build/release-info
 
@@ -40,8 +33,3 @@ jobs:
           args: release --rm-dist --release-notes=./build/release-info
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Cleanup
-        if: always()
-        run: |
-          rm -f ${HOME}/.docker/config.json

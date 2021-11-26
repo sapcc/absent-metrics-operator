@@ -4,7 +4,6 @@
 [![CI](https://github.com/sapcc/absent-metrics-operator/actions/workflows/ci.yaml/badge.svg)](https://github.com/sapcc/absent-metrics-operator/actions/workflows/ci.yaml)
 [![Coverage Status](https://coveralls.io/repos/github/sapcc/absent-metrics-operator/badge.svg?branch=master)](https://coveralls.io/github/sapcc/absent-metrics-operator?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/sapcc/absent-metrics-operator)](https://goreportcard.com/report/github.com/sapcc/absent-metrics-operator)
-[![Docker Pulls](https://img.shields.io/docker/pulls/sapcc/absent-metrics-operator)](https://hub.docker.com/r/sapcc/absent-metrics-operator)
 
 > Project status: **alpha**. The API and user facing objects may change.
 
@@ -87,10 +86,9 @@ annotations:
 
 ## Usage
 
-We provide pre-compiled binaries and container images. See the latest
-[release](https://github.com/sapcc/absent-metrics-operator/releases/latest).
+You can download pre-compiled binaries for the [latest release](https://github.com/sapcc/absent-metrics-operator/releases/latest).
 
-Alternatively, you can build with `make`, install with `make install`, `go get`, or
+Alternatively, you can build with `make`, install with `make install`, `go install`, or
 `docker build`.
 
 For usage instructions:
