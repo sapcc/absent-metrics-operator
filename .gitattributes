@@ -1,6 +1,3 @@
-# Exclude the following from language statistics on GitHub.
-vendor/** linguist-vendored
-
 # Exclude the following from language statistics and suppress them in diffs on GitHub.
 go.sum linguist-generated
 vendor/modules.txt linguist-generated
