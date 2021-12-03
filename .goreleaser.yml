@@ -1,3 +1,6 @@
+gomod:
+  proxy: true
+
 builds:
   - env:
       - CGO_ENABLED=0
