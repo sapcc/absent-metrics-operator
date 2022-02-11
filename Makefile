@@ -62,14 +62,16 @@ comma := ,
 check: build-all static-check build/cover.html FORCE
 	@printf "\e[1;32m>> All checks successful.\e[0m\n"
 
-static-check: FORCE
+prepare-static-check: FORCE
 	@command -v golangci-lint >/dev/null 2>&1 || { echo >&2 "Error: golangci-lint is not installed. See: https://golangci-lint.run/usage/install/"; exit 1; }
+
+static-check: prepare-static-check FORCE
 	@printf "\e[1;36m>> golangci-lint\e[0m\n"
 	@golangci-lint run
 
 build/cover.out: build FORCE
 	@printf "\e[1;36m>> go test\e[0m\n"
-	@env $(GO_TESTENV) go test $(GO_BUILDFLAGS) -ldflags '-s -w $(GO_LDFLAGS)' -p 1 -coverprofile=$@ -covermode=count -coverpkg=$(subst $(space),$(comma),$(GO_COVERPKGS)) $(GO_TESTPKGS)
+	@env $(GO_TESTENV) go test $(GO_BUILDFLAGS) -ldflags '-s -w $(GO_LDFLAGS)' -shuffle=on -p 1 -coverprofile=$@ -covermode=count -coverpkg=$(subst $(space),$(comma),$(GO_COVERPKGS)) $(GO_TESTPKGS)
 
 build/cover.html: build/cover.out
 	@printf "\e[1;36m>> go tool cover > build/cover.html\e[0m\n"
