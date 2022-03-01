@@ -34,7 +34,7 @@ build/release-info: CHANGELOG.md | build
 
 build-all: build/absent-metrics-operator
 
-GO_BUILDFLAGS = -mod vendor
+GO_BUILDFLAGS =
 GO_LDFLAGS = -X main.version=$(VERSION) -X main.commit=$(COMMIT_HASH) -X main.date=$(BUILD_DATE)
 GO_TESTENV =
 
@@ -80,14 +80,8 @@ build/cover.html: build/cover.out
 build:
 	@mkdir $@
 
-vendor: FORCE
+tidy-deps: FORCE
 	go mod tidy
-	go mod vendor
-	go mod verify
-
-vendor-compat: FORCE
-	go mod tidy -compat=$(shell awk '$$1 == "go" { print $$2 }' < go.mod)
-	go mod vendor
 	go mod verify
 
 license-headers: FORCE

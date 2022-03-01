@@ -1,6 +1,10 @@
 run:
-  modules-download-mode: vendor
   deadline: 2m # 1m by default
+  # By using the readonly option, the go command is disallowed from the implicit automatic
+  # updating of go.mod. Instead, it fails when any changes to go.mod are needed. This
+  # setting is most useful to check that go.mod does not need updates, such as in a
+  # continuous integration and testing system.
+  modules-download-mode: readonly
 
 linters:
   # Do not use 'enable-all', it is deprecated.

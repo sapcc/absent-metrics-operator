@@ -3,9 +3,6 @@ binaries:
     fromPackage: .
     installTo: bin/
 
-vendoring:
-  enabled: true
-
 staticCheck:
   golangciLint: true
 
