@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	promlabels "github.com/prometheus/prometheus/pkg/labels"
+	promlabels "github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
