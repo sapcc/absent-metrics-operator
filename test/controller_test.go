@@ -31,6 +31,8 @@ import (
 	. "github.com/onsi/gomega"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -354,7 +356,7 @@ func newObjKey(namespace, name string) client.ObjectKey {
 
 func createMockRule(metric string) monitoringv1.Rule {
 	return monitoringv1.Rule{
-		Alert: strings.Title(metric),
+		Alert: cases.Title(language.English).String(metric),
 		Expr:  intstr.FromString(fmt.Sprintf("%s > 0", metric)),
 		For:   "5m",
 		Labels: map[string]string{

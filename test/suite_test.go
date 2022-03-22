@@ -104,7 +104,7 @@ var _ = BeforeSuite(func() {
 	wg.Go(func() error { return c.Run(ctx.Done()) })
 
 	By("adding mock PrometheusRule resources")
-	addMockPrometheusRules(ctx)
+	Expect(addMockPrometheusRules(ctx)).ToNot(HaveOccurred())
 
 	// High duration for sleep is needed otherwise test runs in CI fail.
 	time.Sleep(1 * time.Second)
@@ -161,7 +161,7 @@ func addMockPrometheusRules(ctx context.Context) error {
 		}
 
 		// Create namespace if it doesn't exist already.
-		ns := corev1.Namespace{}
+		var ns corev1.Namespace
 		err = k8sClient.Get(ctx, client.ObjectKey{Name: pr.Namespace}, &ns)
 		if err != nil {
 			if !apierrors.IsNotFound(err) {
@@ -169,6 +169,9 @@ func addMockPrometheusRules(ctx context.Context) error {
 			}
 			ns.Name = pr.Namespace
 			err = k8sClient.Create(ctx, &ns)
+		}
+		if err != nil {
+			return err
 		}
 
 		// Create PrometheusRule resource.

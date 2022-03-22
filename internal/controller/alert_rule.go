@@ -23,6 +23,8 @@ import (
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	promlabels "github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/sapcc/absent-metrics-operator/internal/log"
@@ -217,7 +219,7 @@ func (c *Controller) ParseAlertRule(defaultTier, defaultService string, in monit
 			l := strings.ToLower(v)
 			if prev != l {
 				prev = l
-				alertName += strings.Title(l)
+				alertName += cases.Title(language.English).String(l)
 			}
 		}
 
