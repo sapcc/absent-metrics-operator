@@ -14,6 +14,7 @@ go 1.17
 // 5. Open an issue, if the above doesn't work.
 
 require (
+	github.com/ghodss/yaml v1.0.0
 	github.com/go-kit/log v0.2.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.17.0
