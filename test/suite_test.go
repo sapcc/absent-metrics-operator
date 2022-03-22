@@ -143,7 +143,7 @@ func binaryAssetsAbsPath() (string, error) {
 }
 
 func addMockPrometheusRules(ctx context.Context) error {
-	mockDir := filepath.Join("fixtures", "prometheusrules")
+	mockDir := filepath.Join("fixtures", "start-data")
 	mockFiles, err := os.ReadDir(mockDir)
 	if err != nil {
 		return err
