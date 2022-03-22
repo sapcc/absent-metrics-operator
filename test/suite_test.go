@@ -16,13 +16,14 @@ package test
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
-	. "github.com/onsi/ginkgo"
+	"github.com/ghodss/yaml"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus/client_golang/prometheus"
@@ -32,7 +33,6 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
-	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
@@ -53,35 +53,22 @@ var (
 //nolint:unused
 func TestController(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecsWithDefaultAndCustomReporters(t,
-		"Controller Suite",
-		[]Reporter{printer.NewlineReporter{}})
+	RunSpecs(t, "Controller Suite")
 }
 
 var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter)))
 
 	By("bootstrapping test environment")
-	// Get directory for control plane binaries.
-	// setup-envtest should have downloaded binaries in a directory inside bin/k8s.
-	files, err := os.ReadDir("bin/k8s")
+	p, err := binaryAssetsAbsPath()
 	Expect(err).ToNot(HaveOccurred())
-	if len(files) != 1 || !files[0].IsDir() {
-		Fail("test/bin/k8s should only have one directory and that directory should contain control plane binaries")
-	}
-	p, err := filepath.Abs(filepath.Join("bin/k8s", files[0].Name()))
-	Expect(err).ToNot(HaveOccurred())
-
-	// Set "KUBEBUILDER_ASSETS" env var. By default, envtest looks for these binaries in
-	// "/usr/local/kubebuilder/bin".
-	err = os.Setenv("KUBEBUILDER_ASSETS", p)
-	Expect(err).ToNot(HaveOccurred())
-
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths: []string{filepath.Join("fixtures", "crd")},
+		CRDDirectoryPaths:     []string{"crd"},
+		BinaryAssetsDirectory: p,
 	}
 	cfg, err := testEnv.Start()
 	Expect(err).ToNot(HaveOccurred())
+	Expect(cfg).NotTo(BeNil())
 
 	err = monitoringv1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
@@ -114,30 +101,7 @@ var _ = BeforeSuite(func() {
 	wg.Go(func() error { return c.Run(ctx.Done()) })
 
 	By("adding mock PrometheusRule resources")
-	mockDir := filepath.Join("fixtures", "prometheusrules")
-	mockFiles, err := os.ReadDir(mockDir)
-	Expect(err).ToNot(HaveOccurred())
-	for _, file := range mockFiles {
-		b, err := os.ReadFile(filepath.Join(mockDir, file.Name()))
-		Expect(err).ToNot(HaveOccurred())
-
-		var pr monitoringv1.PrometheusRule
-		err = json.Unmarshal(b, &pr)
-		Expect(err).ToNot(HaveOccurred())
-
-		// Create namespace if it doesn't exist already.
-		ns := corev1.Namespace{}
-		err = k8sClient.Get(ctx, client.ObjectKey{Name: pr.Namespace}, &ns)
-		if err != nil && apierrors.IsNotFound(err) {
-			ns.Name = pr.Namespace
-			err = k8sClient.Create(ctx, &ns)
-		}
-		Expect(err).ToNot(HaveOccurred())
-
-		// Create PrometheusRule resource
-		err = k8sClient.Create(ctx, &pr)
-		Expect(err).ToNot(HaveOccurred())
-	}
+	Expect(addMockPrometheusRules(ctx)).ToNot(HaveOccurred())
 
 	// High duration for sleep is needed otherwise test runs in CI fail.
 	time.Sleep(1 * time.Second)
@@ -151,3 +115,68 @@ var _ = AfterSuite(func() {
 	By("tearing down the test environment")
 	Expect(testEnv.Stop()).To(Succeed())
 })
+
+///////////////////////////////////////////////////////////////////////////////
+// Helper functions
+
+func binaryAssetsAbsPath() (string, error) {
+	// setup-envtest should have downloaded binaries in a subdirectory inside bin/k8s.
+	parentDir := "bin/k8s"
+	files, err := os.ReadDir(parentDir)
+	if err != nil {
+		return "", nil
+	}
+	if len(files) != 1 || !files[0].IsDir() {
+		return "", fmt.Errorf(
+			"test/%s should only have one directory and that directory should contain binary assets downloaded by setup-envtest",
+			parentDir,
+		)
+	}
+	absPath, err := filepath.Abs(filepath.Join(parentDir, files[0].Name()))
+	if err != nil {
+		return "", err
+	}
+	return absPath, nil
+}
+
+func addMockPrometheusRules(ctx context.Context) error {
+	mockDir := filepath.Join("fixtures", "start-data")
+	mockFiles, err := os.ReadDir(mockDir)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range mockFiles {
+		var pr monitoringv1.PrometheusRule
+		b, err := os.ReadFile(filepath.Join(mockDir, file.Name()))
+		if err != nil {
+			return err
+		}
+		err = yaml.Unmarshal(b, &pr)
+		if err != nil {
+			return err
+		}
+
+		// Create namespace if it doesn't exist already.
+		var ns corev1.Namespace
+		err = k8sClient.Get(ctx, client.ObjectKey{Name: pr.Namespace}, &ns)
+		if err != nil {
+			if !apierrors.IsNotFound(err) {
+				return err
+			}
+			ns.Name = pr.Namespace
+			err = k8sClient.Create(ctx, &ns)
+		}
+		if err != nil {
+			return err
+		}
+
+		// Create PrometheusRule resource.
+		err = k8sClient.Create(ctx, &pr)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

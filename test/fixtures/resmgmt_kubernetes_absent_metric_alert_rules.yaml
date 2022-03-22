@@ -1,0 +1,44 @@
+metadata:
+  name: kubernetes-absent-metric-alert-rules
+  namespace: resmgmt
+  labels:
+    absent-metrics-operator/managed-by: "true"
+    prometheus: kubernetes
+    service: keppel
+    tier: os
+    type: alerting-rules
+
+spec:
+  groups:
+    - name: kubernetes-keppel.alerts/keppel.alerts
+      rules:
+        - alert: AbsentOsKeppelKubePodFailedSchedulingMemoryTotal
+          expr: absent(kube_pod_failed_scheduling_memory_total)
+          for: 10m
+          labels:
+            context: absent-metrics
+            service: keppel
+            severity: info
+            tier: os
+          annotations:
+            description:
+              The metric 'kube_pod_failed_scheduling_memory_total' is missing.
+              'OpenstackKeppelPodSchedulingInsufficientMemory' alert using it may not
+              fire as intended. See <https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md|the
+              operator playbook>.
+            summary: missing kube_pod_failed_scheduling_memory_total
+        - alert: AbsentOsKeppelContainerMemoryUsagePercent
+          expr: absent(keppel_container_memory_usage_percent)
+          for: 10m
+          labels:
+            context: absent-metrics
+            service: keppel
+            severity: info
+            tier: os
+          annotations:
+            description:
+              The metric 'keppel_container_memory_usage_percent' is missing.
+              'OpenstackKeppelPodOOMExceedingLimits' alert using it may not fire as intended.
+              See <https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md|the
+              operator playbook>.
+            summary: missing keppel_container_memory_usage_percent
