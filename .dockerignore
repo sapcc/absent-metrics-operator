@@ -1,4 +1,10 @@
 .github/
 build/
+config/
 dist/
+doc/
+hack/
 test/
+
+/*.md
+/*.yaml

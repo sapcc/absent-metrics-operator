@@ -1,0 +1,6 @@
+domain: cloud.sap
+layout:
+- go.kubebuilder.io/v3
+projectName: absent-metrics-operator
+repo: github.com/sapcc/absent-metrics-operator
+version: "3"
