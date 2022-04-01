@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"sort"
 	"time"
 
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -73,6 +74,11 @@ func updatedAtTime() string {
 }
 
 func (r *PrometheusRuleReconciler) createAbsencePrometheusRule(ctx context.Context, absencePromRule *monitoringv1.PrometheusRule) error {
+	// Sort rule groups for consistent test results.
+	sort.SliceStable(absencePromRule.Spec.Groups, func(i, j int) bool {
+		return absencePromRule.Spec.Groups[i].Name < absencePromRule.Spec.Groups[j].Name
+	})
+
 	absencePromRule.Annotations[annotationOperatorUpdatedAt] = updatedAtTime()
 	if err := r.Create(ctx, absencePromRule, &client.CreateOptions{}); err != nil {
 		return err
@@ -84,6 +90,11 @@ func (r *PrometheusRuleReconciler) createAbsencePrometheusRule(ctx context.Conte
 }
 
 func (r *PrometheusRuleReconciler) updateAbsencePrometheusRule(ctx context.Context, absencePromRule *monitoringv1.PrometheusRule) error {
+	// Sort rule groups for consistent test results.
+	sort.SliceStable(absencePromRule.Spec.Groups, func(i, j int) bool {
+		return absencePromRule.Spec.Groups[i].Name < absencePromRule.Spec.Groups[j].Name
+	})
+
 	absencePromRule.Annotations[annotationOperatorUpdatedAt] = updatedAtTime()
 	if err := r.Update(ctx, absencePromRule, &client.UpdateOptions{}); err != nil {
 		return err
@@ -259,7 +270,7 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 
 	// Step 4: parse RuleGroups and generate corresponding absence alert rules.
 	promRuleName := promRule.GetName()
-	absenceRuleGroups, err := parseRuleGroups(promRule.Spec.Groups, promRuleName, labelOpts)
+	absenceRuleGroups, err := ParseRuleGroups(promRule.Spec.Groups, promRuleName, labelOpts)
 	if err != nil {
 		return err
 	}

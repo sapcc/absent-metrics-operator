@@ -124,7 +124,13 @@ var _ = Describe("Controller", func() {
 	Describe("Update", func() {
 		objKey := newObjKey(swiftNs, "openstack-swift.alerts")
 		prObjKey := newObjKey(swiftNs, osAbsentPRName)
-		tier, service := "os", "swift"
+		labelOpts := controllers.LabelOpts{
+			DefaultTier:    "os",
+			DefaultService: "swift",
+			Keep:           keepLabel,
+		}
+		fooBar := "foo_bar"
+		barFoo := "bar_foo"
 
 		Context("by adding a new alert rule", func() {
 			It("should update "+osAbsentPRName+" in "+swiftNs+" namespace", func() {
@@ -133,20 +139,15 @@ var _ = Describe("Controller", func() {
 				err := k8sClient.Get(ctx, objKey, &pr)
 				Expect(err).ToNot(HaveOccurred())
 
-				// Add a new alert rule to the first group for easier lookup.
-				rule := createMockRule("foo_bar")
+				// Add a new alert rule.
+				rule := createMockRule(fooBar)
 				pr.Spec.Groups[0].Rules = append(pr.Spec.Groups[0].Rules, rule)
 				err = k8sClient.Update(ctx, &pr)
 				Expect(err).ToNot(HaveOccurred())
 
 				// Generate the corresponding absent alert rules.
-				rL, err := controllers.GenerateAbsenceAlertRules(rule, controllers.LabelOpts{
-					DefaultTier:    tier,
-					DefaultService: service,
-					Keep:           keepLabel,
-				})
+				expected, err := controllers.ParseRuleGroups(pr.Spec.Groups, pr.GetName(), labelOpts)
 				Expect(err).ToNot(HaveOccurred())
-				expected := rL[0]
 
 				// Get the updated AbsentPromRule from the server and check if it has the
 				// corresponding absent alert rule.
@@ -154,9 +155,7 @@ var _ = Describe("Controller", func() {
 				var absentPR monitoringv1.PrometheusRule
 				err = k8sClient.Get(ctx, prObjKey, &absentPR)
 				Expect(err).ToNot(HaveOccurred())
-				rIdx := len(absentPR.Spec.Groups[0].Rules) - 1
-				// The new absent alert rule should've been ended to the end of the first group.
-				actual := absentPR.Spec.Groups[0].Rules[rIdx]
+				actual := absentPR.Spec.Groups
 				Expect(actual).To(Equal(expected))
 			})
 		})
@@ -168,20 +167,23 @@ var _ = Describe("Controller", func() {
 				err := k8sClient.Get(ctx, objKey, &pr)
 				Expect(err).ToNot(HaveOccurred())
 
-				// Update an existing alert rule.
-				rule := createMockRule("bar_foo")
-				pr.Spec.Groups[0].Rules[0] = rule // first rule of first group
+				// Update an existing alert rule. Replace alert that has foo_bar metric
+				// with bar_foo.
+			OuterLoop:
+				for gIdx, g := range pr.Spec.Groups {
+					for rIdx, r := range g.Rules {
+						if strings.Contains(r.Expr.String(), fooBar) {
+							pr.Spec.Groups[gIdx].Rules[rIdx] = createMockRule(barFoo)
+							break OuterLoop
+						}
+					}
+				}
 				err = k8sClient.Update(ctx, &pr)
 				Expect(err).ToNot(HaveOccurred())
 
-				// Generate the corresponding absent alert rule.
-				rL, err := controllers.GenerateAbsenceAlertRules(rule, controllers.LabelOpts{
-					DefaultTier:    tier,
-					DefaultService: service,
-					Keep:           keepLabel,
-				})
+				// Generate the corresponding absent alert rules.
+				expected, err := controllers.ParseRuleGroups(pr.Spec.Groups, pr.GetName(), labelOpts)
 				Expect(err).ToNot(HaveOccurred())
-				expected := rL[0]
 
 				// Get the updated AbsentPromRule from the server and check if the
 				// corresponding absent alert rule has been updated.
@@ -189,7 +191,7 @@ var _ = Describe("Controller", func() {
 				var absentPR monitoringv1.PrometheusRule
 				err = k8sClient.Get(ctx, prObjKey, &absentPR)
 				Expect(err).ToNot(HaveOccurred())
-				actual := absentPR.Spec.Groups[0].Rules[0]
+				actual := absentPR.Spec.Groups
 				Expect(actual).To(Equal(expected))
 			})
 		})
@@ -267,30 +269,30 @@ var _ = Describe("Controller", func() {
 
 		Context("for a specific alert rule", func() {
 			It("should delete the corresponding absent alert rule from "+osAbsentPRName+" in "+swiftNs+" namespace", func() {
-				// Get the corresponding AbsentPromRule and remove an absent alert rule
-				// manually so that we can use for test assertion. We use first rule of
-				// first group for this.
-				var expected monitoringv1.PrometheusRule
-				err := k8sClient.Get(ctx, prObjKey, &expected)
-				Expect(err).ToNot(HaveOccurred())
-				expected.Spec.Groups[0].Rules = expected.Spec.Groups[0].Rules[1:]
-
 				// Add the 'no_alert_on_absence' label to the first rule of first group in
 				// the PromRule. This should result in the deletion of the corresponding
 				// absent alert rule from the AbsentPromRule.
 				var pr monitoringv1.PrometheusRule
-				err = k8sClient.Get(ctx, objKey, &pr)
+				err := k8sClient.Get(ctx, objKey, &pr)
 				Expect(err).ToNot(HaveOccurred())
 				pr.Spec.Groups[0].Rules[0].Labels["no_alert_on_absence"] = "true"
 				err = k8sClient.Update(ctx, &pr)
 				Expect(err).ToNot(HaveOccurred())
 
+				// Generate the corresponding absent alert rules.
+				expected, err := controllers.ParseRuleGroups(pr.Spec.Groups, pr.GetName(), controllers.LabelOpts{
+					DefaultTier:    pr.Labels[controllers.LabelTier],
+					DefaultService: pr.Labels[controllers.LabelService],
+					Keep:           keepLabel,
+				})
+				Expect(err).ToNot(HaveOccurred())
+
 				// Check that the corresponding absent alert rule was removed.
 				waitForControllerToProcess()
-				var actual monitoringv1.PrometheusRule
-				err = k8sClient.Get(ctx, prObjKey, &actual)
+				var aPR monitoringv1.PrometheusRule
+				err = k8sClient.Get(ctx, prObjKey, &aPR)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(actual.Spec).To(Equal(expected.Spec))
+				Expect(aPR.Spec.Groups).To(Equal(expected))
 			})
 		})
 

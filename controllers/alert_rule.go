@@ -131,7 +131,7 @@ func (e *ruleGroupParseError) Error() string {
 	return e.cause.Error()
 }
 
-// parseRuleGroups takes a slice of RuleGroup that has alert rules and returns
+// ParseRuleGroups takes a slice of RuleGroup that has alert rules and returns
 // a new slice of RuleGroup that has the corresponding absence alert rules.
 //
 // The original tier and service labels from the alert rules will be carried over to
@@ -141,7 +141,7 @@ func (e *ruleGroupParseError) Error() string {
 //
 // The rule group names for the absence alerts have the format:
 //   promRuleName/originalGroupName.
-func parseRuleGroups(in []monitoringv1.RuleGroup, promRuleName string, opts LabelOpts) ([]monitoringv1.RuleGroup, error) {
+func ParseRuleGroups(in []monitoringv1.RuleGroup, promRuleName string, opts LabelOpts) ([]monitoringv1.RuleGroup, error) {
 	out := make([]monitoringv1.RuleGroup, 0, len(in))
 	for _, g := range in {
 		var absenceAlertRules []monitoringv1.Rule
@@ -154,7 +154,7 @@ func parseRuleGroups(in []monitoringv1.RuleGroup, promRuleName string, opts Labe
 			if r.Labels != nil && parseBool(r.Labels[labelNoAlertOnAbsence]) {
 				continue
 			}
-			rules, err := GenerateAbsenceAlertRules(r, opts)
+			rules, err := parseAlertRule(r, opts)
 			if err != nil {
 				return nil, &ruleGroupParseError{cause: err}
 			}
@@ -164,6 +164,11 @@ func parseRuleGroups(in []monitoringv1.RuleGroup, promRuleName string, opts Labe
 		}
 
 		if len(absenceAlertRules) > 0 {
+			// Sort alert rules for consistent test results.
+			sort.SliceStable(absenceAlertRules, func(i, j int) bool {
+				return absenceAlertRules[i].Alert < absenceAlertRules[j].Alert
+			})
+
 			out = append(out, monitoringv1.RuleGroup{
 				Name:  absenceRuleGroupName(promRuleName, g.Name),
 				Rules: absenceAlertRules,
@@ -173,11 +178,11 @@ func parseRuleGroups(in []monitoringv1.RuleGroup, promRuleName string, opts Labe
 	return out, nil
 }
 
-// GenerateAbsenceAlertRules generates the corresponding absence alert rules for a given
-// Rule. Since an alert expression can reference multiple time series therefore a slice of
+// parseAlertRule generates the corresponding absence alert rules for a given Rule. Since
+// an alert expression can reference multiple time series therefore a slice of
 // []monitoringv1.Rule is returned as multiple (one for each time series) absence alert
 // rules would be generated.
-func GenerateAbsenceAlertRules(in monitoringv1.Rule, opts LabelOpts) ([]monitoringv1.Rule, error) {
+func parseAlertRule(in monitoringv1.Rule, opts LabelOpts) ([]monitoringv1.Rule, error) {
 	exprStr := in.Expr.String()
 	mex := &metricNameExtractor{
 		// logger: c.logger, // TODO
@@ -221,15 +226,8 @@ func GenerateAbsenceAlertRules(in monitoringv1.Rule, opts LabelOpts) ([]monitori
 		}
 	}
 
-	// Sort metric names alphabetically for consistent test results.
-	metrics := make([]string, 0, len(mex.found))
-	for k := range mex.found {
-		metrics = append(metrics, k)
-	}
-	sort.Strings(metrics)
-
-	out := make([]monitoringv1.Rule, 0, len(metrics))
-	for _, m := range metrics {
+	out := make([]monitoringv1.Rule, 0, len(mex.found))
+	for m := range mex.found {
 		// Generate an alert name from metric name. Example:
 		//   network:tis_a_metric:rate5m -> AbsentTierServiceNetworkTisAMetricRate5m
 		words := []string{"absent", absenceRuleLabels[LabelTier], absenceRuleLabels[LabelService]}
