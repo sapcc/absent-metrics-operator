@@ -31,39 +31,50 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes/scheme"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	"github.com/sapcc/absent-metrics-operator/internal/controller"
-	"github.com/sapcc/absent-metrics-operator/internal/log"
+	"github.com/sapcc/absent-metrics-operator/controllers"
+	//+kubebuilder:scaffold:imports
 )
+
+// These tests use Ginkgo (BDD-style Go testing framework). Refer to
+// http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var (
-	testEnv   *envtest.Environment
 	k8sClient client.Client
+	testEnv   *envtest.Environment
+	reg       *prometheus.Registry
 
-	c      *controller.Controller
-	reg    *prometheus.Registry
+	ctx    context.Context
 	wg     *errgroup.Group
 	cancel context.CancelFunc
+
+	keepLabel = controllers.KeepLabel{
+		controllers.LabelTier:    true,
+		controllers.LabelService: true,
+	}
 )
 
-//nolint:unused
 func TestController(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Controller Suite")
 }
 
 var _ = BeforeSuite(func() {
-	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(GinkgoWriter)))
+	controllers.IsTest = true
+
+	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
 	By("bootstrapping test environment")
 	p, err := binaryAssetsAbsPath()
 	Expect(err).ToNot(HaveOccurred())
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths:     []string{"crd"},
+		ErrorIfCRDPathMissing: true,
 		BinaryAssetsDirectory: p,
 	}
 	cfg, err := testEnv.Start()
@@ -73,32 +84,37 @@ var _ = BeforeSuite(func() {
 	err = monitoringv1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
+	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme:             scheme.Scheme,
+		MetricsBindAddress: "0",
+		Port:               9443,
+	})
+	Expect(err).NotTo(HaveOccurred())
+
+	reg = controllers.RegisterMetrics()
+
+	err = (&controllers.PrometheusRuleReconciler{
+		Client:    mgr.GetClient(),
+		Scheme:    mgr.GetScheme(),
+		KeepLabel: keepLabel,
+	}).SetupWithManager(mgr)
+	Expect(err).NotTo(HaveOccurred())
+
+	//+kubebuilder:scaffold:scheme
+
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
-	Expect(err).ToNot(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
+	Expect(k8sClient).NotTo(BeNil())
 
-	By("starting controller")
-	reg = prometheus.NewPedanticRegistry()
-	opts := controller.Opts{
-		IsTest:             true,
-		Logger:             log.New(GinkgoWriter, log.FormatLogfmt, true),
-		PrometheusRegistry: reg,
-		Config:             cfg,
-		ResyncPeriod:       1 * time.Second,
-		KeepLabel: map[string]bool{
-			controller.LabelTier:    true,
-			controller.LabelService: true,
-		},
-	}
-	c, err = controller.New(opts)
-	Expect(err).ToNot(HaveOccurred())
-
-	// NOTE: We start the controller before adding objects since the items are
+	// We start the controller before adding objects since the items are
 	// queued by the controller sequentially and we depend on this behavior in
-	// our mock assertion.
-	ctx := context.Background()
-	ctx, cancel = context.WithCancel(ctx)
+	// our mock assertions.
+	By("starting manager")
+	ctx, cancel = context.WithCancel(ctrl.SetupSignalHandler())
 	wg, ctx = errgroup.WithContext(ctx)
-	wg.Go(func() error { return c.Run(ctx.Done()) })
+	wg.Go(func() error {
+		return mgr.Start(ctx)
+	})
 
 	By("adding mock PrometheusRule resources")
 	Expect(addMockPrometheusRules(ctx)).ToNot(HaveOccurred())
@@ -108,7 +124,7 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	By("stopping controller")
+	By("stopping manager")
 	cancel()
 	Expect(wg.Wait()).To(Succeed())
 

@@ -15,7 +15,6 @@
 package test
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -37,7 +36,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/sapcc/absent-metrics-operator/internal/controller"
+	"github.com/sapcc/absent-metrics-operator/controllers"
 )
 
 var _ = Describe("Controller", func() {
@@ -56,10 +55,8 @@ var _ = Describe("Controller", func() {
 	// 	 - swift/openstack-swift.alerts
 
 	var (
-		ctx = context.Background()
-
-		k8sAbsentPRName = controller.AbsentPrometheusRuleName("kubernetes")
-		osAbsentPRName  = controller.AbsentPrometheusRuleName("openstack")
+		k8sAbsentPRName = controllers.AbsencePrometheusRuleName("kubernetes")
+		osAbsentPRName  = controllers.AbsencePrometheusRuleName("openstack")
 
 		swiftNs   = "swift"
 		resmgmtNs = "resmgmt"
@@ -140,7 +137,11 @@ var _ = Describe("Controller", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				// Generate the corresponding absent alert rules.
-				rL, err := c.ParseAlertRule(tier, service, rule)
+				rL, err := controllers.GenerateAbsenceAlertRules(rule, controllers.LabelOpts{
+					DefaultTier:    tier,
+					DefaultService: service,
+					Keep:           keepLabel,
+				})
 				Expect(err).ToNot(HaveOccurred())
 				expected := rL[0]
 
@@ -171,7 +172,11 @@ var _ = Describe("Controller", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				// Generate the corresponding absent alert rule.
-				rL, err := c.ParseAlertRule(tier, service, rule)
+				rL, err := controllers.GenerateAbsenceAlertRules(rule, controllers.LabelOpts{
+					DefaultTier:    tier,
+					DefaultService: service,
+					Keep:           keepLabel,
+				})
 				Expect(err).ToNot(HaveOccurred())
 				expected := rL[0]
 
@@ -297,7 +302,6 @@ var _ = Describe("Controller", func() {
 				err = k8sClient.Update(ctx, &pr)
 				Expect(err).ToNot(HaveOccurred())
 
-				c.EnqueueAllPrometheusRules() // Force reconciliation
 				waitForControllerToProcess()
 				err = k8sClient.Get(ctx, prObjKey, &pr)
 				Expect(err).To(HaveOccurred())
