@@ -74,6 +74,7 @@ var _ = Describe("Controller", func() {
 				err := k8sClient.Get(ctx, newObjKey(resmgmtNs, k8sAbsentPRName), &actual)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(actual.Labels).To(Equal(expected.Labels))
+				Expect(actual.Annotations).To(Equal(expected.Annotations))
 				Expect(actual.Spec).To(Equal(expected.Spec))
 			})
 
@@ -83,6 +84,7 @@ var _ = Describe("Controller", func() {
 				err := k8sClient.Get(ctx, newObjKey(resmgmtNs, osAbsentPRName), &actual)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(actual.Labels).To(Equal(expected.Labels))
+				Expect(actual.Annotations).To(Equal(expected.Annotations))
 				Expect(actual.Spec).To(Equal(expected.Spec))
 			})
 
@@ -113,6 +115,7 @@ var _ = Describe("Controller", func() {
 				err = k8sClient.Get(ctx, newObjKey(swiftNs, osAbsentPRName), &actual)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(actual.Labels).To(Equal(expected.Labels))
+				Expect(actual.Annotations).To(Equal(expected.Annotations))
 				Expect(actual.Spec).To(Equal(expected.Spec))
 			})
 		})

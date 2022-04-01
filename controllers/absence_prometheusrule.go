@@ -64,8 +64,16 @@ func (r *PrometheusRuleReconciler) getExistingAbsencePrometheusRule(ctx context.
 	return &absencePromRule, nil
 }
 
+func updatedAtTime() string {
+	now := time.Now()
+	if IsTest {
+		now = time.Unix(1, 0)
+	}
+	return now.UTC().Format(time.RFC3339)
+}
+
 func (r *PrometheusRuleReconciler) createAbsencePrometheusRule(ctx context.Context, absencePromRule *monitoringv1.PrometheusRule) error {
-	absencePromRule.Annotations[annotationOperatorUpdatedAt] = time.Now().UTC().Format(time.RFC3339)
+	absencePromRule.Annotations[annotationOperatorUpdatedAt] = updatedAtTime()
 	if err := r.Create(ctx, absencePromRule, &client.CreateOptions{}); err != nil {
 		return err
 	}
@@ -76,7 +84,7 @@ func (r *PrometheusRuleReconciler) createAbsencePrometheusRule(ctx context.Conte
 }
 
 func (r *PrometheusRuleReconciler) updateAbsencePrometheusRule(ctx context.Context, absencePromRule *monitoringv1.PrometheusRule) error {
-	absencePromRule.Annotations[annotationOperatorUpdatedAt] = time.Now().UTC().Format(time.RFC3339)
+	absencePromRule.Annotations[annotationOperatorUpdatedAt] = updatedAtTime()
 	if err := r.Update(ctx, absencePromRule, &client.UpdateOptions{}); err != nil {
 		return err
 	}
