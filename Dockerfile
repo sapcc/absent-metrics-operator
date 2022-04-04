@@ -2,7 +2,7 @@ FROM golang:1.17-alpine3.15 as builder
 RUN apk add --no-cache make gcc git musl-dev
 
 COPY . /src
-RUN make -C /src install PREFIX=/pkg GO_BUILDFLAGS='-mod vendor'
+RUN make -C /src install PREFIX=/pkg
 
 ################################################################################
 

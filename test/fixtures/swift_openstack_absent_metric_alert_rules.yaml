@@ -1,19 +1,21 @@
 metadata:
+  name: openstack-absent-metric-alert-rules
+  namespace: swift
   labels:
     absent-metrics-operator/managed-by: "true"
     prometheus: openstack
     service: swift
     tier: os
     type: alerting-rules
-  name: openstack-absent-metric-alert-rules
-  namespace: swift
+  annotations:
+    absent-metrics-operator/updated-at: "1970-01-01T00:00:01Z"
 
 spec:
   groups:
     - name: openstack-swift.alerts/swift.alerts
       rules:
-        - alert: AbsentOsSwiftGlobalSwiftClusterStorageUsedPercentAverage
-          expr: absent(global:swift_cluster_storage_used_percent_average)
+        - alert: AbsentOsSwiftClusterMd5NotMatched
+          expr: absent(swift_cluster_md5_not_matched)
           for: 10m
           labels:
             context: absent-metrics
@@ -22,11 +24,10 @@ spec:
             tier: os
           annotations:
             description:
-              The metric 'global:swift_cluster_storage_used_percent_average'
-              is missing. 'OpenstackSwiftUsedSpace' alert using it may not fire as intended.
-              See <https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md|the
+              The metric 'swift_cluster_md5_not_matched' is missing. 'OpenstackSwiftMismatchedConfig'
+              alert using it may not fire as intended. See <https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md|the
               operator playbook>.
-            summary: missing global:swift_cluster_storage_used_percent_average
+            summary: missing swift_cluster_md5_not_matched
 
         - alert: AbsentOsSwiftDispersionTaskExitCode
           expr: absent(swift_dispersion_task_exit_code)
@@ -43,6 +44,22 @@ spec:
               operator playbook>.
             summary: missing swift_dispersion_task_exit_code
 
+        - alert: AbsentOsSwiftGlobalSwiftClusterStorageUsedPercentAverage
+          expr: absent(global:swift_cluster_storage_used_percent_average)
+          for: 10m
+          labels:
+            context: absent-metrics
+            service: swift
+            severity: info
+            tier: os
+          annotations:
+            description:
+              The metric 'global:swift_cluster_storage_used_percent_average'
+              is missing. 'OpenstackSwiftUsedSpace' alert using it may not fire as intended.
+              See <https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md|the
+              operator playbook>.
+            summary: missing global:swift_cluster_storage_used_percent_average
+
         - alert: AbsentOsSwiftReconTaskExitCode
           expr: absent(swift_recon_task_exit_code)
           for: 10m
@@ -57,18 +74,3 @@ spec:
               alert using it may not fire as intended. See <https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md|the
               operator playbook>.
             summary: missing swift_recon_task_exit_code
-
-        - alert: AbsentOsSwiftClusterMd5NotMatched
-          expr: absent(swift_cluster_md5_not_matched)
-          for: 10m
-          labels:
-            context: absent-metrics
-            service: swift
-            severity: info
-            tier: os
-          annotations:
-            description:
-              The metric 'swift_cluster_md5_not_matched' is missing. 'OpenstackSwiftMismatchedConfig'
-              alert using it may not fire as intended. See <https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md|the
-              operator playbook>.
-            summary: missing swift_cluster_md5_not_matched

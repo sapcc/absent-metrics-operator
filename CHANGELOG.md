@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to the absent metrics operator will be documented in this file.
 
 The sections should follow the order `Added`, `Changed`, `Fixed`, `Removed`, and `Deprecated`.
 
@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased](https://github.com/sapcc/absent-metrics-operator/compare/v0.7.3...HEAD)
+
+### Added
+
+- Use Kubebuilder for scaffolding.
+- `absent-metrics-operator/updated-at` annotation to operator generated `PrometheusRule`
+  resources which specifies the time (UTC) at which this resource was updated by the
+  operator.
+
+### Changed
+
+- Update Ginkgo testing framework to v2.
+- Updated all dependencies to their latest version.
 
 ## 0.7.3 - 2021-11-29
 
@@ -59,13 +71,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `context` label to absent alerts.
+- `context` label to absence alerts.
 
 ## 0.4.0 - 2020-08-20
 
 ### Removed
 
-- `playbook` label from absent alerts.
+- `playbook` label from absence alerts.
 
 ## 0.3.0 - 2020-08-20
 
@@ -79,7 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Operator can be disabled for a specific alert rule.
-- `playbook` label to absent metric alerts.
+- `playbook` label to absence alerts.
 - `keep-labels` flag for specifying which labels to carry over from alert
   rules.
 

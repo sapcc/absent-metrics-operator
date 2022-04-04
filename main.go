@@ -15,24 +15,28 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
-	"net/http"
 	"os"
 	"strings"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/sapcc/go-bits/httpee"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc" // load auth plugin
-	"k8s.io/client-go/tools/clientcmd"
+	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
+	// to ensure that exec-entrypoint and run can make use of them.
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
-	"github.com/sapcc/absent-metrics-operator/internal/controller"
-	"github.com/sapcc/absent-metrics-operator/internal/log"
-	"github.com/sapcc/absent-metrics-operator/internal/signals"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	"github.com/sapcc/absent-metrics-operator/controllers"
+	//+kubebuilder:scaffold:imports
 )
 
-// This info identifies a specific build of the app. It is set at compile time.
+// This info identifies a specific build of the operator. It is set at compile time.
 var (
 	version = "dev"
 	commit  = "unknown"
@@ -40,100 +44,109 @@ var (
 )
 
 var (
-	availableLogFormats = []string{
-		log.FormatLogfmt,
-		log.FormatJSON,
-	}
-	defaultKeepLabels = []string{
-		controller.LabelService,
-		controller.LabelTier,
-	}
+	scheme   = runtime.NewScheme()
+	setupLog = ctrl.Log.WithName("setup")
 )
 
+func init() {
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+
+	//+kubebuilder:scaffold:scheme
+}
+
 func main() {
-	var showDebug bool
-	var logFormat, kubeconfig, keepLabels string
-	flagset := flag.CommandLine
-	flagset.BoolVar(&showDebug, "debug", false, "Print debug level logs")
-	flagset.StringVar(&logFormat, "log-format", log.FormatLogfmt,
-		fmt.Sprintf("Log format to use. Possible values: %s", strings.Join(availableLogFormats, ", ")))
-	flagset.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster")
-	flagset.StringVar(&keepLabels, "keep-labels", strings.Join(defaultKeepLabels, ","),
-		"A comma separated list of labels to keep from the original alert rule")
-	if err := flagset.Parse(os.Args[1:]); err != nil {
-		fmt.Fprintf(os.Stderr, "FATAL: could not parse flagset: %s", err.Error())
+	var (
+		debug                bool
+		metricsAddr          string
+		probeAddr            string
+		enableLeaderElection bool
+		keepLabel            labelsMap
+	)
+	flag.BoolVar(&debug, "debug", false, "Alias for '-zap-devel' flag.")
+	// Port `9659` has been allocated for absent metrics operator: https://github.com/prometheus/prometheus/wiki/Default-port-allocations
+	flag.StringVar(&metricsAddr, "metrics-bind-address", ":9659", "The address the metric endpoint binds to.")
+	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
+		"Enable leader election for controller manager. "+
+			"Enabling this will ensure there is only one active controller manager.")
+	flag.Var(keepLabel, "keep-labels", "A comma-separated list of labels to retain from the original alert rule. "+
+		fmt.Sprintf("(default %q)", labelsMap{controllers.LabelTier: true, controllers.LabelService: true}))
+	opts := zap.Options{
+		Development: debug,
+	}
+	opts.BindFlags(flag.CommandLine)
+	flag.Parse()
+
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+		Scheme:                 scheme,
+		MetricsBindAddress:     metricsAddr,
+		Port:                   9443,
+		HealthProbeBindAddress: probeAddr,
+		LeaderElection:         enableLeaderElection,
+		LeaderElectionID:       "62fc53df.cloud.sap",
+	})
+	if err != nil {
+		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
-	logger := log.New(os.Stdout, logFormat, showDebug)
-	logger.Info("msg", "starting absent-metrics-operator",
-		"version", version, "git-commit", commit, "build-date", date)
+	controllers.RegisterMetrics()
 
-	r := prometheus.NewRegistry()
-
-	keepLabelMap := make(map[string]bool)
-	kL := strings.Split(keepLabels, ",")
-	for _, v := range kL {
-		keepLabelMap[strings.TrimSpace(v)] = true
+	if err = (&controllers.PrometheusRuleReconciler{
+		Client:    mgr.GetClient(),
+		Scheme:    mgr.GetScheme(),
+		KeepLabel: controllers.KeepLabel(keepLabel),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "PrometheusRule")
+		os.Exit(1)
 	}
-	if keepLabelMap[controller.LabelTier] || keepLabelMap[controller.LabelService] {
-		if !keepLabelMap[controller.LabelTier] && !keepLabelMap[controller.LabelService] {
-			logger.Fatal("msg", "labels 'tier' and 'service' are co-dependent, i.e. use both or neither")
-		}
-	}
+	//+kubebuilder:scaffold:builder
 
-	// Create controller
-	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		logger.Fatal("msg", "instantiating cluster config failed", "err", err)
+	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up health check")
+		os.Exit(1)
+	}
+	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up ready check")
+		os.Exit(1)
 	}
 
-	opts := controller.Opts{
-		IsTest:             false,
-		Logger:             log.With(logger, "component", "controller"),
-		KeepLabel:          keepLabelMap,
-		PrometheusRegistry: r,
-		Config:             cfg,
-		ResyncPeriod:       controller.DefaultResyncPeriod,
-	}
-	c, err := controller.New(opts)
-	if err != nil {
-		logger.Fatal("msg", "could not instantiate controller", "err", err)
-	}
-
-	// Set up signal handling for graceful shutdown
-	wg, ctx := signals.SetupSignalHandlerAndRoutineGroup(logger)
-
-	// Serve metrics at port "9659". This port has been allocated for absent
-	// metrics operator.
-	// See: https://github.com/prometheus/prometheus/wiki/Default-port-allocations
-	listenAddr := ":9659"
-	http.HandleFunc("/", landingPageHandler(logger))
-	http.Handle("/metrics", promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
-	logger.Info("msg", "listening on "+listenAddr)
-	wg.Go(func() error { return httpee.ListenAndServeContext(ctx, listenAddr, nil) })
-
-	// Start controller
-	wg.Go(func() error { return c.Run(ctx.Done()) })
-
-	if err := wg.Wait(); err != nil {
-		logger.Fatal("msg", "unhandled error received", "err", err)
+	setupLog.Info("starting manager", "version", version, "git-commit", commit, "build-date", date)
+	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+		setupLog.Error(err, "problem running manager")
+		os.Exit(1)
 	}
 }
 
-func landingPageHandler(logger *log.Logger) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		pageBytes := []byte(`<html>
-		<head><title>Absent Metrics Operator</title></head>
-		<body>
-		<h1>Absent Metrics Operator</h1>
-		<p><a href="/metrics">Metrics</a></p>
-		<p><a href="https://github.com/sapcc/absent-metrics-operator">Source Code</a></p>
-		</body>
-		</html>`)
+// labelsMap type is a wrapper around controllers.KeepLabel. It is used for the
+// `keep-labels` flag to convert a comma-separated string into a map.
+type labelsMap controllers.KeepLabel
 
-		if _, err := w.Write(pageBytes); err != nil {
-			logger.ErrorWithBackoff("msg", "could not write landing page bytes", "err", err)
+// String implements the flag.Value interface.
+func (lm labelsMap) String() string {
+	list := make([]string, 0, len(lm))
+	for k := range lm {
+		list = append(list, k)
+	}
+	return strings.Join(list, ",")
+}
+
+// Set implements the flag.Value interface.
+func (lm labelsMap) Set(in string) error {
+	lm = make(labelsMap)
+	list := strings.Split(in, ",")
+	for _, v := range list {
+		lm[strings.TrimSpace(v)] = true
+	}
+
+	// Validate
+	if lm[controllers.LabelTier] || lm[controllers.LabelService] {
+		if !lm[controllers.LabelTier] && !lm[controllers.LabelService] {
+			return errors.New("labels 'tier' and 'service' are co-dependent: use both or neither")
 		}
 	}
+
+	return nil
 }

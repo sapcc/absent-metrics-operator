@@ -1,0 +1,88 @@
+run:
+  deadline: 3m # 1m by default
+  modules-download-mode: readonly
+
+output:
+  # Do not print lines of code with issue.
+  print-issued-lines: false
+
+issues:
+  # '0' disables the following options.
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude:
+    # It is idiomatic Go to reuse the name 'err' with ':=' for subsequent errors.
+    # Ref: https://go.dev/doc/effective_go#redeclaration
+    - 'declaration of "err" shadows declaration at'
+
+linters-settings:
+  dupl:
+    # Tokens count to trigger issue, 150 by default.
+    threshold: 100
+  errcheck:
+    # Report about assignment of errors to blank identifier.
+    check-blank: true
+    # Report about not checking of errors in type assertions.
+    check-type-assertions: true
+  forbidigo:
+    forbid:
+      # ioutil package has been deprecated: https://github.com/golang/go/issues/42026
+      - ^ioutil\..*$
+  goimports:
+    # Put local imports after 3rd-party packages.
+    local-prefixes: github.com/sapcc/absent-metrics-operator
+  govet:
+    # Report about shadowed variables.
+    check-shadowing: true
+  lll:
+    line-length: 140
+  unused:
+    # Treat code as a program (not a library) and report unused exported identifiers.
+    check-exported: true
+
+linters:
+  # We use 'disable-all' and enable linters explicitly so that a newer version
+  # will not introduce new linters unexpectedly.
+  disable-all: true
+  enable:
+    - bodyclose
+    - deadcode
+    - dogsled
+    - dupl
+    - errcheck
+    - errname
+    - exportloopref
+    - forbidigo
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - gofmt
+    - gofumpt
+    - goimports
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ifshort
+    - importas
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - nilerr
+    - noctx
+    - nolintlint
+    - prealloc
+    - rowserrcheck
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - thelper
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - varcheck
+    - wastedassign
+    - whitespace

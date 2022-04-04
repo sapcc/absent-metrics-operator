@@ -5,34 +5,39 @@
 [![Coverage Status](https://coveralls.io/repos/github/sapcc/absent-metrics-operator/badge.svg?branch=master)](https://coveralls.io/github/sapcc/absent-metrics-operator?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/sapcc/absent-metrics-operator)](https://goreportcard.com/report/github.com/sapcc/absent-metrics-operator)
 
-> Project status: **alpha**. The API and user facing objects may change.
-
 In this document:
 
+- [Terminology](#terminology)
 - [Overview](#overview)
 - [Motivation](#motivation)
+- [Installation](#installation)
 - [Usage](#usage)
   - [Metrics](#metrics)
-- [Absent metric alert definition](#absent-metric-alert-definition)
-  - [Template](#template)
-  - [Labels](#labels)
-    - [Defaults](#defaults)
-    - [Carry over from original alert rule](#carry-over-from-original-alert-rule)
 
 In other documents:
 
-- [Operator's Playbook](./doc/playbook.md)
+- [Absence alert rule definition](./doc/absence-alert-rule-definition.md)
+- [Playbook for operators](./doc/playbook.md)
+
+## Terminology
+
+An **_absence alert rule_** is an alert rule that alerts on the absence of a metric.
+
+A `PrometheusRule` is a custom resource defined by the [Prometheus
+operator](prometheus-operator), it is used to define a set of alerting rules. Within the
+absent metrics operator documentation and source code, an **_AbsencePrometheusRule_** is a
+`PrometheusRule` resource created (and managed) by the absent metrics operator that
+defines corresponding **_absence alert rules_** for the metrics that were used in the
+alert rule definitions in a `PrometheusRule`.
 
 ## Overview
 
 The absent metrics operator is a companion operator for the [Prometheus
-Operator](https://github.com/prometheus-operator/prometheus-operator).
+Operator][prometheus-operator].
 
-The operator monitors all the `PrometheusRule` resources deployed across a
-Kubernetes cluster and creates corresponding _absent metric alert rules_ for
+It monitors all the `PrometheusRule` resources deployed across a
+Kubernetes cluster and creates corresponding _absence alert rules_ for
 the alert rules defined in those resources.
-
-An absent metric alert rule alerts on the absence of a metric.
 
 ## Motivation
 
@@ -60,15 +65,14 @@ the alert rule expression becomes:
 absent(foo_bar) or foo_bar > 0
 ```
 
-This gets tedious if you have hundreds of alerts deployed across the cluster.
+However, this gets tedious if you have hundreds of alerts deployed across the cluster.
 There is also the element of human error, e.g. typo or forgetting to include
 the `absent` function in the alert expression.
 
-This problem is resolved by the absent metrics operator as it automatically
-creates the corresponding absent metric alerts for your alert definitions.
+This problem is resolved by the absent metrics operator as it automatically creates the
+corresponding alert rules that check and alert on metric absence.
 
-The operator would generate the following absent metric alert for the above
-example:
+For example, considering the alert rule mentioned above, the operator would generate the following _absence alert rule_:
 
 ```yaml
 alert: AbsentFooBar
@@ -84,12 +88,19 @@ annotations:
   description: The metric 'foo_bar' is missing. 'ImportantAlert' alert using it may not fire as intended.
 ```
 
+Refer to the _absence alert rule_ [definition
+documentation](./doc/absence-alert-rule-definition.md) for more information on how these
+alerts are generated and defined.
+
+## Installation
+
+We provide pre-compiled binaries for the [latest release](https://github.com/sapcc/absent-metrics-operator/releases/latest).
+
+Alternatively, you can build with `make`, install with `make install`, or `docker build`.
+The `make install` target understands the conventional environment variables for choosing
+install locations: `DESTDIR` and `PREFIX`.
+
 ## Usage
-
-You can download pre-compiled binaries for the [latest release](https://github.com/sapcc/absent-metrics-operator/releases/latest).
-
-Alternatively, you can build with `make`, install with `make install`, `go install`, or
-`docker build`.
 
 For usage instructions:
 
@@ -97,9 +108,9 @@ For usage instructions:
 $ absent-metrics-operator --help
 ```
 
-The operator can be disabled for a specific `PrometheusRule` or a specific
-alert definition. Refer to the [operator's playbook](./doc/playbook.md) for
-more info.
+In case of a false positive, the operator can be disabled for a specific alert rule or the
+entire `PrometheusRule` resource. Refer to the [playbook for operators](./doc/playbook.md#disable-the-operator)
+for instructions.
 
 ### Metrics
 
@@ -111,62 +122,4 @@ for the operator.
 | --------------------------------------------------- | ------------------------------------------------- |
 | `absent_metrics_operator_successful_reconcile_time` | `prometheusrule_namespace`, `prometheusrule_name` |
 
-## Absent metric alert definition
-
-The absent metric alerts are defined in a separate `PrometheusRule` resource
-that is managed by the operator. They are aggregated first by namespace and
-then by the Prometheus server.
-
-For example, if a namespace has alert rules defined across several
-`PrometheusRule` resources for the Prometheus servers called `OpenStack` and
-`Infra`. The absent metric alerts for this namespace would be aggregated in two
-new `PrometheusRule` resources called:
-
-- `openstack-absent-metric-alert-rules`
-- `infra-absent-metric-alert-rules`
-
-### Template
-
-The absent metric alert rule has the following template:
-
-```yaml
-alert: $name
-expr: absent($metric)
-for: 10m
-labels:
-  context: absent-metrics
-  severity: info
-  tier: $tier
-  service: $service
-annotations:
-  summary: missing $metric
-  description: The metric '$metric' is missing. '$alert-name' alert using it may not fire as intended.
-```
-
-Consider the metric `limes_successful_scrapes:rate5m` with tier `os` and
-service `limes`. The corresponding absent metric alert name would be
-`AbsentOsLimesSuccessfulScrapesRate5m`.
-
-The values of `tier` and `service` labels are only included in the name if the
-labels are specified in the `keep-labels` flag. See below.
-
-The description also includes a [link](./doc/playbook.md) to documentation that
-can be referenced on how to deal with absent metric alerts.
-
-### Labels
-
-#### Defaults
-
-The following labels are always present on every absent metric alert rule:
-
-- `severity` is `info`.
-- `context` is `absent-metrics`.
-
-#### Carry over from original alert rule
-
-You can specify which labels to carry over from the original alert rule by
-specifying a comma-separated list of labels to the `--keep-labels` flag. The
-default value for this flag is `service,tier`.
-
-The `tier` and `service` are a special case, they are co-dependent. See the
-[playbook](./doc/playbook.md) for details.
+[prometheus-operator]: https://github.com/prometheus-operator/prometheus-operator
