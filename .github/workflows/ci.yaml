@@ -1,78 +1,78 @@
 name: CI
 "on":
-  pull_request:
-    branches:
-    - '*'
-    paths-ignore:
-    - '**.md'
   push:
     branches:
-    - master
+      - master
     paths-ignore:
-    - '**.md'
+      - '**.md'
+  pull_request:
+    branches:
+      - '*'
+    paths-ignore:
+      - '**.md'
+permissions:
+  contents: read
 jobs:
   build:
     name: Build
     needs:
-    - lint
+      - lint
     runs-on: ubuntu-latest
     steps:
-    - name: Check out code
-      uses: actions/checkout@v2
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: "1.17"
-    - name: Cache Go modules
-      uses: actions/cache@v2
-      with:
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        path: |
-          ~/go/pkg/mod
-          ~/.cache/go-build
-        restore-keys: ${{ runner.os }}-go-
-    - name: Make build
-      run: make build-all
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.17"
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          restore-keys: ${{ runner.os }}-go-
+      - name: Make build
+        run: make build-all
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-    - name: Check out code
-      uses: actions/checkout@v2
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: "1.17"
-    - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v2
-      with:
-        skip-go-installation: true
-        version: latest
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.17"
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
   test:
     name: Test
     needs:
-    - build
+      - build
     runs-on: ubuntu-latest
     steps:
-    - name: Check out code
-      uses: actions/checkout@v2
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: "1.17"
-    - name: Cache envtest control plane binaries
-      uses: actions/cache@v2
-      with:
-        path: test/bin
-        key: ${{ runner.os }}-envtest-${{ hashFiles('test/envtest-version.txt') }}
-    - name: Cache Go modules
-      uses: actions/cache@v2
-      with:
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        path: |
-          ~/go/pkg/mod
-          ~/.cache/go-build
-        restore-keys: ${{ runner.os }}-go-
-    - name: Run tests and generate coverage report
-      run: make build/cover.out
-
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.17"
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          restore-keys: ${{ runner.os }}-go-
+      - name: Cache envtest control plane binaries
+        uses: actions/cache@v3
+        with:
+          path: test/bin
+          key: ${{ runner.os }}-envtest-${{ hashFiles('test/envtest-version.txt') }}
+      - name: Run tests and generate coverage report
+        run: make build/cover.out

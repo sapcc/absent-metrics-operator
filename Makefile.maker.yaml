@@ -11,6 +11,9 @@ golangciLint:
   # explicitly for documentation purposes.
   createConfig: false
 
+spellCheck:
+  ignoreWords: ["importas"] # importas is a valid linter name
+
 # Do not generate CI workflow as we use a custom definition for it.
 githubWorkflow:
   global:
