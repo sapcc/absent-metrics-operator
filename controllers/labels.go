@@ -55,7 +55,10 @@ func keepTierServiceLabels(keep KeepLabel) bool {
 
 // labelOptsWithDefaultTierAndService finds defaults for tier and service labels for an
 // AbsencePrometheusRule and returns the corresponding LabelOpts.
-func (r *PrometheusRuleReconciler) labelOptsWithDefaultTierAndService(ctx context.Context, absencePromRule *monitoringv1.PrometheusRule) *LabelOpts {
+func (r *PrometheusRuleReconciler) labelOptsWithDefaultTierAndService(
+	ctx context.Context,
+	absencePromRule *monitoringv1.PrometheusRule,
+) *LabelOpts {
 	result := &LabelOpts{
 		Keep: r.KeepLabel,
 	}

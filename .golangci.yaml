@@ -53,8 +53,6 @@ linters:
     - errname
     - exportloopref
     - forbidigo
-    - funlen
-    - gochecknoinits
     - goconst
     - gocritic
     - gocyclo

@@ -239,8 +239,8 @@ func parseAlertRule(in monitoringv1.Rule, opts LabelOpts) ([]monitoringv1.Rule, 
 		// Avoid name stuttering
 		var alertName string
 		var prevW string
-		for _, w := range words {
-			w := strings.ToLower(w) // convert to lowercase for comparison
+		for _, v := range words {
+			w := strings.ToLower(v) // convert to lowercase for comparison
 			if w != prevW {
 				alertName += cases.Title(language.English).String(w)
 				prevW = w

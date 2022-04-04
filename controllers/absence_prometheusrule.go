@@ -38,7 +38,7 @@ func AbsencePrometheusRuleName(promServer string) string {
 	return fmt.Sprintf("%s%s", promServer, absencePromRuleNameSuffix)
 }
 
-func (r *PrometheusRuleReconciler) newAbsencePrometheusRule(ctx context.Context, namespace, promServer string) *monitoringv1.PrometheusRule {
+func (r *PrometheusRuleReconciler) newAbsencePrometheusRule(namespace, promServer string) *monitoringv1.PrometheusRule {
 	return &monitoringv1.PrometheusRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      AbsencePrometheusRuleName(promServer),
@@ -56,7 +56,10 @@ func (r *PrometheusRuleReconciler) newAbsencePrometheusRule(ctx context.Context,
 	}
 }
 
-func (r *PrometheusRuleReconciler) getExistingAbsencePrometheusRule(ctx context.Context, namespace, promServer string) (*monitoringv1.PrometheusRule, error) {
+func (r *PrometheusRuleReconciler) getExistingAbsencePrometheusRule(
+	ctx context.Context,
+	namespace, promServer string,
+) (*monitoringv1.PrometheusRule, error) {
 	var absencePromRule monitoringv1.PrometheusRule
 	nsName := types.NamespacedName{Namespace: namespace, Name: AbsencePrometheusRuleName(promServer)}
 	if err := r.Get(ctx, nsName, &absencePromRule); err != nil {
@@ -73,6 +76,7 @@ func updatedAtTime() string {
 	return now.UTC().Format(time.RFC3339)
 }
 
+//nolint:dupl
 func (r *PrometheusRuleReconciler) createAbsencePrometheusRule(ctx context.Context, absencePromRule *monitoringv1.PrometheusRule) error {
 	// Sort rule groups for consistent test results.
 	sort.SliceStable(absencePromRule.Spec.Groups, func(i, j int) bool {
@@ -89,6 +93,7 @@ func (r *PrometheusRuleReconciler) createAbsencePrometheusRule(ctx context.Conte
 	return nil
 }
 
+//nolint:dupl
 func (r *PrometheusRuleReconciler) updateAbsencePrometheusRule(ctx context.Context, absencePromRule *monitoringv1.PrometheusRule) error {
 	// Sort rule groups for consistent test results.
 	sort.SliceStable(absencePromRule.Spec.Groups, func(i, j int) bool {
@@ -120,7 +125,11 @@ func (r *PrometheusRuleReconciler) deleteAbsencePrometheusRule(ctx context.Conte
 //
 // We use this when a PrometheusRule resource has been deleted or if the
 // 'absent-metrics-operator/disable' is set to 'true'.
-func (r *PrometheusRuleReconciler) cleanUpOrphanedAbsenceAlertRules(ctx context.Context, promRule types.NamespacedName, promServer string) error {
+func (r *PrometheusRuleReconciler) cleanUpOrphanedAbsenceAlertRules(
+	ctx context.Context,
+	promRule types.NamespacedName,
+	promServer string,
+) error {
 	// Step 1: find the corresponding AbsencePrometheusRule that needs to be cleaned up.
 	var aPRToClean *monitoringv1.PrometheusRule
 	if promServer != "" {
@@ -158,7 +167,7 @@ func (r *PrometheusRuleReconciler) cleanUpOrphanedAbsenceAlertRules(ctx context.
 	// Step 2: iterate through the AbsenceRuleGroups, skip those that were generated for
 	// this PrometheusRule and keep the rest as is.
 	old := aPRToClean.Spec.Groups
-	var new []monitoringv1.RuleGroup
+	new := make([]monitoringv1.RuleGroup, 0, len(old))
 	for _, g := range old {
 		n := promRulefromAbsenceRuleGroupName(g.Name)
 		if n != "" && n == promRule.Name {
@@ -199,7 +208,7 @@ func (r *PrometheusRuleReconciler) cleanUpAbsencePrometheusRule(ctx context.Cont
 
 	// Step 2: iterate through all the AbsencePrometheusRule's RuleGroups and remove those
 	// that don't belong to any PrometheusRule.
-	var new []monitoringv1.RuleGroup
+	new := make([]monitoringv1.RuleGroup, 0, len(absencePromRule.Spec.Groups))
 	for _, g := range absencePromRule.Spec.Groups {
 		n := promRulefromAbsenceRuleGroupName(g.Name)
 		if !prNames[n] {
@@ -241,7 +250,7 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 	case err == nil:
 		existingAbsencePrometheusRule = true
 	case apierrors.IsNotFound(err):
-		absencePromRule = r.newAbsencePrometheusRule(ctx, namespace, promServer)
+		absencePromRule = r.newAbsencePrometheusRule(namespace, promServer)
 	default:
 		// This could have been caused by a temporary network failure, or any
 		// other transient reason.

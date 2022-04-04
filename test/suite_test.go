@@ -140,7 +140,7 @@ func binaryAssetsAbsPath() (string, error) {
 	parentDir := "bin/k8s"
 	files, err := os.ReadDir(parentDir)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 	if len(files) != 1 || !files[0].IsDir() {
 		return "", fmt.Errorf(

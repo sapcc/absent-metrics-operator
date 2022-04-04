@@ -37,7 +37,7 @@ import (
 // if the operator is working as intended, and to insure against missed watch events.
 var requeueInterval = 5 * time.Minute
 
-// PrometheusRuleReconciler reconciles a PrometheusRule object
+// PrometheusRuleReconciler reconciles a PrometheusRule object.
 type PrometheusRuleReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
@@ -69,7 +69,7 @@ func (r *PrometheusRuleReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	case err == nil:
 		err = r.reconcileObject(ctx, req.NamespacedName, &promRule)
 	case apierrors.IsNotFound(err):
-		err = r.handleObjectNotFound(ctx, req.NamespacedName, &promRule)
+		err = r.handleObjectNotFound(ctx, req.NamespacedName)
 	default:
 		// Handle err down below.
 	}
@@ -98,11 +98,7 @@ func (r *PrometheusRuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 // handleObjectNotFound is a helper function for Reconcile(). It exists separately so that
 // we can exit on error without making the `switch` in Reconcile() complex.
-func (r *PrometheusRuleReconciler) handleObjectNotFound(
-	ctx context.Context,
-	key types.NamespacedName,
-	obj *monitoringv1.PrometheusRule) error {
-
+func (r *PrometheusRuleReconciler) handleObjectNotFound(ctx context.Context, key types.NamespacedName) error {
 	// Step 1: check if the object is a PrometheusRule or an AbsencePrometheusRule.
 	if strings.HasSuffix(key.Name, absencePromRuleNameSuffix) {
 		// In case that the AbsencePrometheusRule no longer exists we don't have to do any
@@ -128,8 +124,8 @@ func (r *PrometheusRuleReconciler) handleObjectNotFound(
 func (r *PrometheusRuleReconciler) reconcileObject(
 	ctx context.Context,
 	key types.NamespacedName,
-	obj *monitoringv1.PrometheusRule) error {
-
+	obj *monitoringv1.PrometheusRule,
+) error {
 	logger := log.FromContext(ctx)
 	l := obj.GetLabels()
 
