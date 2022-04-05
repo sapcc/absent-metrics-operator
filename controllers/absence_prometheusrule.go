@@ -50,8 +50,6 @@ func (r *PrometheusRuleReconciler) newAbsencePrometheusRule(namespace, promServe
 				labelPrometheusServer:  promServer,
 				"type":                 "alerting-rules",
 			},
-			// We initialize empty map here so that we can add values later.
-			Annotations: map[string]string{},
 		},
 	}
 }
@@ -68,22 +66,27 @@ func (r *PrometheusRuleReconciler) getExistingAbsencePrometheusRule(
 	return &absencePromRule, nil
 }
 
-func updatedAtTime() string {
-	now := time.Now()
-	if IsTest {
-		now = time.Unix(1, 0)
-	}
-	return now.UTC().Format(time.RFC3339)
-}
-
-//nolint:dupl
-func (r *PrometheusRuleReconciler) createAbsencePrometheusRule(ctx context.Context, absencePromRule *monitoringv1.PrometheusRule) error {
+func sortRuleGroups(absencePromRule *monitoringv1.PrometheusRule) {
 	// Sort rule groups for consistent test results.
 	sort.SliceStable(absencePromRule.Spec.Groups, func(i, j int) bool {
 		return absencePromRule.Spec.Groups[i].Name < absencePromRule.Spec.Groups[j].Name
 	})
+}
 
-	absencePromRule.Annotations[annotationOperatorUpdatedAt] = updatedAtTime()
+func updateAnnotationTime(absencePromRule *monitoringv1.PrometheusRule) {
+	now := time.Now()
+	if IsTest {
+		now = time.Unix(1, 0)
+	}
+	if absencePromRule.Annotations == nil {
+		absencePromRule.Annotations = make(map[string]string)
+	}
+	absencePromRule.Annotations[annotationOperatorUpdatedAt] = now.UTC().Format(time.RFC3339)
+}
+
+func (r *PrometheusRuleReconciler) createAbsencePrometheusRule(ctx context.Context, absencePromRule *monitoringv1.PrometheusRule) error {
+	sortRuleGroups(absencePromRule)
+	updateAnnotationTime(absencePromRule)
 	if err := r.Create(ctx, absencePromRule, &client.CreateOptions{}); err != nil {
 		return err
 	}
@@ -93,14 +96,9 @@ func (r *PrometheusRuleReconciler) createAbsencePrometheusRule(ctx context.Conte
 	return nil
 }
 
-//nolint:dupl
 func (r *PrometheusRuleReconciler) updateAbsencePrometheusRule(ctx context.Context, absencePromRule *monitoringv1.PrometheusRule) error {
-	// Sort rule groups for consistent test results.
-	sort.SliceStable(absencePromRule.Spec.Groups, func(i, j int) bool {
-		return absencePromRule.Spec.Groups[i].Name < absencePromRule.Spec.Groups[j].Name
-	})
-
-	absencePromRule.Annotations[annotationOperatorUpdatedAt] = updatedAtTime()
+	sortRuleGroups(absencePromRule)
+	updateAnnotationTime(absencePromRule)
 	if err := r.Update(ctx, absencePromRule, &client.UpdateOptions{}); err != nil {
 		return err
 	}
