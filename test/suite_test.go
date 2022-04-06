@@ -96,6 +96,7 @@ var _ = BeforeSuite(func() {
 	err = (&controllers.PrometheusRuleReconciler{
 		Client:    mgr.GetClient(),
 		Scheme:    mgr.GetScheme(),
+		Log:       ctrl.Log.WithName("controller").WithName("prometheusrule"),
 		KeepLabel: keepLabel,
 	}).SetupWithManager(mgr)
 	Expect(err).NotTo(HaveOccurred())
