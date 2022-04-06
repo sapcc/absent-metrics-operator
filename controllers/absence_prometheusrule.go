@@ -27,7 +27,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const absencePromRuleNameSuffix = "-absent-metric-alert-rules"
@@ -91,7 +90,7 @@ func (r *PrometheusRuleReconciler) createAbsencePrometheusRule(ctx context.Conte
 		return err
 	}
 
-	log.FromContext(ctx).Info("successfully created AbsencePrometheusRule",
+	r.Log.Info("successfully created AbsencePrometheusRule",
 		"AbsencePrometheusRule", fmt.Sprintf("%s/%s", absencePromRule.GetNamespace(), absencePromRule.GetName()))
 	return nil
 }
@@ -103,7 +102,7 @@ func (r *PrometheusRuleReconciler) updateAbsencePrometheusRule(ctx context.Conte
 		return err
 	}
 
-	log.FromContext(ctx).Info("successfully updated AbsencePrometheusRule",
+	r.Log.Info("successfully updated AbsencePrometheusRule",
 		"AbsencePrometheusRule", fmt.Sprintf("%s/%s", absencePromRule.GetNamespace(), absencePromRule.GetName()))
 	return nil
 }
@@ -113,7 +112,7 @@ func (r *PrometheusRuleReconciler) deleteAbsencePrometheusRule(ctx context.Conte
 		return err
 	}
 
-	log.FromContext(ctx).Info("successfully deleted AbsencePrometheusRule",
+	r.Log.Info("successfully deleted AbsencePrometheusRule",
 		"AbsencePrometheusRule", fmt.Sprintf("%s/%s", absencePromRule.GetNamespace(), absencePromRule.GetName()))
 	return nil
 }
@@ -230,6 +229,10 @@ func (r *PrometheusRuleReconciler) cleanUpAbsencePrometheusRule(ctx context.Cont
 // updateAbsenceAlertRules generates absence alert rules for the given PrometheusRule and
 // adds them to the corresponding AbsencePrometheusRule.
 func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, promRule *monitoringv1.PrometheusRule) error {
+	promRuleName := promRule.GetName()
+	namespace := promRule.GetNamespace()
+	log := r.Log.WithValues("name", promRuleName, "namespace", namespace)
+
 	// Step 1: find the Prometheus server for this resource.
 	promRuleLabels := promRule.GetLabels()
 	promServer, ok := promRuleLabels["prometheus"]
@@ -242,7 +245,6 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 	// advance so that we can get suitable defaults for tier and service labels in the
 	// next step.
 	existingAbsencePrometheusRule := false
-	namespace := promRule.GetNamespace()
 	absencePromRule, err := r.getExistingAbsencePrometheusRule(ctx, namespace, promServer)
 	switch {
 	case err == nil:
@@ -276,7 +278,6 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 	}
 
 	// Step 4: parse RuleGroups and generate corresponding absence alert rules.
-	promRuleName := promRule.GetName()
 	absenceRuleGroups, err := ParseRuleGroups(promRule.Spec.Groups, promRuleName, labelOpts)
 	if err != nil {
 		return err
@@ -298,12 +299,11 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 	// these errors after Step 4 and 5 to avoid unnecessary logging in case the
 	// aforementioned steps result in no change.
 	if keepTierServiceLabels(labelOpts.Keep) {
-		logger := log.FromContext(ctx)
 		if labelOpts.DefaultTier == "" {
-			logger.Info("could not find a default value for 'tier' label")
+			log.Info("could not find a default value for 'tier' label")
 		}
 		if labelOpts.DefaultService == "" {
-			logger.Info("could not find a default value for 'service' label")
+			log.Info("could not find a default value for 'service' label")
 		}
 	}
 

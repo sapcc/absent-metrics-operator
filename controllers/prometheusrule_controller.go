@@ -19,13 +19,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-logr/logr"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // requeueInterval is the interval after which each resource will be requeued.
@@ -41,26 +41,19 @@ var requeueInterval = 5 * time.Minute
 type PrometheusRuleReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	Log    logr.Logger
 
 	// KeepLabel is a map of labels that will be retained from the original alert rule and
 	// passed on to its corresponding absent alert rule.
 	KeepLabel KeepLabel
 }
 
-//+kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheusrules,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheusrules/status,verbs=get;update;patch
-
 // Reconcile is part of the main Kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the PrometheusRule object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/reconcile
 func (r *PrometheusRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logger := log.FromContext(ctx)
+	log := r.Log.WithValues("name", req.Name, "namespace", req.Namespace)
 
 	// Get the current PrometheusRule from the API server.
 	var promRule monitoringv1.PrometheusRule
@@ -79,7 +72,7 @@ func (r *PrometheusRuleReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			// resource for immediate processing and we'll be stuck parsing broken alert
 			// rules. Instead, we wait for the next time the resource is updated or until
 			// the requeueInterval is elapsed (whichever happens first).
-			logger.Error(e, "could not parse rule groups")
+			log.Error(e, "could not parse rule groups")
 			return ctrl.Result{RequeueAfter: requeueInterval}, nil
 		}
 		// Requeue for later processing.
@@ -99,6 +92,8 @@ func (r *PrometheusRuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // handleObjectNotFound is a helper function for Reconcile(). It exists separately so that
 // we can exit on error without making the `switch` in Reconcile() complex.
 func (r *PrometheusRuleReconciler) handleObjectNotFound(ctx context.Context, key types.NamespacedName) error {
+	log := r.Log.WithValues("name", key.Name, "namespace", key.Namespace)
+
 	// Step 1: check if the object is a PrometheusRule or an AbsencePrometheusRule.
 	if strings.HasSuffix(key.Name, absencePromRuleNameSuffix) {
 		// In case that the AbsencePrometheusRule no longer exists we don't have to do any
@@ -109,12 +104,11 @@ func (r *PrometheusRuleReconciler) handleObjectNotFound(ctx context.Context, key
 
 	// Step 2: if it's a PrometheusRule then it could be possible that the resource no
 	// longer exists therefore we clean up any orphaned absence alert rules.
-	logger := log.FromContext(ctx)
-	logger.Info("PrometheusRule no longer exists")
+	log.Info("PrometheusRule no longer exists")
 	err := r.cleanUpOrphanedAbsenceAlertRules(ctx, key, "")
 	if err == nil {
 		deleteReconcileGauge(key.Namespace, key.Name)
-		logger.Info("successfully cleaned up orphaned absence alert rules")
+		log.Info("successfully cleaned up orphaned absence alert rules")
 	}
 	return err
 }
@@ -126,7 +120,7 @@ func (r *PrometheusRuleReconciler) reconcileObject(
 	key types.NamespacedName,
 	obj *monitoringv1.PrometheusRule,
 ) error {
-	logger := log.FromContext(ctx)
+	log := r.Log.WithValues("name", key.Name, "namespace", key.Namespace)
 	l := obj.GetLabels()
 
 	// Step 1: check if the object is a PrometheusRule or an AbsencePrometheusRule.
@@ -141,7 +135,7 @@ func (r *PrometheusRuleReconciler) reconcileObject(
 		}
 		err = r.cleanUpAbsencePrometheusRule(ctx, obj)
 		if err == nil {
-			logger.Info("successfully cleaned up AbsencePrometheusRule")
+			log.Info("successfully cleaned up AbsencePrometheusRule")
 		}
 		return err
 	}
@@ -149,11 +143,11 @@ func (r *PrometheusRuleReconciler) reconcileObject(
 	// Step 2: if it's a PrometheusRule then check if the the operator has been disabled
 	// for it.
 	if parseBool(l[labelOperatorDisable]) {
-		logger.Info("operator disabled for this PrometheusRule")
+		log.Info("operator disabled for this PrometheusRule")
 		err := r.cleanUpOrphanedAbsenceAlertRules(ctx, key, l[labelPrometheusServer])
 		if err == nil {
 			deleteReconcileGauge(key.Namespace, key.Name)
-			logger.Info("successfully cleaned up orphaned absence alert rules")
+			log.Info("successfully cleaned up orphaned absence alert rules")
 		}
 		return err
 	}
@@ -162,7 +156,7 @@ func (r *PrometheusRuleReconciler) reconcileObject(
 	err := r.updateAbsenceAlertRules(ctx, obj)
 	if err == nil {
 		setReconcileGauge(key.Namespace, key.Name, time.Now())
-		logger.Info("successfully reconciled PrometheusRule")
+		log.Info("successfully reconciled PrometheusRule")
 	}
 	return err
 }

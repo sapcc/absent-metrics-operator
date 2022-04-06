@@ -99,6 +99,7 @@ func main() {
 	if err = (&controllers.PrometheusRuleReconciler{
 		Client:    mgr.GetClient(),
 		Scheme:    mgr.GetScheme(),
+		Log:       ctrl.Log.WithName("controller").WithName("prometheusrule"),
 		KeepLabel: controllers.KeepLabel(keepLabel),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "PrometheusRule")
