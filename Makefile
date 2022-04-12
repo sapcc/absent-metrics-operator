@@ -14,7 +14,7 @@ endif
 
 default: build-all
 
-VERSION     := $(shell git describe --abbrev=7)
+VERSION     := $(shell git describe --tags --abbrev=7)
 COMMIT_HASH := $(shell git rev-parse --verify HEAD)
 BUILD_DATE  := $(shell date -u +"%Y-%m-%dT%H:%M:%S%Z")
 

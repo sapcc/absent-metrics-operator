@@ -30,7 +30,7 @@ variables:
   GO_LDFLAGS: "-X main.version=$(VERSION) -X main.commit=$(COMMIT_HASH) -X main.date=$(BUILD_DATE)"
 
 verbatim: |
-  VERSION     := $(shell git describe --abbrev=7)
+  VERSION     := $(shell git describe --tags --abbrev=7)
   COMMIT_HASH := $(shell git rev-parse --verify HEAD)
   BUILD_DATE  := $(shell date -u +"%Y-%m-%dT%H:%M:%S%Z")
 
