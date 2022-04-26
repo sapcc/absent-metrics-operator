@@ -21,6 +21,15 @@
       "matchDepTypes": [
         "action"
       ]
+    },
+    {
+      "enabled": false,
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "matchPackagePrefixes": [
+        "k8s.io/client-go"
+      ]
     }
   ],
   "prHourlyLimit": 0
