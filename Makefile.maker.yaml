@@ -19,6 +19,8 @@ renovate:
 
 githubWorkflow:
   global:
+    assignees:
+      - talal
     ignorePaths: ["**.md"] # all Markdown files
   ci:
     # Do not generate CI workflow as we use a custom definition for it which includes

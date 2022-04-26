@@ -5,7 +5,9 @@
     "docker:enableMajor",
     "regexManagers:dockerfileVersions"
   ],
-  "assignees": null,
+  "assignees": [
+    "talal"
+  ],
   "constraints": {
     "go": "1.17"
   },
