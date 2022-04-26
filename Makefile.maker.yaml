@@ -18,7 +18,7 @@ spellCheck:
 githubWorkflow:
   global:
     ignorePaths: ["**.md"] # all Markdown files
-  codeQL:
+  securityChecks:
     enabled: true
   license:
     enabled: true
