@@ -1,0 +1,29 @@
+{
+  "extends": [
+    "config:base",
+    "default:pinDigestsDisabled",
+    "docker:enableMajor",
+    "regexManagers:dockerfileVersions"
+  ],
+  "github-actions": {
+    "enabled": false
+  },
+  "assignees": ["talal"],
+  "constraints": {
+    "go": "1.17"
+  },
+  "postUpdateOptions": ["gomodTidy1.17", "gomodUpdateImportPaths"],
+  "packageRules": [
+    {
+      "enabled": false,
+      "matchUpdateTypes": ["major"],
+      "matchPackagePrefixes": ["github.com/prometheus/prometheus"]
+    },
+    {
+      "enabled": false,
+      "matchPackagePrefixes": ["k8s.io/"],
+      "allowedVersions": "<0.23"
+    }
+  ],
+  "prHourlyLimit": 0
+}

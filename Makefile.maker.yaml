@@ -14,10 +14,21 @@ golangciLint:
 spellCheck:
   ignoreWords: ["importas"] # importas is a valid linter name
 
-# Do not generate CI workflow as we use a custom definition for it.
+renovate:
+  # We define our own custom config. This is default behavior but we define this option
+  # explicitly for documentation purposes.
+  enabled: false
+
 githubWorkflow:
   global:
+    assignees:
+      - talal
     ignorePaths: ["**.md"] # all Markdown files
+  ci:
+    # Do not generate CI workflow as we use a custom definition for it which includes
+    # caching for envtest binaries. This is default behavior but we define this option
+    # explicitly for documentation purposes.
+    enabled: false
   securityChecks:
     enabled: true
   license:
