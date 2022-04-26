@@ -28,7 +28,8 @@
         "major"
       ],
       "matchPackagePrefixes": [
-        "k8s.io/client-go"
+        "github.com/prometheus/prometheus",
+        "k8s.io/"
       ]
     }
   ],

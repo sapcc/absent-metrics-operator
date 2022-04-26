@@ -15,7 +15,9 @@ spellCheck:
   ignoreWords: ["importas"] # importas is a valid linter name
 
 renovate:
-  enabled: true
+  # We define our own custom config. This is default behavior but we define this option
+  # explicitly for documentation purposes.
+  enabled: false
 
 githubWorkflow:
   global:
