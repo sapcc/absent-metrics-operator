@@ -2,15 +2,9 @@ module github.com/sapcc/absent-metrics-operator
 
 go 1.17
 
-// Note: the "k8s.io/*" and "github.com/prometheus/*" dependencies should have the same
-// versions as used by github.com/prometheus-operator/prometheus-operator.
-//
-// Instructions:
-// 1. Delete the `require` and `replace` directives in this file.
-// 2. Pick a Git tag on https://github.com/prometheus-operator/prometheus-operator/tags
-// 3. Copy over the `require` and `replace` directives from that tag's go.mod file. If
-//    there are any local references in the `replace` directive, remove those.
-// 4. Run `make tidy-deps`.
+// Note: in case of dependency issues, ensure that the "k8s.io/*" and
+// "github.com/prometheus/*" dependencies have the same versions as used by
+// https://github.com/prometheus-operator/prometheus-operator/blob/<tag>/go.mod
 
 require (
 	github.com/ghodss/yaml v1.0.0
@@ -24,7 +18,7 @@ require (
 	golang.org/x/text v0.3.7
 	k8s.io/api v0.23.5
 	k8s.io/apimachinery v0.23.5
-	k8s.io/client-go v12.0.0+incompatible
+	k8s.io/client-go v0.23.5
 	sigs.k8s.io/controller-runtime v0.11.2
 )
 
@@ -49,7 +43,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/go-cmp v0.5.7 // indirect
+	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.2.0 // indirect
 	github.com/googleapis/gnostic v0.5.5 // indirect
@@ -70,7 +64,7 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.19.1 // indirect
 	golang.org/x/crypto v0.0.0-20211202192323-5770296d904e // indirect
-	golang.org/x/net v0.0.0-20220114011407-0dd24b26b47d // indirect
+	golang.org/x/net v0.0.0-20220105145211-5b0dc2dfae98 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
 	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b // indirect
@@ -85,19 +79,10 @@ require (
 	k8s.io/component-base v0.23.5 // indirect
 	k8s.io/klog/v2 v2.40.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65 // indirect
-	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
+	k8s.io/utils v0.0.0-20211116205334-6203023598ed // indirect
 	sigs.k8s.io/json v0.0.0-20211020170558-c049b76a60c6 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace (
-	// A replace directive is needed for github.com/prometheus/alertmanager
-	// because Cortex (which is an indirect dependency through Thanos) has a
-	// requirement on a more recent commit version but untagged.
-	github.com/prometheus/alertmanager => github.com/prometheus/alertmanager v0.23.0
-	// A replace directive is needed for k8s.io/client-go because Cortex (which
-	// is an indirect dependency through Thanos) has a requirement on v12.0.0.
-	k8s.io/client-go => k8s.io/client-go v0.23.0
-	k8s.io/klog/v2 => github.com/simonpasquier/klog-gokit/v3 v3.1.0
-)
+replace k8s.io/klog/v2 => github.com/simonpasquier/klog-gokit/v3 v3.1.0
