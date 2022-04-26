@@ -94,9 +94,8 @@ alerts are generated and defined.
 
 ## Installation
 
-We provide pre-compiled binaries for the [latest release](https://github.com/sapcc/absent-metrics-operator/releases/latest).
+You can build with `make`, install with `make install`, or `docker build`.
 
-Alternatively, you can build with `make`, install with `make install`, or `docker build`.
 The `make install` target understands the conventional environment variables for choosing
 install locations: `DESTDIR` and `PREFIX`.
 
@@ -105,7 +104,7 @@ install locations: `DESTDIR` and `PREFIX`.
 For usage instructions:
 
 ```
-$ absent-metrics-operator --help
+absent-metrics-operator --help
 ```
 
 In case of a false positive, the operator can be disabled for a specific alert rule or the
