@@ -22,7 +22,7 @@
     {
       "matchPackagePrefixes": ["k8s.io/"],
       "allowedVersions": "<0.23"
-    }
+    },
     {
       "matchPackageNames": ["golang"],
       "allowedVersions": "1.17.x"
