@@ -20,7 +20,6 @@
       "matchPackagePrefixes": ["github.com/prometheus/prometheus"]
     },
     {
-      "enabled": false,
       "matchPackagePrefixes": ["k8s.io/"],
       "allowedVersions": "<0.23"
     }
