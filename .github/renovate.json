@@ -15,13 +15,17 @@
   "postUpdateOptions": ["gomodTidy1.17", "gomodUpdateImportPaths"],
   "packageRules": [
     {
-      "enabled": false,
-      "matchUpdateTypes": ["major"],
-      "matchPackagePrefixes": ["github.com/prometheus/prometheus"]
+      "matchPackageNames": ["github.com/prometheus/prometheus"],
+      "allowedVersions": "0.35.x"
     },
     {
       "matchPackagePrefixes": ["k8s.io/"],
       "allowedVersions": "<0.23"
+    },
+    {
+      "matchPackageNames": ["sigs.k8s.io/controller-runtime"],
+      "matchUpdateTypes": ["major", "minor"],
+      "enabled": false
     },
     {
       "matchPackageNames": ["golang"],
