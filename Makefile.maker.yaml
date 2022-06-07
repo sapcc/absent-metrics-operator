@@ -1,3 +1,8 @@
+# Configuration file for <https://github.com/sapcc/go-makefile-maker>
+
+metadata:
+  url: https://github.com/sapcc/absent-metrics-operator
+
 binaries:
   - name: absent-metrics-operator
     fromPackage: .
@@ -6,6 +11,13 @@ binaries:
 coverageTest:
   only: '/controllers'
 
+dockerfile:
+  enabled: true
+  extraIgnores:
+    - doc/
+    - PROJECT
+    - RELEASE.md
+
 golangciLint:
   # We define our own custom config. This is default behavior but we define this option
   # explicitly for documentation purposes.
@@ -13,11 +25,6 @@ golangciLint:
 
 spellCheck:
   ignoreWords: ["importas"] # importas is a valid linter name
-
-renovate:
-  # We define our own custom config. This is default behavior but we define this option
-  # explicitly for documentation purposes.
-  enabled: false
 
 githubWorkflow:
   global:
