@@ -5,30 +5,27 @@
     "docker:enableMajor",
     "regexManagers:dockerfileVersions"
   ],
-  "github-actions": {
-    "enabled": false
-  },
-  "assignees": ["talal"],
+  "assignees": [
+    "talal"
+  ],
   "constraints": {
     "go": "1.17"
   },
-  "postUpdateOptions": ["gomodTidy1.17", "gomodUpdateImportPaths"],
+  "postUpdateOptions": [
+    "gomodTidy1.17",
+    "gomodUpdateImportPaths"
+  ],
   "packageRules": [
     {
-      "matchPackageNames": ["github.com/prometheus/prometheus"],
-      "allowedVersions": "0.35.x"
+      "matchPackagePrefixes": [
+        "k8s.io/"
+      ],
+      "allowedVersions": "0.22.x"
     },
     {
-      "matchPackagePrefixes": ["k8s.io/"],
-      "allowedVersions": "<0.23"
-    },
-    {
-      "matchPackageNames": ["sigs.k8s.io/controller-runtime"],
-      "matchUpdateTypes": ["major", "minor"],
-      "enabled": false
-    },
-    {
-      "matchPackageNames": ["golang"],
+      "matchPackageNames": [
+        "golang"
+      ],
       "allowedVersions": "1.17.x"
     },
     {
@@ -38,6 +35,28 @@
         "github.com/sapcc/go-bits"
       ],
       "automerge": true
+    },
+    {
+      "matchDepTypes": [
+        "action"
+      ],
+      "enabled": false
+    },
+    {
+      "matchPackageNames": [
+        "github.com/prometheus/prometheus"
+      ],
+      "allowedVersions": "0.35.x"
+    },
+    {
+      "matchPackageNames": [
+        "sigs.k8s.io/controller-runtime"
+      ],
+      "matchUpdateTypes": [
+        "major",
+        "minor"
+      ],
+      "enabled": false
     }
   ],
   "prHourlyLimit": 0,
