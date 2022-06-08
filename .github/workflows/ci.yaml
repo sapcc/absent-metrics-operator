@@ -29,15 +29,8 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
+          cache: true
           go-version: "1.17"
-      - name: Cache Go modules
-        uses: actions/cache@v3
-        with:
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-          restore-keys: ${{ runner.os }}-go-
       - name: Make build
         run: make build-all
   lint:
@@ -65,15 +58,8 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
+          cache: true
           go-version: "1.17"
-      - name: Cache Go modules
-        uses: actions/cache@v3
-        with:
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-          restore-keys: ${{ runner.os }}-go-
       - name: Cache envtest binaries
         id: cache-envtest
         uses: actions/cache@v3
