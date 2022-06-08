@@ -80,7 +80,6 @@ jobs:
         with:
           key: ${{ runner.os }}-envtest-${{ hashFiles('Makefile.maker.yaml') }}
           path: test/bin
-          restore-keys: ${{ runner.os }}-envtest-
       - name: Download envtest binaries
         if: steps.cache-envtest.outputs.cache-hit != 'true'
         run: |
