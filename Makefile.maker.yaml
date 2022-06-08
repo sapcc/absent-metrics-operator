@@ -9,7 +9,7 @@ binaries:
     installTo: bin/
 
 coverageTest:
-  only: '/controllers'
+  only: "/controllers"
 
 dockerfile:
   enabled: true
@@ -25,6 +25,15 @@ golangciLint:
 
 spellCheck:
   ignoreWords: ["importas"] # importas is a valid linter name
+
+renovate:
+  enabled: true
+  packageRules:
+    - matchPackageNames: ["github.com/prometheus/prometheus"]
+      allowedVersions: 0.35.x
+    - matchPackageNames: ["sigs.k8s.io/controller-runtime"]
+      matchUpdateTypes: ["major", "minor"]
+      enabled: false
 
 githubWorkflow:
   global:
