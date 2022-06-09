@@ -43,6 +43,12 @@
       "enabled": false
     },
     {
+      "matchDepTypes": [
+        "dockerfile"
+      ],
+      "enabled": false
+    },
+    {
       "matchPackageNames": [
         "github.com/prometheus/prometheus"
       ],
