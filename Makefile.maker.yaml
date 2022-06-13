@@ -23,9 +23,6 @@ golangciLint:
   # explicitly for documentation purposes.
   createConfig: false
 
-spellCheck:
-  ignoreWords: ["importas"] # importas is a valid linter name
-
 renovate:
   enabled: true
   packageRules:
