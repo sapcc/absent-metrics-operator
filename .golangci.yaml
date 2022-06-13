@@ -1,4 +1,6 @@
 run:
+  # Run golangci-lint with Go 1.17 because some linters do not support Go 1.18 yet.
+  go: '1.17'
   deadline: 3m # 1m by default
   modules-download-mode: readonly
 
