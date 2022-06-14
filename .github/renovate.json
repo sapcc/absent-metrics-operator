@@ -4,7 +4,8 @@
     "default:pinDigestsDisabled"
   ],
   "assignees": [
-    "talal"
+    "talal",
+    "majewsky"
   ],
   "constraints": {
     "go": "1.18"
