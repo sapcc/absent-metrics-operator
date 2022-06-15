@@ -50,7 +50,7 @@ install: FORCE build/absent-metrics-operator
 # which packages to test with "go test"
 GO_TESTPKGS := $(shell go list -f '{{if or .TestGoFiles .XTestGoFiles}}{{.ImportPath}}{{end}}' ./...)
 # which packages to measure coverage for
-GO_COVERPKGS := $(shell go list ./... | command grep -E '/controllers')
+GO_COVERPKGS := $(shell go list ./... | grep -E '/controllers')
 # to get around weird Makefile syntax restrictions, we need variables containing a space and comma
 space := $(null) $(null)
 comma := ,
