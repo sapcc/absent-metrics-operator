@@ -26,6 +26,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	"github.com/sapcc/go-api-declarations/bininfo"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -35,13 +36,6 @@ import (
 
 	"github.com/sapcc/absent-metrics-operator/controllers"
 	//+kubebuilder:scaffold:imports
-)
-
-// This info identifies a specific build of the operator. It is set at compile time.
-var (
-	version = "dev"
-	commit  = "unknown"
-	date    = "now"
 )
 
 var (
@@ -116,6 +110,9 @@ func main() {
 		os.Exit(1)
 	}
 
+	version := bininfo.VersionOr("dev")
+	commit := bininfo.CommitOr("unknown")
+	date := bininfo.BuildDateOr("now")
 	setupLog.Info("starting manager", "version", version, "git-commit", commit, "build-date", date)
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
