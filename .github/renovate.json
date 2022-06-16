@@ -35,6 +35,12 @@
       "allowedVersions": "0.22.x"
     },
     {
+      "matchPackagePrefixes": [
+        "github.com/sapcc/go-api-declarations"
+      ],
+      "automerge": true
+    },
+    {
       "matchPackageNames": [
         "github.com/prometheus/prometheus"
       ],

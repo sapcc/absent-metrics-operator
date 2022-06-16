@@ -50,14 +50,7 @@ githubWorkflow:
     enabled: true
     ignorePaths: [] # override global setting so that nothing is ignored
 
-variables:
-  GO_LDFLAGS: "-X main.version=$(VERSION) -X main.commit=$(COMMIT_HASH) -X main.date=$(BUILD_DATE)"
-
 verbatim: |
-  VERSION     := $(shell git describe --tags --abbrev=7)
-  COMMIT_HASH := $(shell git rev-parse --verify HEAD)
-  BUILD_DATE  := $(shell date -u +"%Y-%m-%dT%H:%M:%S%Z")
-
   ENVTEST_VERSION := "1.22.x!"
   prepare-envtest-binaries:
     @if ! hash setup-envtest 2>/dev/null; then printf "\e[1;36m>> Installing setup-envtest...\e[0m\n"; go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest; fi
