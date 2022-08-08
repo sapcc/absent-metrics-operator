@@ -139,8 +139,7 @@ func (e *ruleGroupParseError) Error() string {
 // for these labels in which case the provided default tier and service will be
 // used.
 //
-// The rule group names for the absence alerts have the format:
-//   promRuleName/originalGroupName.
+// The rule group names for the absence alerts have the format: promRuleName/originalGroupName.
 func ParseRuleGroups(in []monitoringv1.RuleGroup, promRuleName string, opts LabelOpts) ([]monitoringv1.RuleGroup, error) {
 	out := make([]monitoringv1.RuleGroup, 0, len(in))
 	for _, g := range in {
