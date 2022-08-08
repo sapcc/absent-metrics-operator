@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-go@v3
         with:
           cache: true
-          go-version: "1.18"
+          go-version: "1.19"
       - name: Make build
         run: make build-all
   lint:
@@ -42,7 +42,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: "1.18"
+          go-version: "1.19"
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
@@ -59,7 +59,7 @@ jobs:
         uses: actions/setup-go@v3
         with:
           cache: true
-          go-version: "1.18"
+          go-version: "1.19"
       - name: Cache envtest binaries
         id: cache-envtest
         uses: actions/cache@v3
