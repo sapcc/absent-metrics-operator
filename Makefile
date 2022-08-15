@@ -47,7 +47,8 @@ else
 endif
 
 install: FORCE build/absent-metrics-operator
-	install -D -m 0755 build/absent-metrics-operator "$(DESTDIR)$(PREFIX)/bin/absent-metrics-operator"
+	install -d -m 0755 "$(DESTDIR)$(PREFIX)/bin"
+	install -m 0755 build/absent-metrics-operator "$(DESTDIR)$(PREFIX)/bin/absent-metrics-operator"
 
 # which packages to test with "go test"
 GO_TESTPKGS := $(shell go list -f '{{if or .TestGoFiles .XTestGoFiles}}{{.ImportPath}}{{end}}' ./...)
