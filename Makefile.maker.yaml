@@ -19,9 +19,7 @@ dockerfile:
     - RELEASE.md
 
 golangciLint:
-  # We define our own custom config. This is default behavior but we define this option
-  # explicitly for documentation purposes.
-  createConfig: false
+  createConfig: true
 
 renovate:
   enabled: true
