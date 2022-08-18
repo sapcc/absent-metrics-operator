@@ -120,6 +120,7 @@ func (r *PrometheusRuleReconciler) reconcileObject(
 	key types.NamespacedName,
 	obj *monitoringv1.PrometheusRule,
 ) error {
+
 	log := r.Log.WithValues("name", key.Name, "namespace", key.Namespace)
 	l := obj.GetLabels()
 
