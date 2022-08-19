@@ -57,6 +57,7 @@ func (r *PrometheusRuleReconciler) getExistingAbsencePrometheusRule(
 	ctx context.Context,
 	namespace, promServer string,
 ) (*monitoringv1.PrometheusRule, error) {
+
 	var absencePromRule monitoringv1.PrometheusRule
 	nsName := types.NamespacedName{Namespace: namespace, Name: AbsencePrometheusRuleName(promServer)}
 	if err := r.Get(ctx, nsName, &absencePromRule); err != nil {
@@ -163,22 +164,22 @@ func (r *PrometheusRuleReconciler) cleanUpOrphanedAbsenceAlertRules(
 
 	// Step 2: iterate through the AbsenceRuleGroups, skip those that were generated for
 	// this PrometheusRule and keep the rest as is.
-	old := aPRToClean.Spec.Groups
-	new := make([]monitoringv1.RuleGroup, 0, len(old))
-	for _, g := range old {
+	oldRuleGroups := aPRToClean.Spec.Groups
+	newRuleGroups := make([]monitoringv1.RuleGroup, 0, len(oldRuleGroups))
+	for _, g := range oldRuleGroups {
 		n := promRulefromAbsenceRuleGroupName(g.Name)
 		if n != "" && n == promRule.Name {
 			continue
 		}
-		new = append(new, g)
+		newRuleGroups = append(newRuleGroups, g)
 	}
-	if reflect.DeepEqual(old, new) {
+	if reflect.DeepEqual(oldRuleGroups, newRuleGroups) {
 		return nil
 	}
 
 	// Step 3: if, after the cleanup, the AbsencePrometheusRule ends up being empty then
 	// delete it otherwise update.
-	aPRToClean.Spec.Groups = new
+	aPRToClean.Spec.Groups = newRuleGroups
 	if len(aPRToClean.Spec.Groups) == 0 {
 		return r.deleteAbsencePrometheusRule(ctx, aPRToClean)
 	}
@@ -205,21 +206,21 @@ func (r *PrometheusRuleReconciler) cleanUpAbsencePrometheusRule(ctx context.Cont
 
 	// Step 2: iterate through all the AbsencePrometheusRule's RuleGroups and remove those
 	// that don't belong to any PrometheusRule.
-	new := make([]monitoringv1.RuleGroup, 0, len(absencePromRule.Spec.Groups))
+	newRuleGroups := make([]monitoringv1.RuleGroup, 0, len(absencePromRule.Spec.Groups))
 	for _, g := range absencePromRule.Spec.Groups {
 		n := promRulefromAbsenceRuleGroupName(g.Name)
 		if !prNames[n] {
 			continue
 		}
-		new = append(new, g)
+		newRuleGroups = append(newRuleGroups, g)
 	}
-	if reflect.DeepEqual(absencePromRule.Spec.Groups, new) {
+	if reflect.DeepEqual(absencePromRule.Spec.Groups, newRuleGroups) {
 		return nil
 	}
 
 	// Step 3: if, after the cleanup, the AbsencePrometheusRule ends up being empty then
 	// delete it otherwise update.
-	absencePromRule.Spec.Groups = new
+	absencePromRule.Spec.Groups = newRuleGroups
 	if len(absencePromRule.Spec.Groups) == 0 {
 		return r.deleteAbsencePrometheusRule(ctx, absencePromRule)
 	}
@@ -309,9 +310,9 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 
 	// Step 7: if it's an existing AbsencePrometheusRule then update otherwise create a new resource.
 	if existingAbsencePrometheusRule {
-		existing := absencePromRule.Spec.Groups
-		result := mergeAbsenceRuleGroups(existing, absenceRuleGroups)
-		if reflect.DeepEqual(existing, result) {
+		existingRuleGroups := absencePromRule.Spec.Groups
+		result := mergeAbsenceRuleGroups(existingRuleGroups, absenceRuleGroups)
+		if reflect.DeepEqual(existingRuleGroups, result) {
 			return nil
 		}
 		absencePromRule.Spec.Groups = result
@@ -324,12 +325,12 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 // mergeAbsenceRuleGroups merges existing and newly generated AbsenceRuleGroups. If the
 // same AbsenceRuleGroup exists in both 'existing' and 'new' then the newer one will be
 // used.
-func mergeAbsenceRuleGroups(existing, new []monitoringv1.RuleGroup) []monitoringv1.RuleGroup {
+func mergeAbsenceRuleGroups(existingRuleGroups, newRuleGroups []monitoringv1.RuleGroup) []monitoringv1.RuleGroup {
 	var result []monitoringv1.RuleGroup
 	added := make(map[string]bool)
 OuterLoop:
-	for _, oldG := range existing {
-		for _, newG := range new {
+	for _, oldG := range existingRuleGroups {
+		for _, newG := range newRuleGroups {
 			if oldG.Name == newG.Name {
 				// Add the new updated RuleGroup.
 				result = append(result, newG)
@@ -341,7 +342,7 @@ OuterLoop:
 		result = append(result, oldG)
 	}
 	// Add the pending rule groups.
-	for _, g := range new {
+	for _, g := range newRuleGroups {
 		if !added[g.Name] {
 			result = append(result, g)
 		}

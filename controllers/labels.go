@@ -59,6 +59,7 @@ func (r *PrometheusRuleReconciler) labelOptsWithDefaultTierAndService(
 	ctx context.Context,
 	absencePromRule *monitoringv1.PrometheusRule,
 ) *LabelOpts {
+
 	result := &LabelOpts{
 		Keep: r.KeepLabel,
 	}
