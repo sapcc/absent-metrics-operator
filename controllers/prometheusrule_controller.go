@@ -105,8 +105,8 @@ func (r *PrometheusRuleReconciler) handleObjectNotFound(ctx context.Context, key
 		return nil
 	}
 
-	// Step 2: if it's a PrometheusRule then it could be possible that the resource no
-	// longer exists therefore we clean up any orphaned absence alert rules.
+	// Step 2: if it's a PrometheusRule then perhaps this specific resource no longer
+	// exists therefore we need to clean up any orphaned absence alert rules.
 	log.Info("PrometheusRule no longer exists")
 	err := r.cleanUpOrphanedAbsenceAlertRules(ctx, key, "")
 	if err == nil {

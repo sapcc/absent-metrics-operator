@@ -328,6 +328,7 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 func mergeAbsenceRuleGroups(existingRuleGroups, newRuleGroups []monitoringv1.RuleGroup) []monitoringv1.RuleGroup {
 	var result []monitoringv1.RuleGroup
 	added := make(map[string]bool)
+
 OuterLoop:
 	for _, oldG := range existingRuleGroups {
 		for _, newG := range newRuleGroups {
@@ -341,6 +342,7 @@ OuterLoop:
 		// This RuleGroup should be carried over as is.
 		result = append(result, oldG)
 	}
+
 	// Add the pending rule groups.
 	for _, g := range newRuleGroups {
 		if !added[g.Name] {

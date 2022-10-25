@@ -121,7 +121,7 @@ func main() {
 }
 
 // labelsMap type is a wrapper around controllers.KeepLabel. It is used for the
-// `keep-labels` flag to convert a comma-separated string into a map.
+// `--keep-labels` flag to convert a comma-separated string into a map.
 type labelsMap controllers.KeepLabel
 
 // String implements the flag.Value interface.
