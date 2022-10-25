@@ -9,14 +9,14 @@ go 1.19
 require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v1.2.3
-	github.com/onsi/ginkgo/v2 v2.1.6
-	github.com/onsi/gomega v1.20.2
+	github.com/onsi/ginkgo/v2 v2.4.0
+	github.com/onsi/gomega v1.22.1
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.57.0
 	github.com/prometheus/client_golang v1.13.0
 	github.com/prometheus/prometheus v0.35.0
 	github.com/sapcc/go-api-declarations v1.4.0
-	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
-	golang.org/x/text v0.3.7
+	golang.org/x/sync v0.1.0
+	golang.org/x/text v0.4.0
 	k8s.io/api v0.23.5
 	k8s.io/apimachinery v0.23.5
 	k8s.io/client-go v0.23.5
@@ -66,10 +66,10 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.19.1 // indirect
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
-	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
+	golang.org/x/net v0.1.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220309155454-6242fa91716a // indirect
-	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
-	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
+	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/term v0.1.0 // indirect
 	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -88,32 +88,3 @@ require (
 )
 
 replace k8s.io/klog/v2 => github.com/simonpasquier/klog-gokit/v3 v3.1.0
-
-// Exclude pre-gomod kubernetes tags, as they are older than v0.x releases but are picked
-// when we update the dependencies.
-exclude (
-	k8s.io/client-go v1.4.0
-	k8s.io/client-go v1.4.0+incompatible
-	k8s.io/client-go v1.5.0
-	k8s.io/client-go v1.5.0+incompatible
-	k8s.io/client-go v1.5.1
-	k8s.io/client-go v1.5.1+incompatible
-	k8s.io/client-go v1.5.2
-	k8s.io/client-go v1.5.2+incompatible
-	k8s.io/client-go v10.0.0+incompatible
-	k8s.io/client-go v11.0.0+incompatible
-	k8s.io/client-go v12.0.0+incompatible
-	k8s.io/client-go v2.0.0+incompatible
-	k8s.io/client-go v2.0.0-alpha.1+incompatible
-	k8s.io/client-go v3.0.0+incompatible
-	k8s.io/client-go v3.0.0-beta.0+incompatible
-	k8s.io/client-go v4.0.0+incompatible
-	k8s.io/client-go v4.0.0-beta.0+incompatible
-	k8s.io/client-go v5.0.0+incompatible
-	k8s.io/client-go v5.0.1+incompatible
-	k8s.io/client-go v6.0.0+incompatible
-	k8s.io/client-go v7.0.0+incompatible
-	k8s.io/client-go v8.0.0+incompatible
-	k8s.io/client-go v9.0.0+incompatible
-	k8s.io/client-go v9.0.0-invalid+incompatible
-)
