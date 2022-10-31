@@ -16,7 +16,7 @@ spec:
   groups:
     - name: openstack-limes-roleassign.alerts/roleassignment.alerts
       rules:
-        - alert: AbsentOsLimesOpenstackAssignmentsPerRole
+        - alert: AbsentContainersLimesOpenstackAssignmentsPerRole
           expr: absent(openstack_assignments_per_role)
           for: 10m
           labels:
