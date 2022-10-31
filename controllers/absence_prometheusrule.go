@@ -191,10 +191,13 @@ func (r *PrometheusRuleReconciler) cleanUpOrphanedAbsenceAlertRules(
 // has the 'absent-metrics-operator/disable' label. If such rules are found then they are
 // deleted.
 func (r *PrometheusRuleReconciler) cleanUpAbsencePrometheusRule(ctx context.Context, absencePromRule *monitoringv1.PrometheusRule) error {
-	// Step 1: get names of all PrometheusRule resources.
-	namespace := absencePromRule.GetNamespace()
+	// Step 1: get names of all PrometheusRule resources in this namespace for the
+	// concerning Prometheus server.
 	var listOpts client.ListOptions
-	client.InNamespace(namespace).ApplyToList(&listOpts)
+	client.InNamespace(absencePromRule.GetNamespace()).ApplyToList(&listOpts)
+	client.MatchingLabels{
+		labelPrometheusServer: absencePromRule.Labels[labelPrometheusServer],
+	}.ApplyToList(&listOpts)
 	var promRules monitoringv1.PrometheusRuleList
 	if err := r.List(ctx, &promRules, &listOpts); err != nil {
 		return err
