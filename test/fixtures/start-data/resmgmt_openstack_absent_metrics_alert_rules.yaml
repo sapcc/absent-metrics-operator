@@ -1,0 +1,32 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: openstack-absent-metric-alert-rules
+  namespace: resmgmt
+  labels:
+    absent-metrics-operator/managed-by: "true"
+    prometheus: openstack
+    ccloud/support-group: containers
+    ccloud/service: limes
+    type: alerting-rules
+  annotations:
+    absent-metrics-operator/updated-at: "1970-01-01T00:00:01Z"
+spec:
+  groups:
+    - name: openstack-limes-roleassign.alerts/roleassignment.alerts
+      rules:
+        - alert: AbsentOsLimesOpenstackAssignmentsPerRole
+          expr: absent(openstack_assignments_per_role)
+          for: 10m
+          labels:
+            context: absent-metrics
+            support_group: containers
+            service: limes
+            severity: info
+          annotations:
+            description:
+              The metric 'openstack_assignments_per_role' is missing. 'OpenstackLimesUnexpectedCloudViewerRoleAssignments'
+              alert using it may not fire as intended. See <https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md|the
+              operator playbook>.
+            summary: missing openstack_assignments_per_role
