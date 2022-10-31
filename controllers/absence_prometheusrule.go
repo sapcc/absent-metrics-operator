@@ -291,11 +291,19 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 		// Update the defaults for the AbsencePrometheusRule in case they might've
 		// changed.
 		// New CCloud format.
-		absencePromRule.Labels[LabelCCloudSupportGroup] = labelOpts.DefaultSupportGroup
-		absencePromRule.Labels[LabelCCloudService] = labelOpts.DefaultService
+		if labelOpts.DefaultSupportGroup != "" {
+			absencePromRule.Labels[LabelCCloudSupportGroup] = labelOpts.DefaultSupportGroup
+		}
+		if labelOpts.DefaultService != "" {
+			absencePromRule.Labels[LabelCCloudService] = labelOpts.DefaultService
+		}
 		// Old CCloud format.
-		absencePromRule.Labels[LabelTier] = labelOpts.DefaultTier
-		absencePromRule.Labels[LabelService] = labelOpts.DefaultService
+		if labelOpts.DefaultTier != "" {
+			absencePromRule.Labels[LabelTier] = labelOpts.DefaultTier
+		}
+		if labelOpts.DefaultService != "" {
+			absencePromRule.Labels[LabelService] = labelOpts.DefaultService
+		}
 	}
 
 	// Step 4: parse RuleGroups and generate corresponding absence alert rules.
@@ -316,9 +324,9 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 		return nil
 	}
 
-	// Step 6. log an error in case we couldn't find defaults for tier and service. We log
-	// these errors after Step 4 and 5 to avoid unnecessary logging in case the
-	// aforementioned steps result in no change.
+	// Step 6. log in case we couldn't find defaults for tier and service. We log after
+	// Step 4 and 5 to avoid unnecessary logging in case the aforementioned steps result
+	// in no change.
 	if keepCCloudLabels(labelOpts.Keep) {
 		if labelOpts.DefaultSupportGroup == "" {
 			log.Info("could not find a default value for 'support_group' label")
