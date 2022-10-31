@@ -60,8 +60,6 @@ func keepCCloudLabels(keep KeepLabel) bool {
 
 // defaultSupportGroupAndServiceLabels finds defaults for support group and service labels for an
 // AbsencePrometheusRule and returns the corresponding LabelOpts.
-//
-//nolint:dupl
 func (r *PrometheusRuleReconciler) labelOptsWithCCloudDefaults(
 	ctx context.Context,
 	promRule *monitoringv1.PrometheusRule,
@@ -112,7 +110,7 @@ func (r *PrometheusRuleReconciler) labelOptsWithCCloudDefaults(
 	client.MatchingLabels{labelPrometheusServer: l[labelPrometheusServer]}.ApplyToList(&listOpts)
 	var promRules monitoringv1.PrometheusRuleList
 	if err := r.List(ctx, &promRules, &listOpts); err != nil {
-		return LabelOpts{}, nil
+		return opts, err
 	}
 	var rg []monitoringv1.RuleGroup
 	for _, pr := range promRules.Items {
