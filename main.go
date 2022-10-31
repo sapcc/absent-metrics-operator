@@ -15,7 +15,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -65,8 +64,8 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flag.Var(keepLabel, "keep-labels", "A comma-separated list of labels to retain from the original alert rule. "+
-		fmt.Sprintf("(default %q)", labelsMap{controllers.LabelSupportGroup: true, controllers.LabelTier: true, controllers.LabelService: true}))
+	flag.Var(&keepLabel, "keep-labels", "A comma-separated list of labels to retain from the original alert rule. "+
+		fmt.Sprintf("(default '%s,%s,%s')", controllers.LabelSupportGroup, controllers.LabelTier, controllers.LabelService))
 	opts := zap.Options{
 		Development: debug,
 	}
@@ -74,6 +73,15 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
+	// Set default value for '-keep-labels' flag.
+	if len(keepLabel) == 0 {
+		keepLabel = labelsMap{
+			controllers.LabelSupportGroup: true,
+			controllers.LabelTier:         true,
+			controllers.LabelService:      true,
+		}
+	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
@@ -134,19 +142,13 @@ func (lm labelsMap) String() string {
 }
 
 // Set implements the flag.Value interface.
-func (lm labelsMap) Set(in string) error {
-	lm = make(labelsMap)
+func (lm *labelsMap) Set(in string) error {
+	labels := make(labelsMap)
 	list := strings.Split(in, ",")
 	for _, v := range list {
-		lm[strings.TrimSpace(v)] = true
+		labels[strings.TrimSpace(v)] = true
 	}
 
-	// Validate
-	if lm[controllers.LabelTier] || lm[controllers.LabelService] {
-		if !lm[controllers.LabelTier] && !lm[controllers.LabelService] {
-			return errors.New("labels 'tier' and 'service' are co-dependent: use both or neither")
-		}
-	}
-
+	*lm = labels
 	return nil
 }
