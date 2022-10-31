@@ -60,6 +60,8 @@ func keepCCloudLabels(keep KeepLabel) bool {
 
 // labelOptsWithCCloudDefaults finds defaults for support group and service labels for an
 // AbsencePrometheusRule and returns the corresponding LabelOpts.
+//
+//nolint:dupl
 func (r *PrometheusRuleReconciler) labelOptsWithCCloudDefaults(
 	ctx context.Context,
 	absencePromRule *monitoringv1.PrometheusRule,
@@ -109,6 +111,8 @@ func (r *PrometheusRuleReconciler) labelOptsWithCCloudDefaults(
 
 // labelOptsWithDefaultTierAndService finds defaults for tier and service labels for an
 // AbsencePrometheusRule and returns the corresponding LabelOpts.
+//
+//nolint:dupl
 func (r *PrometheusRuleReconciler) labelOptsWithDefaultTierAndService(
 	ctx context.Context,
 	absencePromRule *monitoringv1.PrometheusRule,
@@ -156,6 +160,7 @@ func (r *PrometheusRuleReconciler) labelOptsWithDefaultTierAndService(
 	return result
 }
 
+//nolint:dupl
 func mostCommonSupportGroupAndServiceCombo(ruleGroups []monitoringv1.RuleGroup) (supportGroup, service string) {
 	// Map of support group to service to number of occurrences.
 	count := make(map[string]map[string]int)
@@ -192,6 +197,7 @@ func mostCommonSupportGroupAndServiceCombo(ruleGroups []monitoringv1.RuleGroup) 
 	return supportGroup, service
 }
 
+//nolint:dupl
 func mostCommonTierAndServiceCombo(ruleGroups []monitoringv1.RuleGroup) (tier, service string) {
 	// Map of tier to service to number of occurrences.
 	count := make(map[string]map[string]int)
