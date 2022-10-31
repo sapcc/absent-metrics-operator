@@ -258,52 +258,25 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 		return err
 	}
 
-	// Step 3: get defaults for tier and service labels and add them to the AbsencePrometheusRule.
+	// Step 3: get defaults for support group, tier and service labels and add them to the
+	// AbsencePrometheusRule.
 	labelOpts := LabelOpts{Keep: r.KeepLabel}
 	if keepCCloudLabels(labelOpts.Keep) {
-		// If the PrometheusRule has support group, tier, and service labels then use those as the defaults.
-		labelOpts.DefaultSupportGroup = promRuleLabels[LabelCCloudSupportGroup]
-		labelOpts.DefaultTier = promRuleLabels[LabelTier]
-		labelOpts.DefaultService = promRuleLabels[LabelCCloudService]
-		// If no labels are defined then we try to find the defaults using different
-		// strategies in labelOptsWithCCloudDefaults().
-		if labelOpts.DefaultSupportGroup == "" || labelOpts.DefaultService == "" {
-			opts := r.labelOptsWithCCloudDefaults(ctx, absencePromRule)
-			if opts != nil {
-				labelOpts = *opts
-			}
+		var err error
+		labelOpts, err = r.labelOptsWithCCloudDefaults(ctx, promRule)
+		if err != nil {
+			return err
 		}
 
-		// TODO: this is here for backwards compatibility with old CCloud label format and
-		// will be removed in a later version.
-		if labelOpts.DefaultTier == "" || labelOpts.DefaultService == "" {
-			opts := r.labelOptsWithDefaultTierAndService(ctx, absencePromRule)
-			if opts != nil {
-				labelOpts.DefaultTier = opts.DefaultTier
-				// Service label from labelOptsWithCCloudDefaults() takes precedence over
-				// labelOptsWithDefaultTierAndService().
-				if labelOpts.DefaultService == "" {
-					labelOpts.DefaultService = opts.DefaultService
-				}
-			}
-		}
-
-		// Update the defaults for the AbsencePrometheusRule in case they might've
-		// changed.
-		// New CCloud format.
-		if labelOpts.DefaultSupportGroup != "" {
-			absencePromRule.Labels[LabelCCloudSupportGroup] = labelOpts.DefaultSupportGroup
-		}
-		if labelOpts.DefaultService != "" {
-			absencePromRule.Labels[LabelCCloudService] = labelOpts.DefaultService
-		}
-		// Old CCloud format.
-		if labelOpts.DefaultTier != "" {
-			absencePromRule.Labels[LabelTier] = labelOpts.DefaultTier
-		}
-		if labelOpts.DefaultService != "" {
-			absencePromRule.Labels[LabelService] = labelOpts.DefaultService
-		}
+		// Update the labels on AbsencePrometheusRule object in case they might've changed
+		// or delete them in case they no longer exist and defaults could not be
+		// determined.
+		// New CCloud format:
+		updateLabel(absencePromRule.Labels, LabelCCloudSupportGroup, labelOpts.DefaultSupportGroup)
+		updateLabel(absencePromRule.Labels, LabelCCloudService, labelOpts.DefaultService)
+		// Old CCloud format:
+		updateLabel(absencePromRule.Labels, LabelTier, labelOpts.DefaultTier)
+		updateLabel(absencePromRule.Labels, LabelService, labelOpts.DefaultService)
 	}
 
 	// Step 4: parse RuleGroups and generate corresponding absence alert rules.

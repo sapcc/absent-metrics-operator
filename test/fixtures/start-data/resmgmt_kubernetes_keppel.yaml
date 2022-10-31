@@ -30,7 +30,6 @@ spec:
           for: 30m
           labels:
             tier: os
-            support_group: containers
             service: keppel
             severity: info
             context: memory

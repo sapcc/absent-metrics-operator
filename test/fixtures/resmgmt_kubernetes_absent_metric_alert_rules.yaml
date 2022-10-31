@@ -4,7 +4,6 @@ metadata:
   labels:
     absent-metrics-operator/managed-by: "true"
     prometheus: kubernetes
-    ccloud/support-group: containers
     ccloud/service: keppel
     tier: os
     service: keppel
@@ -16,12 +15,11 @@ spec:
   groups:
     - name: kubernetes-keppel.alerts/keppel.alerts
       rules:
-        - alert: AbsentContainersKeppelContainerMemoryUsagePercent
+        - alert: AbsentOsKeppelContainerMemoryUsagePercent
           expr: absent(keppel_container_memory_usage_percent)
           for: 10m
           labels:
             context: absent-metrics
-            support_group: containers
             tier: os
             service: keppel
             severity: info
@@ -33,12 +31,11 @@ spec:
               operator playbook>.
             summary: missing keppel_container_memory_usage_percent
 
-        - alert: AbsentContainersKeppelKubePodFailedSchedulingMemoryTotal
+        - alert: AbsentOsKeppelKubePodFailedSchedulingMemoryTotal
           expr: absent(kube_pod_failed_scheduling_memory_total)
           for: 10m
           labels:
             context: absent-metrics
-            support_group: containers
             tier: os
             service: keppel
             severity: info

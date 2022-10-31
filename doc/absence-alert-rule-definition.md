@@ -30,7 +30,7 @@ for: 10m
 labels:
   context: absent-metrics
   severity: info
-  tier: $tier
+  support_group: $support_group
   service: $service
 annotations:
   summary: missing $metric
@@ -38,10 +38,10 @@ annotations:
 ```
 
 Consider the an alert rule that uses a metric called `limes_successful_scrapes:rate5m`
-with tier `os` and service `limes` labels. The name of the corresponding _absence alert
-rule_ would be `AbsentOsLimesSuccessfulScrapesRate5m`.
+with support group `containers` and service `limes` labels. The name of the corresponding
+_absence alert rule_ would be `AbsentContainersLimesSuccessfulScrapesRate5m`.
 
-The values of `tier` and `service` labels are only included in the name if the
+The values of `support_group` and `service` labels are only included in the name if the
 labels are specified in the `--keep-labels` flag.
 
 The description also includes a [link](./doc/playbook.md) to the playbook for operators
@@ -49,9 +49,10 @@ that can be referenced on how to deal with _absence alert rules_.
 
 ## Labels
 
-Labels which are specified with the `--keep-labels` flag will be retained from the original alert rule and will be defined on the corresponding _absence alert rule_ as is.
+Labels which are specified with the `--keep-labels` flag will be retained from the
+original alert rule and will be defined on the corresponding _absence alert rule_ as is.
 
-The `tier` and `service` are a special case, they have some custom behavior which is
+The `support_group` and `service` labels are a special case, they have some custom behavior which is
 defined in the [playbook for operators](./playbook.md#tier-and-service-labels).
 
 ### Defaults
