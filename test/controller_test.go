@@ -125,9 +125,10 @@ var _ = Describe("Controller", func() {
 		objKey := newObjKey(swiftNs, "openstack-swift.alerts")
 		prObjKey := newObjKey(swiftNs, osAbsentPRName)
 		labelOpts := controllers.LabelOpts{
-			DefaultTier:    "os",
-			DefaultService: "swift",
-			Keep:           keepLabel,
+			DefaultSupportGroup: "not-containers",
+			DefaultTier:         "os",
+			DefaultService:      "swift",
+			Keep:                keepLabel,
 		}
 		fooBar := "foo_bar"
 		barFoo := "bar_foo"
@@ -281,9 +282,10 @@ var _ = Describe("Controller", func() {
 
 				// Generate the corresponding absent alert rules.
 				expected, err := controllers.ParseRuleGroups(pr.Spec.Groups, pr.GetName(), controllers.LabelOpts{
-					DefaultTier:    pr.Labels[controllers.LabelTier],
-					DefaultService: pr.Labels[controllers.LabelService],
-					Keep:           keepLabel,
+					DefaultSupportGroup: "not-containers",
+					DefaultTier:         "os",
+					DefaultService:      "swift",
+					Keep:                keepLabel,
 				})
 				Expect(err).ToNot(HaveOccurred())
 

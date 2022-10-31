@@ -213,6 +213,9 @@ func parseAlertRule(in monitoringv1.Rule, opts LabelOpts) ([]monitoringv1.Rule, 
 		for k := range opts.Keep {
 			v := ruleLabels[k]
 			emptyOrTmplVal := (v == "" || strings.Contains(v, "$labels"))
+			if k == LabelSupportGroup && emptyOrTmplVal {
+				v = opts.DefaultSupportGroup
+			}
 			if k == LabelTier && emptyOrTmplVal {
 				v = opts.DefaultTier
 			}

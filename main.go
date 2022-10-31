@@ -66,7 +66,7 @@ func main() {
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.Var(keepLabel, "keep-labels", "A comma-separated list of labels to retain from the original alert rule. "+
-		fmt.Sprintf("(default %q)", labelsMap{controllers.LabelTier: true, controllers.LabelService: true}))
+		fmt.Sprintf("(default %q)", labelsMap{controllers.LabelSupportGroup: true, controllers.LabelTier: true, controllers.LabelService: true}))
 	opts := zap.Options{
 		Development: debug,
 	}

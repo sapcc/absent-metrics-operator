@@ -8,6 +8,7 @@ metadata:
     type: alerting-rules
     prometheus: kubernetes
     tier: os
+    ccloud/support-group: containers
 spec:
   groups:
     - name: keppel.alerts
@@ -18,6 +19,7 @@ spec:
           labels:
             severity: warning
             tier: "{{ $labels.somelabel }}"
+            support_group: "{{ $labels.somelabel }}"
             service: keppel
             context: memory
             dashboard: keppel-overview
@@ -31,6 +33,7 @@ spec:
           for: 30m
           labels:
             tier: os
+            support_group: containers
             service: keppel
             severity: info
             context: memory

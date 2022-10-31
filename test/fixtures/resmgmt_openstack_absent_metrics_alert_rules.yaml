@@ -4,8 +4,10 @@ metadata:
   labels:
     absent-metrics-operator/managed-by: "true"
     prometheus: openstack
-    service: limes
+    ccloud/support-group: containers
+    ccloud/service: limes
     tier: os
+    service: limes
     type: alerting-rules
   annotations:
     absent-metrics-operator/updated-at: "1970-01-01T00:00:01Z"
@@ -19,6 +21,7 @@ spec:
           for: 10m
           labels:
             context: absent-metrics
+            support_group: containers
             service: limes
             severity: info
             tier: os
@@ -34,6 +37,7 @@ spec:
           for: 10m
           labels:
             context: absent-metrics
+            support_group: containers
             service: limes
             severity: info
             tier: os
@@ -51,6 +55,7 @@ spec:
           for: 10m
           labels:
             context: absent-metrics
+            support_group: containers
             service: limes
             severity: info
             tier: os

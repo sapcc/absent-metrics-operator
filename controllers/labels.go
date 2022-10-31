@@ -24,8 +24,12 @@ import (
 
 // These constants are exported for reusability across packages.
 const (
-	LabelTier    = "tier"
-	LabelService = "service"
+	LabelCCloudSupportGroup = "ccloud/support-group"
+	LabelCCloudService      = "ccloud/service"
+
+	LabelSupportGroup = "support_group"
+	LabelTier         = "tier"
+	LabelService      = "service"
 )
 
 const (
@@ -40,8 +44,9 @@ const (
 
 // LabelOpts holds the options that define labels for an absence alert rule.
 type LabelOpts struct {
-	DefaultTier    string
-	DefaultService string
+	DefaultSupportGroup string
+	DefaultTier         string
+	DefaultService      string
 
 	Keep KeepLabel
 }
@@ -49,8 +54,57 @@ type LabelOpts struct {
 // KeepLabel specifies which labels to keep on an absence alert rule.
 type KeepLabel map[string]bool
 
-func keepTierServiceLabels(keep KeepLabel) bool {
-	return keep[LabelTier] && keep[LabelService]
+func keepCCloudLabels(keep KeepLabel) bool {
+	return keep[LabelSupportGroup] && keep[LabelTier] && keep[LabelService]
+}
+
+// labelOptsWithCCloudDefaults finds defaults for support group and service labels for an
+// AbsencePrometheusRule and returns the corresponding LabelOpts.
+func (r *PrometheusRuleReconciler) labelOptsWithCCloudDefaults(
+	ctx context.Context,
+	absencePromRule *monitoringv1.PrometheusRule,
+) *LabelOpts {
+
+	result := &LabelOpts{
+		Keep: r.KeepLabel,
+	}
+
+	// Strategy 1: check if the AbsencePrometheusRule already has support group and
+	// service labels defined.
+	l := absencePromRule.GetLabels()
+	result.DefaultSupportGroup, result.DefaultService = l[LabelCCloudSupportGroup], l[LabelCCloudService]
+	if result.DefaultSupportGroup != "" && result.DefaultService != "" {
+		return result
+	}
+
+	// Strategy 2: try to find the support group and service label from absence alert rules.
+	if len(absencePromRule.Spec.Groups) > 0 {
+		result.DefaultSupportGroup, result.DefaultService = mostCommonSupportGroupAndServiceCombo(absencePromRule.Spec.Groups)
+		if result.DefaultSupportGroup != "" && result.DefaultService != "" {
+			return result
+		}
+	}
+
+	// Strategy 3: iterate through all the alert rule definitions for the concerning
+	// Prometheus server in this specific namespace.
+	var listOpts client.ListOptions
+	client.InNamespace(absencePromRule.GetNamespace()).ApplyToList(&listOpts)
+	client.MatchingLabels{labelPrometheusServer: l[labelPrometheusServer]}.ApplyToList(&listOpts)
+	var promRules monitoringv1.PrometheusRuleList
+	if err := r.List(ctx, &promRules, &listOpts); err != nil {
+		return nil
+	}
+
+	var rg []monitoringv1.RuleGroup
+	for _, pr := range promRules.Items {
+		rg = append(rg, pr.Spec.Groups...)
+	}
+	result.DefaultSupportGroup, result.DefaultService = mostCommonSupportGroupAndServiceCombo(rg)
+	if result.DefaultSupportGroup == "" || result.DefaultService == "" {
+		return nil
+	}
+
+	return result
 }
 
 // labelOptsWithDefaultTierAndService finds defaults for tier and service labels for an
@@ -100,6 +154,42 @@ func (r *PrometheusRuleReconciler) labelOptsWithDefaultTierAndService(
 	}
 
 	return result
+}
+
+func mostCommonSupportGroupAndServiceCombo(ruleGroups []monitoringv1.RuleGroup) (supportGroup, service string) {
+	// Map of support group to service to number of occurrences.
+	count := make(map[string]map[string]int)
+	for _, g := range ruleGroups {
+		for _, r := range g.Rules {
+			if r.Record != "" {
+				continue // skip recording rule
+			}
+			t, ok := r.Labels[LabelSupportGroup]
+			if !ok || strings.Contains(t, "$labels") {
+				continue
+			}
+			s, ok := r.Labels[LabelService]
+			if !ok || strings.Contains(s, "$labels") {
+				continue
+			}
+			if count[t] == nil {
+				count[t] = make(map[string]int)
+			}
+			count[t][s]++
+		}
+	}
+
+	var i int
+	for sg, m := range count {
+		for s, j := range m {
+			if j > i {
+				i = j
+				supportGroup = sg
+				service = s
+			}
+		}
+	}
+	return supportGroup, service
 }
 
 func mostCommonTierAndServiceCombo(ruleGroups []monitoringv1.RuleGroup) (tier, service string) {

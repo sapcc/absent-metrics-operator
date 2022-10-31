@@ -4,8 +4,10 @@ metadata:
   labels:
     absent-metrics-operator/managed-by: "true"
     prometheus: openstack
-    service: swift
+    ccloud/support-group: not-containers
+    ccloud/service: swift
     tier: os
+    service: swift
     type: alerting-rules
   annotations:
     absent-metrics-operator/updated-at: "1970-01-01T00:00:01Z"
@@ -19,6 +21,7 @@ spec:
           for: 10m
           labels:
             context: absent-metrics
+            support_group: not-containers
             service: swift
             severity: info
             tier: os
@@ -34,6 +37,7 @@ spec:
           for: 10m
           labels:
             context: absent-metrics
+            support_group: not-containers
             service: swift
             severity: info
             tier: os
@@ -49,6 +53,7 @@ spec:
           for: 10m
           labels:
             context: absent-metrics
+            support_group: not-containers
             service: swift
             severity: info
             tier: os
@@ -65,6 +70,7 @@ spec:
           for: 10m
           labels:
             context: absent-metrics
+            support_group: not-containers
             service: swift
             severity: info
             tier: os

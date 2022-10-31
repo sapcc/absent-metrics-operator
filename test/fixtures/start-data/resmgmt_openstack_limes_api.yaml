@@ -20,6 +20,7 @@ spec:
         service: limes
         severity: info
         tier: os
+        support_group: containers
       annotations:
         summary: "Server errors on {{ $labels.kubernetes_name }}"
         description: "{{ $labels.kubernetes_name }} is producing HTTP responses with 5xx status codes."
@@ -33,6 +34,7 @@ spec:
         service: "{{ $labels.service_name }}"
         severity: warning
         tier: os
+        support_group: containers
         playbook: docs/support/playbook/limes/failed_scrapes
       annotations:
         summary: "Limes cannot scrape {{ title $labels.service_name }}"
@@ -47,6 +49,7 @@ spec:
         service: "{{ $labels.service_name }}"
         severity: warning
         tier: os
+        support_group: containers
       annotations:
         summary: "Limes cannot find {{ title $labels.service_name }} endpoint"
         description: "Limes has suspended scraping from {{ title $labels.service_name }} for more than an hour."
