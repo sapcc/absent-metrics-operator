@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
+	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -45,6 +46,8 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var (
+	logger logr.Logger
+
 	k8sClient client.Client
 	testEnv   *envtest.Environment
 	reg       *prometheus.Registry
@@ -68,7 +71,8 @@ func TestController(t *testing.T) {
 var _ = BeforeSuite(func() {
 	controllers.IsTest = true
 
-	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+	logger = zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true))
+	logf.SetLogger(logger)
 
 	By("bootstrapping test environment")
 	p, err := binaryAssetsAbsPath()

@@ -147,7 +147,7 @@ var _ = Describe("Controller", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				// Generate the corresponding absent alert rules.
-				expected, err := controllers.ParseRuleGroups(pr.Spec.Groups, pr.GetName(), labelOpts)
+				expected, err := controllers.ParseRuleGroups(logger, pr.Spec.Groups, pr.GetName(), labelOpts)
 				Expect(err).ToNot(HaveOccurred())
 
 				// Get the updated AbsentPromRule from the server and check if it has the
@@ -183,7 +183,7 @@ var _ = Describe("Controller", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				// Generate the corresponding absent alert rules.
-				expected, err := controllers.ParseRuleGroups(pr.Spec.Groups, pr.GetName(), labelOpts)
+				expected, err := controllers.ParseRuleGroups(logger, pr.Spec.Groups, pr.GetName(), labelOpts)
 				Expect(err).ToNot(HaveOccurred())
 
 				// Get the updated AbsentPromRule from the server and check if the
@@ -281,7 +281,7 @@ var _ = Describe("Controller", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				// Generate the corresponding absent alert rules.
-				expected, err := controllers.ParseRuleGroups(pr.Spec.Groups, pr.GetName(), controllers.LabelOpts{
+				expected, err := controllers.ParseRuleGroups(logger, pr.Spec.Groups, pr.GetName(), controllers.LabelOpts{
 					DefaultSupportGroup: "not-containers",
 					DefaultTier:         "os",
 					DefaultService:      "swift",

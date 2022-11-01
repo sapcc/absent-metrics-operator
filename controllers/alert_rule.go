@@ -140,7 +140,7 @@ func (e *ruleGroupParseError) Error() string {
 // used.
 //
 // The rule group names for the absence alerts have the format: promRuleName/originalGroupName.
-func ParseRuleGroups(in []monitoringv1.RuleGroup, promRuleName string, opts LabelOpts) ([]monitoringv1.RuleGroup, error) {
+func ParseRuleGroups(logger logr.Logger, in []monitoringv1.RuleGroup, promRuleName string, opts LabelOpts) ([]monitoringv1.RuleGroup, error) {
 	out := make([]monitoringv1.RuleGroup, 0, len(in))
 	for _, g := range in {
 		var absenceAlertRules []monitoringv1.Rule
@@ -153,7 +153,7 @@ func ParseRuleGroups(in []monitoringv1.RuleGroup, promRuleName string, opts Labe
 			if r.Labels != nil && parseBool(r.Labels[labelNoAlertOnAbsence]) {
 				continue
 			}
-			rules, err := parseAlertRule(r, opts)
+			rules, err := parseAlertRule(logger, r, opts)
 			if err != nil {
 				return nil, &ruleGroupParseError{cause: err}
 			}
@@ -183,12 +183,12 @@ var nonAlphaNumericRx = regexp.MustCompile(`[^a-zA-Z0-9]`)
 // an alert expression can reference multiple time series therefore a slice of
 // []monitoringv1.Rule is returned as multiple (one for each time series) absence alert
 // rules would be generated.
-func parseAlertRule(in monitoringv1.Rule, opts LabelOpts) ([]monitoringv1.Rule, error) {
+func parseAlertRule(logger logr.Logger, in monitoringv1.Rule, opts LabelOpts) ([]monitoringv1.Rule, error) {
 	exprStr := in.Expr.String()
 	mex := &metricNameExtractor{
-		// logger: c.logger, // TODO
-		expr:  exprStr,
-		found: map[string]struct{}{},
+		logger: logger,
+		expr:   exprStr,
+		found:  map[string]struct{}{},
 	}
 	exprNode, err := parser.ParseExpr(exprStr)
 	if err == nil {
