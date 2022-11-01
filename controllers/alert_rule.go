@@ -177,6 +177,8 @@ func ParseRuleGroups(in []monitoringv1.RuleGroup, promRuleName string, opts Labe
 	return out, nil
 }
 
+var nonAlphaNumericRx = regexp.MustCompile(`[^a-zA-Z0-9]`)
+
 // parseAlertRule generates the corresponding absence alert rules for a given Rule. Since
 // an alert expression can reference multiple time series therefore a slice of
 // []monitoringv1.Rule is returned as multiple (one for each time series) absence alert
@@ -213,6 +215,9 @@ func parseAlertRule(in monitoringv1.Rule, opts LabelOpts) ([]monitoringv1.Rule, 
 		for k := range opts.Keep {
 			v := ruleLabels[k]
 			emptyOrTmplVal := (v == "" || strings.Contains(v, "$labels"))
+			if k == LabelSupportGroup && emptyOrTmplVal {
+				v = opts.DefaultSupportGroup
+			}
 			if k == LabelTier && emptyOrTmplVal {
 				v = opts.DefaultTier
 			}
@@ -228,12 +233,15 @@ func parseAlertRule(in monitoringv1.Rule, opts LabelOpts) ([]monitoringv1.Rule, 
 	out := make([]monitoringv1.Rule, 0, len(mex.found))
 	for m := range mex.found {
 		// Generate an alert name from metric name. Example:
-		//   network:tis_a_metric:rate5m -> AbsentTierServiceNetworkTisAMetricRate5m
-		words := []string{"absent", absenceRuleLabels[LabelTier], absenceRuleLabels[LabelService]}
-		sL1 := strings.Split(m, ":")
-		for _, v := range sL1 {
-			sL2 := strings.Split(v, "_")
-			words = append(words, sL2...)
+		//   network:tis_a_metric:rate5m -> Absent(Support Group|Tier)ServiceNetworkTisAMetricRate5m
+		supportGroup := absenceRuleLabels[LabelSupportGroup]
+		if supportGroup == "" {
+			supportGroup = absenceRuleLabels[LabelTier] // use tier in case there is no support group
+		}
+		var words []string
+		for _, v := range []string{"absent", supportGroup, absenceRuleLabels[LabelService], m} {
+			s := nonAlphaNumericRx.Split(v, -1) // remove non-alphanumeric characters
+			words = append(words, s...)
 		}
 		// Avoid name stuttering
 		var alertName string

@@ -54,8 +54,9 @@ var (
 	cancel context.CancelFunc
 
 	keepLabel = controllers.KeepLabel{
-		controllers.LabelTier:    true,
-		controllers.LabelService: true,
+		controllers.LabelSupportGroup: true,
+		controllers.LabelTier:         true,
+		controllers.LabelService:      true,
 	}
 )
 

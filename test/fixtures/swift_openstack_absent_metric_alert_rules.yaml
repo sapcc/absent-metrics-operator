@@ -4,8 +4,10 @@ metadata:
   labels:
     absent-metrics-operator/managed-by: "true"
     prometheus: openstack
-    service: swift
+    ccloud/support-group: not-containers
+    ccloud/service: swift
     tier: os
+    service: swift
     type: alerting-rules
   annotations:
     absent-metrics-operator/updated-at: "1970-01-01T00:00:01Z"
@@ -14,14 +16,15 @@ spec:
   groups:
     - name: openstack-swift.alerts/swift.alerts
       rules:
-        - alert: AbsentOsSwiftClusterMd5NotMatched
+        - alert: AbsentNotContainersSwiftClusterMd5NotMatched
           expr: absent(swift_cluster_md5_not_matched)
           for: 10m
           labels:
             context: absent-metrics
-            service: swift
             severity: info
+            support_group: not-containers
             tier: os
+            service: swift
           annotations:
             description:
               The metric 'swift_cluster_md5_not_matched' is missing. 'OpenstackSwiftMismatchedConfig'
@@ -29,14 +32,15 @@ spec:
               operator playbook>.
             summary: missing swift_cluster_md5_not_matched
 
-        - alert: AbsentOsSwiftDispersionTaskExitCode
+        - alert: AbsentNotContainersSwiftDispersionTaskExitCode
           expr: absent(swift_dispersion_task_exit_code)
           for: 10m
           labels:
             context: absent-metrics
-            service: swift
             severity: info
+            support_group: not-containers
             tier: os
+            service: swift
           annotations:
             description:
               The metric 'swift_dispersion_task_exit_code' is missing. 'OpenstackSwiftHealthCheck'
@@ -44,14 +48,15 @@ spec:
               operator playbook>.
             summary: missing swift_dispersion_task_exit_code
 
-        - alert: AbsentOsSwiftGlobalSwiftClusterStorageUsedPercentAverage
+        - alert: AbsentNotContainersSwiftGlobalSwiftClusterStorageUsedPercentAverage
           expr: absent(global:swift_cluster_storage_used_percent_average)
           for: 10m
           labels:
             context: absent-metrics
-            service: swift
             severity: info
+            support_group: not-containers
             tier: os
+            service: swift
           annotations:
             description:
               The metric 'global:swift_cluster_storage_used_percent_average'
@@ -60,14 +65,15 @@ spec:
               operator playbook>.
             summary: missing global:swift_cluster_storage_used_percent_average
 
-        - alert: AbsentOsSwiftReconTaskExitCode
+        - alert: AbsentNotContainersSwiftReconTaskExitCode
           expr: absent(swift_recon_task_exit_code)
           for: 10m
           labels:
             context: absent-metrics
-            service: swift
             severity: info
+            support_group: not-containers
             tier: os
+            service: swift
           annotations:
             description:
               The metric 'swift_recon_task_exit_code' is missing. 'OpenstackSwiftHealthCheck'

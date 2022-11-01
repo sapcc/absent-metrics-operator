@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/sapcc/absent-metrics-operator/compare/v0.8.0...HEAD)
 
+### Added
+
+- Carry over `support_group` labels from original alert rules.
+
+### Changed
+
+- Updated all dependencies to their latest version.
+
+### Fixed
+
+- Add missing Kubebuilder annotations.
+- `-keep-labels` flag.
+
+### Deprecated
+
+- Support for determining `tier` label [heuristically](./doc/playbook.md) has been
+  deprecated and will be removed in a later version.
+
 ## 0.8.0 - 2022-04-12
 
 ### Added

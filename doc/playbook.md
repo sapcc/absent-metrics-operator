@@ -63,28 +63,32 @@ An _absence alert rule_ for the `foo_bar` metric will be created because it is u
 `ImportantServiceAlert` even though `ImportantAlert` specifies the `no_alert_on_absence`
 label.
 
-## Tier and service labels
+## Support group and service labels
 
-`tier` and `service` labels are a special case. We (SAP Converged Cloud) use them for
-posting alert notifications to different Slack channels.
+`support_group` and `service` labels are a special case. We (SAP Converged Cloud) use them for
+routing alert notifications to different channels.
 
 These labels are defined using different strategies in the following order
 (highest to lowest priority):
 
-1. Alert rule labels: if the alert rule has the `tier` **OR** `service` label and the
+1. Alert rule labels: if the alert rule has the `support_group` **OR** `service` label and the
    label doesn't use templating (e.g. `$labels.some_label`) then carry over that label as
    is.
-2. Resource level labels: If the `tier` **OR** `service` labels are defined at the
-   resource (i.e. `PrometheusRule`) level then use their values.
-3. Most common tier service: find a default value for the `tier` and `service` labels by
-   traversing through all the alert rule definitions for a specific Prometheus server in a
-   specific namespace. The `tier` **AND** `service` label combination that is the most
-   common amongst all those alerts will be used as the default.
+2. K8s object level labels: If the `support_group` **OR** `service` labels are defined at the
+   object (i.e. `PrometheusRule`) level then use their values.
+3. Most common `support_group`/`service` combination: find a default value for the
+   `support_group` and `service` labels by traversing through all the alert rules defined
+   in the `PrometheusRule` object. The `support_group` **AND** `service` label combination
+   that is the most common amongst all those alerts will be used as the default.
+4. Most common `support_group`/`service` combination across the namespace: traverse
+   through all the alert rule definitions for the concerning Prometheus server in the
+   concerning namespace. The `support_group` **AND** `service` label combination that is
+   the most common amongst all those alerts will be used as the default.
 
-If all of the above strategies fail, i.e. a value for `tier` and `service` cannot be
-determined, then the _absence alert rules_ won't have these labels.
+If all of the above strategies fail, i.e. a value for `support_group` and `service` cannot
+be determined, then the _absence alert rules_ won't have these labels.
 
-**Tip**: add `tier` and `service` labels to your `PrometheusRule` resource. These values
-will be used as defaults in case your alert rule definition is missing these labels or if
-templating is used. This will ensure that the alert notifications for _absence alerts_
-will land in the appropriate Slack channel.
+**Tip**: add `ccloud/support-group` and `ccloud/service` labels to your `PrometheusRule`
+objects. These values will be used as defaults in case your alert rule definitions are
+missing these labels or if templating is used. This will ensure that the alert
+notifications for _absence alerts_ will be routed to the correct channels.

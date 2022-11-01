@@ -7,7 +7,6 @@ metadata:
   labels:
     type: alerting-rules
     prometheus: kubernetes
-    tier: os
 spec:
   groups:
     - name: keppel.alerts
