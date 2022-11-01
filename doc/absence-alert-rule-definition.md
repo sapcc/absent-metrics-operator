@@ -53,7 +53,7 @@ Labels which are specified with the `--keep-labels` flag will be retained from t
 original alert rule and will be defined on the corresponding _absence alert rule_ as is.
 
 The `support_group` and `service` labels are a special case, they have some custom behavior which is
-defined in the [playbook for operators](./playbook.md#tier-and-service-labels).
+defined in the [playbook for operators](./playbook.md#support-group-and-service-labels).
 
 ### Defaults
 

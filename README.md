@@ -48,7 +48,7 @@ alert: ImportantAlert
 expr: foo_bar > 0
 for: 5m
 labels:
-  tier: network
+  support_group: network
   service: foo
   severity: critical
 annotations:
@@ -75,13 +75,13 @@ corresponding alert rules that check and alert on metric absence.
 For example, considering the alert rule mentioned above, the operator would generate the following _absence alert rule_:
 
 ```yaml
-alert: AbsentFooBar
+alert: AbsentNetworkFooBar
 expr: absent(foo_bar)
 for: 10m
 labels:
   context: absent-metrics
   severity: info
-  tier: network
+  support_group: network
   service: foo
 annotations:
   summary: missing foo_bar
