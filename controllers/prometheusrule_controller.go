@@ -65,7 +65,7 @@ func (r *PrometheusRuleReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	case err == nil:
 		err = r.reconcileObject(ctx, req.NamespacedName, &promRule)
 	case apierrors.IsNotFound(err):
-		err = r.handleObjectNotFound(ctx, req.NamespacedName)
+		r.handleObjectNotFound(ctx, req.NamespacedName)
 	default:
 		// Handle err down below.
 	}
@@ -94,7 +94,7 @@ func (r *PrometheusRuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 // handleObjectNotFound is a helper function for Reconcile(). It exists separately so that
 // we can exit on error without making the `switch` in Reconcile() complex.
-func (r *PrometheusRuleReconciler) handleObjectNotFound(ctx context.Context, key types.NamespacedName) error {
+func (r *PrometheusRuleReconciler) handleObjectNotFound(ctx context.Context, key types.NamespacedName) {
 	log := r.Log.WithValues("name", key.Name, "namespace", key.Namespace)
 
 	// Step 1: check if the object is a PrometheusRule or an AbsencePrometheusRule.
@@ -102,18 +102,26 @@ func (r *PrometheusRuleReconciler) handleObjectNotFound(ctx context.Context, key
 		// In case that the AbsencePrometheusRule no longer exists we don't have to do any
 		// further processing. If it still exists then it will be handled the next time it
 		// is reconciled.
-		return nil
+		return
 	}
 
 	// Step 2: if it's a PrometheusRule then perhaps this specific resource no longer
-	// exists therefore we need to clean up any orphaned absence alert rules.
+	// exists therefore we need to clean up any orphaned absence alert rules from any
+	// corresponding AbsencePrometheusRule.
+	//
+	// We choose to absorb the error here as returning the error would requeue the
+	// resource for immediate processing and we'll be stuck trying to clean up the
+	// corresponding AbsencePrometheusRule. This can be a problem if a corresponding
+	// AbsencePrometheusRule doesn't exist. Instead, we wait until all the
+	// AbsencePrometheusRules are processed (after the requeueInterval is elapsed).
 	log.Info("PrometheusRule no longer exists")
 	err := r.cleanUpOrphanedAbsenceAlertRules(ctx, key, "")
-	if err == nil {
-		deleteReconcileGauge(key.Namespace, key.Name)
+	if err != nil {
+		log.Error(err, "could not clean up orphaned absence alert rules")
+	} else {
 		log.Info("successfully cleaned up orphaned absence alert rules")
 	}
-	return err
+	deleteReconcileGauge(key.Namespace, key.Name)
 }
 
 // reconcileObject is a helper function for Reconcile(). It exists separately so that we
@@ -145,15 +153,24 @@ func (r *PrometheusRuleReconciler) reconcileObject(
 	}
 
 	// Step 2: if it's a PrometheusRule then check if the the operator has been disabled
-	// for it.
+	// for it. If it is disabled then try to clean up the orphaned absence alert rules
+	// from any corresponding AbsencePrometheusRule.
+	//
+	// We choose to absorb the error here as returning the error would requeue the
+	// resource for immediate processing and we'll be stuck trying to clean up the
+	// corresponding AbsencePrometheusRule. This can be a problem if a corresponding
+	// AbsencePrometheusRule doesn't exist. Instead, we wait until all the
+	// AbsencePrometheusRules are processed (after the requeueInterval is elapsed).
 	if parseBool(l[labelOperatorDisable]) {
 		log.Info("operator disabled for this PrometheusRule")
 		err := r.cleanUpOrphanedAbsenceAlertRules(ctx, key, l[labelPrometheusServer])
-		if err == nil {
-			deleteReconcileGauge(key.Namespace, key.Name)
+		if err != nil {
+			log.Error(err, "could not clean up orphaned absence alert rules")
+		} else {
 			log.Info("successfully cleaned up orphaned absence alert rules")
 		}
-		return err
+		deleteReconcileGauge(key.Namespace, key.Name)
+		return nil
 	}
 
 	// Step 3: Generate the corresponding absence alert rules for this resource.

@@ -21,7 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add missing Kubebuilder annotations.
 - Logging during metric expression parsing.
-- `-keep-labels` flag.
+- `keep-labels` flag parsing.
+- Prevent getting stuck during clean up of orphaned absence alert rules when the
+  corresponding AbsencePrometheusRule doesn't exist.
 
 ### Deprecated
 

@@ -128,6 +128,7 @@ func (r *PrometheusRuleReconciler) cleanUpOrphanedAbsenceAlertRules(
 	promRule types.NamespacedName,
 	promServer string,
 ) error {
+
 	// Step 1: find the corresponding AbsencePrometheusRule that needs to be cleaned up.
 	var aPRToClean *monitoringv1.PrometheusRule
 	if promServer != "" {
@@ -159,7 +160,7 @@ func (r *PrometheusRuleReconciler) cleanUpOrphanedAbsenceAlertRules(
 		}
 	}
 	if aPRToClean == nil {
-		return errors.New("could not find the corresponding AbsencePrometheusRule")
+		return errors.New("could not find the corresponding AbsencePrometheusRule for clean up")
 	}
 
 	// Step 2: iterate through the AbsenceRuleGroups, skip those that were generated for
