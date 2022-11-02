@@ -28,6 +28,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const logLevelDebug int = 1
+
 // requeueInterval is the interval after which each resource will be requeued.
 //
 // The controller manager does a periodic sync (10 hours by default) that reconciles all
@@ -114,14 +116,14 @@ func (r *PrometheusRuleReconciler) handleObjectNotFound(ctx context.Context, key
 	// corresponding AbsencePrometheusRule. This can be a problem if a corresponding
 	// AbsencePrometheusRule doesn't exist. Instead, we wait until all the
 	// AbsencePrometheusRules are processed (after the requeueInterval is elapsed).
-	log.Info("PrometheusRule no longer exists")
+	log.V(logLevelDebug).Info("PrometheusRule no longer exists")
 	err := r.cleanUpOrphanedAbsenceAlertRules(ctx, key, "")
 	if err != nil {
 		if !apierrors.IsNotFound(err) && err != errCorrespondingAbsencePromRuleNotExists {
 			log.Error(err, "could not clean up orphaned absence alert rules")
 		}
 	} else {
-		log.Info("successfully cleaned up orphaned absence alert rules")
+		log.V(logLevelDebug).Info("successfully cleaned up orphaned absence alert rules")
 	}
 	deleteReconcileGauge(key.Namespace, key.Name)
 }
@@ -149,7 +151,7 @@ func (r *PrometheusRuleReconciler) reconcileObject(
 		}
 		err = r.cleanUpAbsencePrometheusRule(ctx, obj)
 		if err == nil {
-			log.Info("successfully cleaned up AbsencePrometheusRule")
+			log.V(logLevelDebug).Info("successfully cleaned up AbsencePrometheusRule")
 		}
 		return err
 	}
@@ -164,14 +166,14 @@ func (r *PrometheusRuleReconciler) reconcileObject(
 	// AbsencePrometheusRule doesn't exist. Instead, we wait until all the
 	// AbsencePrometheusRules are processed (after the requeueInterval is elapsed).
 	if parseBool(l[labelOperatorDisable]) {
-		log.Info("operator disabled for this PrometheusRule")
+		log.V(logLevelDebug).Info("operator disabled for this PrometheusRule")
 		err := r.cleanUpOrphanedAbsenceAlertRules(ctx, key, l[labelPrometheusServer])
 		if err != nil {
 			if !apierrors.IsNotFound(err) && err != errCorrespondingAbsencePromRuleNotExists {
 				log.Error(err, "could not clean up orphaned absence alert rules")
 			}
 		} else {
-			log.Info("successfully cleaned up orphaned absence alert rules")
+			log.V(logLevelDebug).Info("successfully cleaned up orphaned absence alert rules")
 		}
 		deleteReconcileGauge(key.Namespace, key.Name)
 		return nil
@@ -181,7 +183,7 @@ func (r *PrometheusRuleReconciler) reconcileObject(
 	err := r.updateAbsenceAlertRules(ctx, obj)
 	if err == nil {
 		setReconcileGauge(key.Namespace, key.Name, time.Now())
-		log.Info("successfully reconciled PrometheusRule")
+		log.V(logLevelDebug).Info("successfully reconciled PrometheusRule")
 	}
 	return err
 }

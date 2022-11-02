@@ -91,7 +91,7 @@ func (r *PrometheusRuleReconciler) createAbsencePrometheusRule(ctx context.Conte
 		return err
 	}
 
-	r.Log.Info("successfully created AbsencePrometheusRule",
+	r.Log.V(logLevelDebug).Info("successfully created AbsencePrometheusRule",
 		"AbsencePrometheusRule", fmt.Sprintf("%s/%s", absencePromRule.GetNamespace(), absencePromRule.GetName()))
 	return nil
 }
@@ -103,7 +103,7 @@ func (r *PrometheusRuleReconciler) updateAbsencePrometheusRule(ctx context.Conte
 		return err
 	}
 
-	r.Log.Info("successfully updated AbsencePrometheusRule",
+	r.Log.V(logLevelDebug).Info("successfully updated AbsencePrometheusRule",
 		"AbsencePrometheusRule", fmt.Sprintf("%s/%s", absencePromRule.GetNamespace(), absencePromRule.GetName()))
 	return nil
 }
@@ -113,7 +113,7 @@ func (r *PrometheusRuleReconciler) deleteAbsencePrometheusRule(ctx context.Conte
 		return err
 	}
 
-	r.Log.Info("successfully deleted AbsencePrometheusRule",
+	r.Log.V(logLevelDebug).Info("successfully deleted AbsencePrometheusRule",
 		"AbsencePrometheusRule", fmt.Sprintf("%s/%s", absencePromRule.GetNamespace(), absencePromRule.GetName()))
 	return nil
 }

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Do not log error if corresponding AbsencePrometheusRule can not be retrieved or does not
   exist during clean up.
+- Use debug log level for less important log messages.
 
 ### Fixed
 
