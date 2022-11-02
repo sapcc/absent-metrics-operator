@@ -52,11 +52,11 @@ func (mex *metricNameExtractor) Visit(node parser.Node, path []parser.Node) (par
 		return mex, nil
 	}
 
-	err := errors.New("error while parsing PromQL query")
 	name := vs.Name
 	if name == "" {
-		// Check if the VectorSelector uses label matching against the 'name'
-		// label.
+		// Check if the VectorSelector uses label matching against the internal `__name__`
+		// label. For example, the expression `http_requests_total` is equivalent to
+		// `{__name__="http_requests_total"}`.
 		for _, v := range vs.LabelMatchers {
 			if v.Name != "__name__" {
 				continue
@@ -76,7 +76,7 @@ func (mex *metricNameExtractor) Visit(node parser.Node, path []parser.Node) (par
 				if err != nil {
 					// We do not return on error here so that any subsequent
 					// VectorSelector(s) get a chance to be processed.
-					mex.logger.Error(err, fmt.Sprintf("could not compile regex '%s'", v.Value),
+					mex.logger.Error(err, fmt.Sprintf("could not compile regex: %s", v.Value),
 						"expr", mex.expr)
 					continue
 				}
@@ -87,7 +87,8 @@ func (mex *metricNameExtractor) Visit(node parser.Node, path []parser.Node) (par
 		}
 	}
 	if name == "" {
-		mex.logger.Error(err, fmt.Sprintf("could not find metric name for VectorSelector '%s'", vs.String()),
+		mex.logger.Error(errors.New("error while parsing PromQL query"),
+			fmt.Sprintf("could not find metric name for VectorSelector: %s", vs.String()),
 			"expr", mex.expr)
 		return mex, nil
 	}
