@@ -117,7 +117,9 @@ func (r *PrometheusRuleReconciler) handleObjectNotFound(ctx context.Context, key
 	log.Info("PrometheusRule no longer exists")
 	err := r.cleanUpOrphanedAbsenceAlertRules(ctx, key, "")
 	if err != nil {
-		log.Error(err, "could not clean up orphaned absence alert rules")
+		if !apierrors.IsNotFound(err) && err != errCorrespondingAbsencePromRuleNotExists {
+			log.Error(err, "could not clean up orphaned absence alert rules")
+		}
 	} else {
 		log.Info("successfully cleaned up orphaned absence alert rules")
 	}
@@ -165,7 +167,9 @@ func (r *PrometheusRuleReconciler) reconcileObject(
 		log.Info("operator disabled for this PrometheusRule")
 		err := r.cleanUpOrphanedAbsenceAlertRules(ctx, key, l[labelPrometheusServer])
 		if err != nil {
-			log.Error(err, "could not clean up orphaned absence alert rules")
+			if !apierrors.IsNotFound(err) && err != errCorrespondingAbsencePromRuleNotExists {
+				log.Error(err, "could not clean up orphaned absence alert rules")
+			}
 		} else {
 			log.Info("successfully cleaned up orphaned absence alert rules")
 		}

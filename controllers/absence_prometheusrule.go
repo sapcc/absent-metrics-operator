@@ -118,6 +118,8 @@ func (r *PrometheusRuleReconciler) deleteAbsencePrometheusRule(ctx context.Conte
 	return nil
 }
 
+var errCorrespondingAbsencePromRuleNotExists = errors.New("corresponding AbsencePrometheusRule for clean up does not exist")
+
 // cleanUpOrphanedAbsenceAlertRules deletes the absence alert rules for a PrometheusRule
 // resource.
 //
@@ -160,7 +162,7 @@ func (r *PrometheusRuleReconciler) cleanUpOrphanedAbsenceAlertRules(
 		}
 	}
 	if aPRToClean == nil {
-		return errors.New("could not find the corresponding AbsencePrometheusRule for clean up")
+		return errCorrespondingAbsencePromRuleNotExists
 	}
 
 	// Step 2: iterate through the AbsenceRuleGroups, skip those that were generated for
