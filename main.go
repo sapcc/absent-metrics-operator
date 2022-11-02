@@ -66,12 +66,14 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.Var(&keepLabel, "keep-labels", "A comma-separated list of labels to retain from the original alert rule. "+
 		fmt.Sprintf("(default '%s,%s,%s')", controllers.LabelSupportGroup, controllers.LabelTier, controllers.LabelService))
-	opts := zap.Options{
-		Development: debug,
-	}
+	opts := zap.Options{}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
+	// Enabled debug mode if `-debug` flag is provided.
+	if debug {
+		opts.Development = true
+	}
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	// Set default value for '-keep-labels' flag.

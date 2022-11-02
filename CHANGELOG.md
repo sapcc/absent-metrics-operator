@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Do not log error if corresponding AbsencePrometheusRule can not be retrieved or does not
   exist during clean up.
 
+### Fixed
+
+- `-debug` flag.
+
 ## 0.9.0 - 2022-11-02
 
 ### Added
