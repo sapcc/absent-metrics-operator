@@ -94,12 +94,14 @@ func (mex *metricNameExtractor) Visit(node parser.Node, path []parser.Node) (par
 	}
 
 	switch {
-	case strings.Contains(mex.expr, fmt.Sprintf("absent(%s", name)):
-		// Skip this metric if the there is already an
-		// absent function for it in the original expression.
+	case strings.Contains(mex.expr, fmt.Sprintf("absent(%s", name)) ||
+		strings.Contains(mex.expr, fmt.Sprintf("absent({__name__=\"%s\"", name)):
+		// Skip this metric if the there is already an absent function for it in the
+		// original expression.
+		// E.g. absent(metric_name) || absent({__name__="metric_name"})
 	case name == "up":
-		// Skip "up" metric, it is automatically injected by
-		// Prometheus to describe Prometheus scraping jobs.
+		// Skip "up" metric, it is automatically injected by Prometheus to describe
+		// Prometheus scraping jobs.
 	default:
 		mex.found[name] = struct{}{}
 	}
