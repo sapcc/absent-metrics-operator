@@ -29,7 +29,7 @@ renovate:
     - matchPackageNames: ["github.com/prometheus/prometheus"]
       allowedVersions: 0.35.x
     - matchPackageNames: ["sigs.k8s.io/controller-runtime"]
-      matchUpdateTypes: ["major", "minor"]
+      matchUpdateTypes: ["major"]
       enabled: false
 
 githubWorkflow:
