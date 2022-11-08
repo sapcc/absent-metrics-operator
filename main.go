@@ -22,6 +22,7 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+	"go.uber.org/zap/zapcore"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -66,7 +67,7 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.Var(&keepLabel, "keep-labels", "A comma-separated list of labels to retain from the original alert rule. "+
 		fmt.Sprintf("(default '%s,%s,%s')", controllers.LabelSupportGroup, controllers.LabelTier, controllers.LabelService))
-	opts := zap.Options{}
+	opts := zap.Options{TimeEncoder: zapcore.RFC3339TimeEncoder}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
