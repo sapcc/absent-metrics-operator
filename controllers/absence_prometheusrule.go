@@ -96,10 +96,15 @@ func (r *PrometheusRuleReconciler) createAbsencePrometheusRule(ctx context.Conte
 	return nil
 }
 
-func (r *PrometheusRuleReconciler) updateAbsencePrometheusRule(ctx context.Context, absencePromRule *monitoringv1.PrometheusRule) error {
+func (r *PrometheusRuleReconciler) patchAbsencePrometheusRule(
+	ctx context.Context,
+	absencePromRule,
+	unmodifiedAbsencePromRule *monitoringv1.PrometheusRule,
+) error {
+
 	sortRuleGroups(absencePromRule)
 	updateAnnotationTime(absencePromRule)
-	if err := r.Update(ctx, absencePromRule); err != nil {
+	if err := r.Patch(ctx, absencePromRule, client.MergeFrom(unmodifiedAbsencePromRule)); err != nil {
 		return err
 	}
 
@@ -182,11 +187,12 @@ func (r *PrometheusRuleReconciler) cleanUpOrphanedAbsenceAlertRules(
 
 	// Step 3: if, after the cleanup, the AbsencePrometheusRule ends up being empty then
 	// delete it otherwise update.
-	aPRToClean.Spec.Groups = newRuleGroups
-	if len(aPRToClean.Spec.Groups) == 0 {
+	if len(newRuleGroups) == 0 {
 		return r.deleteAbsencePrometheusRule(ctx, aPRToClean)
 	}
-	return r.updateAbsencePrometheusRule(ctx, aPRToClean)
+	unmodified := aPRToClean.DeepCopy()
+	aPRToClean.Spec.Groups = newRuleGroups
+	return r.patchAbsencePrometheusRule(ctx, aPRToClean, unmodified)
 }
 
 // cleanUpAbsencePrometheusRule checks an AbsencePrometheusRule to see if it contains
@@ -226,11 +232,12 @@ func (r *PrometheusRuleReconciler) cleanUpAbsencePrometheusRule(ctx context.Cont
 
 	// Step 3: if, after the cleanup, the AbsencePrometheusRule ends up being empty then
 	// delete it otherwise update.
-	absencePromRule.Spec.Groups = newRuleGroups
-	if len(absencePromRule.Spec.Groups) == 0 {
+	if len(newRuleGroups) == 0 {
 		return r.deleteAbsencePrometheusRule(ctx, absencePromRule)
 	}
-	return r.updateAbsencePrometheusRule(ctx, absencePromRule)
+	unmodified := absencePromRule.DeepCopy()
+	absencePromRule.Spec.Groups = newRuleGroups
+	return r.patchAbsencePrometheusRule(ctx, absencePromRule, unmodified)
 }
 
 // updateAbsenceAlertRules generates absence alert rules for the given PrometheusRule and
@@ -264,12 +271,13 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 		return err
 	}
 
+	unmodifiedAbsencePromRule := absencePromRule.DeepCopy()
+
 	// Step 3: get defaults for support group, tier and service labels and add them to the
 	// AbsencePrometheusRule.
 	//
 	// We make a copy of the existing CCloud labels so that we can compare if the labels
 	// have been updated.
-	existingCCloudLabels := getCCloudLabels(absencePromRule)
 	labelOpts := LabelOpts{Keep: r.KeepLabel}
 	if keepCCloudLabels(labelOpts.Keep) {
 		var err error
@@ -326,11 +334,12 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 	if existingAbsencePrometheusRule {
 		existingRuleGroups := absencePromRule.Spec.Groups
 		result := mergeAbsenceRuleGroups(existingRuleGroups, absenceRuleGroups)
-		if reflect.DeepEqual(existingCCloudLabels, getCCloudLabels(absencePromRule)) && reflect.DeepEqual(existingRuleGroups, result) {
+		if reflect.DeepEqual(getCCloudLabels(unmodifiedAbsencePromRule), getCCloudLabels(absencePromRule)) &&
+			reflect.DeepEqual(existingRuleGroups, result) {
 			return nil
 		}
 		absencePromRule.Spec.Groups = result
-		return r.updateAbsencePrometheusRule(ctx, absencePromRule)
+		return r.patchAbsencePrometheusRule(ctx, absencePromRule, unmodifiedAbsencePromRule)
 	}
 	absencePromRule.Spec.Groups = absenceRuleGroups
 	return r.createAbsencePrometheusRule(ctx, absencePromRule)
