@@ -67,7 +67,8 @@ func (r *PrometheusRuleReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	case err == nil:
 		err = r.reconcileObject(ctx, req.NamespacedName, &promRule)
 	case apierrors.IsNotFound(err):
-		r.handleObjectNotFound(ctx, req.NamespacedName)
+		// Could not find object on the API server, maybe it has been deleted?
+		return r.handleObjectNotFound(ctx, req.NamespacedName)
 	default:
 		// Handle err down below.
 	}
@@ -84,6 +85,10 @@ func (r *PrometheusRuleReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{Requeue: true}, err
 	}
 
+	if parseBool(promRule.Labels[labelOperatorDisable]) {
+		// Do not requeue in case the operator has been disabled for this resource.
+		return ctrl.Result{}, nil
+	}
 	return ctrl.Result{RequeueAfter: requeueInterval}, nil
 }
 
@@ -96,26 +101,26 @@ func (r *PrometheusRuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 // handleObjectNotFound is a helper function for Reconcile(). It exists separately so that
 // we can exit on error without making the `switch` in Reconcile() complex.
-func (r *PrometheusRuleReconciler) handleObjectNotFound(ctx context.Context, key types.NamespacedName) {
+func (r *PrometheusRuleReconciler) handleObjectNotFound(ctx context.Context, key types.NamespacedName) (ctrl.Result, error) {
 	log := r.Log.WithValues("name", key.Name, "namespace", key.Namespace)
 
 	// Step 1: check if the object is a PrometheusRule or an AbsencePrometheusRule.
 	if strings.HasSuffix(key.Name, absencePromRuleNameSuffix) {
-		// In case that the AbsencePrometheusRule no longer exists we don't have to do any
+		// In case that an AbsencePrometheusRule no longer exists we don't have to do any
 		// further processing. If it still exists then it will be handled the next time it
 		// is reconciled.
-		return
+		return ctrl.Result{}, nil
 	}
 
 	// Step 2: if it's a PrometheusRule then perhaps this specific resource no longer
 	// exists therefore we need to clean up any orphaned absence alert rules from any
 	// corresponding AbsencePrometheusRule.
 	//
-	// We choose to absorb the error here as returning the error would requeue the
-	// resource for immediate processing and we'll be stuck trying to clean up the
-	// corresponding AbsencePrometheusRule. This can be a problem if a corresponding
-	// AbsencePrometheusRule doesn't exist. Instead, we wait until all the
-	// AbsencePrometheusRules are processed (after the requeueInterval is elapsed).
+	// We choose to absorb the error here as returning the error and requeueing would lead
+	// to getting stuck on trying to clean up the corresponding AbsencePrometheusRule.
+	// This can be a problem if there is no corresponding AbsencePrometheusRule. Instead,
+	// we wait until the next time when all AbsencePrometheusRules are requeued for
+	// processing (after the requeueInterval is elapsed).
 	log.V(logLevelDebug).Info("PrometheusRule no longer exists")
 	err := r.cleanUpOrphanedAbsenceAlertRules(ctx, key, "")
 	if err != nil {
@@ -126,6 +131,7 @@ func (r *PrometheusRuleReconciler) handleObjectNotFound(ctx context.Context, key
 		log.V(logLevelDebug).Info("successfully cleaned up orphaned absence alert rules")
 	}
 	deleteReconcileGauge(key.Namespace, key.Name)
+	return ctrl.Result{}, nil
 }
 
 // reconcileObject is a helper function for Reconcile(). It exists separately so that we
@@ -162,9 +168,10 @@ func (r *PrometheusRuleReconciler) reconcileObject(
 	//
 	// We choose to absorb the error here as returning the error would requeue the
 	// resource for immediate processing and we'll be stuck trying to clean up the
-	// corresponding AbsencePrometheusRule. This can be a problem if a corresponding
-	// AbsencePrometheusRule doesn't exist. Instead, we wait until all the
-	// AbsencePrometheusRules are processed (after the requeueInterval is elapsed).
+	// corresponding AbsencePrometheusRule. This can be a problem if there is no
+	// corresponding AbsencePrometheusRule. Instead, we wait until the next time when all
+	// AbsencePrometheusRules are requeued for processing (after the requeueInterval is
+	// elapsed).
 	if parseBool(l[labelOperatorDisable]) {
 		log.V(logLevelDebug).Info("operator disabled for this PrometheusRule")
 		err := r.cleanUpOrphanedAbsenceAlertRules(ctx, key, l[labelPrometheusServer])
