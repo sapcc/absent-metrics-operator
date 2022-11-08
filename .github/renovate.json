@@ -48,7 +48,7 @@
       "matchPackagePrefixes": [
         "k8s.io/"
       ],
-      "allowedVersions": "0.22.x"
+      "allowedVersions": "0.23.x"
     },
     {
       "matchPackageNames": [
@@ -60,15 +60,14 @@
       "matchPackageNames": [
         "github.com/prometheus/prometheus"
       ],
-      "allowedVersions": "0.35.x"
+      "allowedVersions": "0.40.x"
     },
     {
       "matchPackageNames": [
         "sigs.k8s.io/controller-runtime"
       ],
       "matchUpdateTypes": [
-        "major",
-        "minor"
+        "major"
       ],
       "enabled": false
     }

@@ -71,6 +71,6 @@ jobs:
         run: |
           go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
           mkdir -p test/bin
-          setup-envtest --bin-dir test/bin use 1.22.x!
+          setup-envtest --bin-dir test/bin use 1.23.x!
       - name: Run tests and generate coverage report
         run: make build/cover.out
