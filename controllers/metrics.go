@@ -15,9 +15,8 @@
 package controllers
 
 import (
-	"time"
-
 	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
@@ -48,17 +47,15 @@ var successfulReconcileTime = prometheus.NewGaugeVec(
 	[]string{"prometheusrule_namespace", "prometheusrule_name"},
 )
 
-func setReconcileGauge(namespace, name string, now time.Time) {
-	gauge := successfulReconcileTime.WithLabelValues(namespace, name)
+func setReconcileGauge(key types.NamespacedName) {
+	gauge := successfulReconcileTime.WithLabelValues(key.Namespace, key.Name)
 	if IsTest {
 		gauge.Set(1)
 	} else {
-		// The following is the same as doing gauge.SetToCurrentTime() but we do it
-		// manually so that we can use our own time.Time.
-		gauge.Set(float64(now.UnixNano() / 1e9))
+		gauge.SetToCurrentTime()
 	}
 }
 
-func deleteReconcileGauge(namespace, name string) {
-	successfulReconcileTime.DeleteLabelValues(namespace, name)
+func deleteReconcileGauge(key types.NamespacedName) {
+	successfulReconcileTime.DeleteLabelValues(key.Namespace, key.Name)
 }

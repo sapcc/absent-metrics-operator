@@ -130,7 +130,7 @@ func (r *PrometheusRuleReconciler) handleObjectNotFound(ctx context.Context, key
 	} else {
 		log.V(logLevelDebug).Info("successfully cleaned up orphaned absence alert rules")
 	}
-	deleteReconcileGauge(key.Namespace, key.Name)
+	deleteReconcileGauge(key)
 	return ctrl.Result{}, nil
 }
 
@@ -182,14 +182,14 @@ func (r *PrometheusRuleReconciler) reconcileObject(
 		} else {
 			log.V(logLevelDebug).Info("successfully cleaned up orphaned absence alert rules")
 		}
-		deleteReconcileGauge(key.Namespace, key.Name)
+		deleteReconcileGauge(key)
 		return nil
 	}
 
 	// Step 3: Generate the corresponding absence alert rules for this resource.
 	err := r.updateAbsenceAlertRules(ctx, obj)
 	if err == nil {
-		setReconcileGauge(key.Namespace, key.Name, time.Now())
+		setReconcileGauge(key)
 		log.V(logLevelDebug).Info("successfully reconciled PrometheusRule")
 	}
 	return err
