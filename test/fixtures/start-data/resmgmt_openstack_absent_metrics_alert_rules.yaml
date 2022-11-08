@@ -19,8 +19,6 @@ spec:
           for: 10m
           labels:
             context: absent-metrics
-            support_group: containers
-            service: limes
             severity: info
           annotations:
             description:

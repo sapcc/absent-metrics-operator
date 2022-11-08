@@ -16,7 +16,6 @@ spec:
           for: 10m
           labels:
             support_group: containers
-            service: limes
             severity: info
             playbook: docs/support/playbook/unexpected-role-assignments
             meta: Unexpected role assignments found for Keystone role "resource_service"
@@ -29,7 +28,6 @@ spec:
           for: 10m
           labels:
             support_group: containers
-            service: limes
             severity: info
             playbook: docs/support/playbook/unexpected-role-assignments
             meta: Unexpected role assignments found for Keystone role "cloud_resource_viewer"

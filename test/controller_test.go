@@ -70,8 +70,7 @@ var _ = Describe("Controller", func() {
 		Context("during initial run", func() {
 			It("should create "+k8sAbsentPRName+" in "+resmgmtNs+" namespace", func() {
 				expected := resmgmtK8sAbsentPromRule
-				var actual monitoringv1.PrometheusRule
-				err := k8sClient.Get(ctx, newObjKey(resmgmtNs, k8sAbsentPRName), &actual)
+				actual, err := getPromRule(newObjKey(resmgmtNs, k8sAbsentPRName))
 				Expect(err).ToNot(HaveOccurred())
 				Expect(actual.Labels).To(Equal(expected.Labels))
 				Expect(actual.Annotations).To(Equal(expected.Annotations))
@@ -80,8 +79,7 @@ var _ = Describe("Controller", func() {
 
 			It("should create "+osAbsentPRName+" in "+resmgmtNs+" namespace", func() {
 				expected := resmgmtOSAbsentPromRule
-				var actual monitoringv1.PrometheusRule
-				err := k8sClient.Get(ctx, newObjKey(resmgmtNs, osAbsentPRName), &actual)
+				actual, err := getPromRule(newObjKey(resmgmtNs, osAbsentPRName))
 				Expect(err).ToNot(HaveOccurred())
 				Expect(actual.Labels).To(Equal(expected.Labels))
 				Expect(actual.Annotations).To(Equal(expected.Annotations))
@@ -89,8 +87,7 @@ var _ = Describe("Controller", func() {
 			})
 
 			It("should not create "+osAbsentPRName+" in "+swiftNs+" namespace", func() {
-				var actual monitoringv1.PrometheusRule
-				err := k8sClient.Get(ctx, newObjKey(swiftNs, osAbsentPRName), &actual)
+				_, err := getPromRule(newObjKey(swiftNs, osAbsentPRName))
 				Expect(err).To(HaveOccurred())
 				Expect(apierrors.IsNotFound(err)).To(Equal(true))
 			})
@@ -99,8 +96,7 @@ var _ = Describe("Controller", func() {
 		Context("after removing absent-metrics-operator/disable label", func() {
 			It("should create "+osAbsentPRName+" in "+swiftNs+" namespace", func() {
 				// Get the concerning PromRule.
-				var pr monitoringv1.PrometheusRule
-				err := k8sClient.Get(ctx, newObjKey(swiftNs, "openstack-swift.alerts"), &pr)
+				pr, err := getPromRule(newObjKey(swiftNs, "openstack-swift.alerts"))
 				Expect(err).ToNot(HaveOccurred())
 
 				// Update the "disable" label on the PromRule.
@@ -111,8 +107,7 @@ var _ = Describe("Controller", func() {
 				// Check that the corresponding AbsentPromRule was created.
 				waitForControllerToProcess()
 				expected := swiftOSAbsentPromRule
-				var actual monitoringv1.PrometheusRule
-				err = k8sClient.Get(ctx, newObjKey(swiftNs, osAbsentPRName), &actual)
+				actual, err := getPromRule(newObjKey(swiftNs, osAbsentPRName))
 				Expect(err).ToNot(HaveOccurred())
 				Expect(actual.Labels).To(Equal(expected.Labels))
 				Expect(actual.Annotations).To(Equal(expected.Annotations))
@@ -136,8 +131,7 @@ var _ = Describe("Controller", func() {
 		Context("by adding a new alert rule", func() {
 			It("should update "+osAbsentPRName+" in "+swiftNs+" namespace", func() {
 				// Get the concerning PromRule.
-				var pr monitoringv1.PrometheusRule
-				err := k8sClient.Get(ctx, objKey, &pr)
+				pr, err := getPromRule(objKey)
 				Expect(err).ToNot(HaveOccurred())
 
 				// Add a new alert rule.
@@ -153,8 +147,7 @@ var _ = Describe("Controller", func() {
 				// Get the updated AbsentPromRule from the server and check if it has the
 				// corresponding absent alert rule.
 				waitForControllerToProcess()
-				var absentPR monitoringv1.PrometheusRule
-				err = k8sClient.Get(ctx, prObjKey, &absentPR)
+				absentPR, err := getPromRule(prObjKey)
 				Expect(err).ToNot(HaveOccurred())
 				actual := absentPR.Spec.Groups
 				Expect(actual).To(Equal(expected))
@@ -164,8 +157,7 @@ var _ = Describe("Controller", func() {
 		Context("by updating an existing alert rule", func() {
 			It("should update "+osAbsentPRName+" in "+swiftNs+" namespace", func() {
 				// Get the concerning PromRule.
-				var pr monitoringv1.PrometheusRule
-				err := k8sClient.Get(ctx, objKey, &pr)
+				pr, err := getPromRule(objKey)
 				Expect(err).ToNot(HaveOccurred())
 
 				// Update an existing alert rule. Replace alert that has foo_bar metric
@@ -189,8 +181,7 @@ var _ = Describe("Controller", func() {
 				// Get the updated AbsentPromRule from the server and check if the
 				// corresponding absent alert rule has been updated.
 				waitForControllerToProcess()
-				var absentPR monitoringv1.PrometheusRule
-				err = k8sClient.Get(ctx, prObjKey, &absentPR)
+				absentPR, err := getPromRule(prObjKey)
 				Expect(err).ToNot(HaveOccurred())
 				actual := absentPR.Spec.Groups
 				Expect(actual).To(Equal(expected))
@@ -201,14 +192,11 @@ var _ = Describe("Controller", func() {
 	Describe("Cleanup", func() {
 		Context("when a PrometheusRule is deleted", func() {
 			It("should delete "+k8sAbsentPRName+" in "+resmgmtNs+" namespace", func() {
-				var pr monitoringv1.PrometheusRule
-				pr.Namespace = resmgmtNs
-				pr.Name = "kubernetes-keppel.alerts"
-				err := k8sClient.Delete(ctx, &pr)
+				err := deletePromRule(newObjKey(resmgmtNs, "kubernetes-keppel.alerts"))
 				Expect(err).ToNot(HaveOccurred())
 
 				waitForControllerToProcess()
-				err = k8sClient.Get(ctx, newObjKey(resmgmtNs, k8sAbsentPRName), &pr)
+				_, err = getPromRule(newObjKey(resmgmtNs, k8sAbsentPRName))
 				Expect(err).To(HaveOccurred())
 				Expect(apierrors.IsNotFound(err)).To(Equal(true))
 			})
@@ -219,10 +207,7 @@ var _ = Describe("Controller", func() {
 				// 'openstack-limes-api.alerts' and 'openstack-limes-roleassign.alerts'
 				// PromRules.
 				limesRolePRName := "openstack-limes-roleassign.alerts"
-				var pr monitoringv1.PrometheusRule
-				pr.Namespace = resmgmtNs
-				pr.Name = limesRolePRName
-				err := k8sClient.Delete(ctx, &pr)
+				err := deletePromRule(newObjKey(resmgmtNs, limesRolePRName))
 				Expect(err).ToNot(HaveOccurred())
 
 				expected := make([]monitoringv1.RuleGroup, 0, len(resmgmtOSAbsentPromRule.Spec.Groups)-1)
@@ -236,8 +221,7 @@ var _ = Describe("Controller", func() {
 				// corresponding absent alert rules from AbsentPromRule instead of
 				// deleting the AbsentPromRule itself.
 				waitForControllerToProcess()
-				var actual monitoringv1.PrometheusRule
-				err = k8sClient.Get(ctx, newObjKey(resmgmtNs, osAbsentPRName), &actual)
+				actual, err := getPromRule(newObjKey(resmgmtNs, osAbsentPRName))
 				Expect(err).ToNot(HaveOccurred())
 				Expect(actual.Spec.Groups).To(Equal(expected))
 			})
@@ -249,15 +233,14 @@ var _ = Describe("Controller", func() {
 				// the deletion of its corresponding AbsentPromRule since no absent alert
 				// rules will be generated and the resulting AbsentPromRule would be
 				// empty.
-				var pr monitoringv1.PrometheusRule
-				err := k8sClient.Get(ctx, newObjKey(resmgmtNs, "openstack-limes-api.alerts"), &pr)
+				pr, err := getPromRule(newObjKey(resmgmtNs, "openstack-limes-api.alerts"))
 				Expect(err).ToNot(HaveOccurred())
 				pr.Spec.Groups = []monitoringv1.RuleGroup{}
 				err = k8sClient.Update(ctx, &pr)
 				Expect(err).ToNot(HaveOccurred())
 
 				waitForControllerToProcess()
-				err = k8sClient.Get(ctx, newObjKey("resmgmt", osAbsentPRName), &pr)
+				_, err = getPromRule(newObjKey("resmgmt", osAbsentPRName))
 				Expect(err).To(HaveOccurred())
 				Expect(apierrors.IsNotFound(err)).To(Equal(true))
 			})
@@ -273,8 +256,7 @@ var _ = Describe("Controller", func() {
 				// Add the 'no_alert_on_absence' label to the first rule of first group in
 				// the PromRule. This should result in the deletion of the corresponding
 				// absent alert rule from the AbsentPromRule.
-				var pr monitoringv1.PrometheusRule
-				err := k8sClient.Get(ctx, objKey, &pr)
+				pr, err := getPromRule(objKey)
 				Expect(err).ToNot(HaveOccurred())
 				pr.Spec.Groups[0].Rules[0].Labels["no_alert_on_absence"] = "true"
 				err = k8sClient.Update(ctx, &pr)
@@ -291,8 +273,7 @@ var _ = Describe("Controller", func() {
 
 				// Check that the corresponding absent alert rule was removed.
 				waitForControllerToProcess()
-				var aPR monitoringv1.PrometheusRule
-				err = k8sClient.Get(ctx, prObjKey, &aPR)
+				aPR, err := getPromRule(prObjKey)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(aPR.Spec.Groups).To(Equal(expected))
 			})
@@ -302,15 +283,14 @@ var _ = Describe("Controller", func() {
 			It("should delete "+osAbsentPRName+" in "+swiftNs+" namespace", func() {
 				// Add the 'absent-metrics-operator/disable' label to the PromRule. This
 				// should result in the deletion of the corresponding AbsentPromRule.
-				var pr monitoringv1.PrometheusRule
-				err := k8sClient.Get(ctx, objKey, &pr)
+				pr, err := getPromRule(objKey)
 				Expect(err).ToNot(HaveOccurred())
 				pr.Labels["absent-metrics-operator/disable"] = "true"
 				err = k8sClient.Update(ctx, &pr)
 				Expect(err).ToNot(HaveOccurred())
 
 				waitForControllerToProcess()
-				err = k8sClient.Get(ctx, prObjKey, &pr)
+				_, err = getPromRule(prObjKey)
 				Expect(err).To(HaveOccurred())
 				Expect(apierrors.IsNotFound(err)).To(Equal(true))
 			})
@@ -386,4 +366,17 @@ func getFixture(name string) monitoringv1.PrometheusRule {
 	Expect(err).ToNot(HaveOccurred())
 
 	return pr
+}
+
+func getPromRule(key client.ObjectKey) (monitoringv1.PrometheusRule, error) {
+	var pr monitoringv1.PrometheusRule
+	err := k8sClient.Get(ctx, key, &pr)
+	return pr, err
+}
+
+func deletePromRule(key client.ObjectKey) error {
+	var pr monitoringv1.PrometheusRule
+	pr.SetName(key.Name)
+	pr.SetNamespace(key.Namespace)
+	return k8sClient.Delete(ctx, &pr)
 }
