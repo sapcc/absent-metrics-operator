@@ -14,7 +14,7 @@ endif
 
 default: build-all
 
-ENVTEST_VERSION := "1.22.x!"
+ENVTEST_VERSION := "1.23.x!"
 prepare-envtest-binaries:
 	@if ! hash setup-envtest 2>/dev/null; then printf "\e[1;36m>> Installing setup-envtest...\e[0m\n"; go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest; fi
 	@mkdir -p test/bin
