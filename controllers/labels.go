@@ -205,6 +205,19 @@ func mostCommonTierAndServiceCombo(ruleGroups []monitoringv1.RuleGroup) (tier, s
 	return tier, service
 }
 
+func getCCloudLabels(pr *monitoringv1.PrometheusRule) map[string]string {
+	l := make(map[string]string)
+	for k, v := range pr.GetLabels() {
+		if k == LabelCCloudSupportGroup ||
+			k == LabelCCloudService ||
+			k == LabelService ||
+			k == LabelTier {
+			l[k] = v
+		}
+	}
+	return l
+}
+
 // updateLabel is used to update a specific label in the label map.
 // If a new value is provided then the label at the specific key will be updated with the new value.
 // If value is an empty string then the label at the specific key will be deleted from the map.

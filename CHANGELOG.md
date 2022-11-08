@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/sapcc/absent-metrics-operator/compare/v0.9.1...HEAD)
 
+### Fixed
+
+- Update AbsencePrometheusRule if only labels have changed.
+
 ## 0.9.1 - 2022-11-07
 
 ### Changed

@@ -266,6 +266,10 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 
 	// Step 3: get defaults for support group, tier and service labels and add them to the
 	// AbsencePrometheusRule.
+	//
+	// We make a copy of the existing CCloud labels so that we can compare if the labels
+	// have been updated.
+	existingCCloudLabels := getCCloudLabels(absencePromRule)
 	labelOpts := LabelOpts{Keep: r.KeepLabel}
 	if keepCCloudLabels(labelOpts.Keep) {
 		var err error
@@ -322,7 +326,7 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 	if existingAbsencePrometheusRule {
 		existingRuleGroups := absencePromRule.Spec.Groups
 		result := mergeAbsenceRuleGroups(existingRuleGroups, absenceRuleGroups)
-		if reflect.DeepEqual(existingRuleGroups, result) {
+		if reflect.DeepEqual(existingCCloudLabels, getCCloudLabels(absencePromRule)) && reflect.DeepEqual(existingRuleGroups, result) {
 			return nil
 		}
 		absencePromRule.Spec.Groups = result
