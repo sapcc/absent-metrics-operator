@@ -87,7 +87,7 @@ func updateAnnotationTime(absencePromRule *monitoringv1.PrometheusRule) {
 func (r *PrometheusRuleReconciler) createAbsencePrometheusRule(ctx context.Context, absencePromRule *monitoringv1.PrometheusRule) error {
 	sortRuleGroups(absencePromRule)
 	updateAnnotationTime(absencePromRule)
-	if err := r.Create(ctx, absencePromRule, &client.CreateOptions{}); err != nil {
+	if err := r.Create(ctx, absencePromRule); err != nil {
 		return err
 	}
 
@@ -99,7 +99,7 @@ func (r *PrometheusRuleReconciler) createAbsencePrometheusRule(ctx context.Conte
 func (r *PrometheusRuleReconciler) updateAbsencePrometheusRule(ctx context.Context, absencePromRule *monitoringv1.PrometheusRule) error {
 	sortRuleGroups(absencePromRule)
 	updateAnnotationTime(absencePromRule)
-	if err := r.Update(ctx, absencePromRule, &client.UpdateOptions{}); err != nil {
+	if err := r.Update(ctx, absencePromRule); err != nil {
 		return err
 	}
 
@@ -109,7 +109,7 @@ func (r *PrometheusRuleReconciler) updateAbsencePrometheusRule(ctx context.Conte
 }
 
 func (r *PrometheusRuleReconciler) deleteAbsencePrometheusRule(ctx context.Context, absencePromRule *monitoringv1.PrometheusRule) error {
-	if err := r.Delete(ctx, absencePromRule, &client.DeleteOptions{}); err != nil {
+	if err := r.Delete(ctx, absencePromRule); err != nil {
 		return err
 	}
 
