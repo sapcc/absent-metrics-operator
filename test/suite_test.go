@@ -22,7 +22,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -37,6 +36,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/yaml"
 
 	"github.com/sapcc/absent-metrics-operator/controllers"
 	//+kubebuilder:scaffold:imports

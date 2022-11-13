@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/sapcc/absent-metrics-operator/compare/v0.9.2...HEAD)
 
+### Changed
+
+- Updated all dependencies to their latest version.
+- Use `sigs.k8s.io/yaml` instead of `github.com/ghodss/yaml`.
+
 ## 0.9.2 - 2022-11-08
 
 ### Changed
