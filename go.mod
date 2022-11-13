@@ -10,17 +10,17 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v1.2.3
 	github.com/onsi/ginkgo/v2 v2.5.0
-	github.com/onsi/gomega v1.24.0
+	github.com/onsi/gomega v1.24.1
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.60.1
 	github.com/prometheus/client_golang v1.14.0
-	github.com/prometheus/prometheus v0.40.0
+	github.com/prometheus/prometheus v0.40.1
 	github.com/sapcc/go-api-declarations v1.4.2
 	go.uber.org/zap v1.23.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/text v0.4.0
-	k8s.io/api v0.25.3
-	k8s.io/apimachinery v0.25.3
-	k8s.io/client-go v0.25.3
+	k8s.io/api v0.25.4
+	k8s.io/apimachinery v0.25.4
+	k8s.io/client-go v0.25.4
 	sigs.k8s.io/controller-runtime v0.13.1
 )
 
@@ -77,10 +77,10 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/exp v0.0.0-20221031165847-c99f073a8326 // indirect
-	golang.org/x/net v0.1.0 // indirect
+	golang.org/x/net v0.2.0 // indirect
 	golang.org/x/oauth2 v0.1.0 // indirect
-	golang.org/x/sys v0.1.0 // indirect
-	golang.org/x/term v0.1.0 // indirect
+	golang.org/x/sys v0.2.0 // indirect
+	golang.org/x/term v0.2.0 // indirect
 	golang.org/x/time v0.1.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -98,9 +98,4 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace (
-	k8s.io/api => k8s.io/api v0.24.7
-	k8s.io/apimachinery => k8s.io/apimachinery v0.24.7
-	k8s.io/client-go => k8s.io/client-go v0.24.7
-	k8s.io/klog/v2 => github.com/simonpasquier/klog-gokit/v3 v3.1.0
-)
+replace k8s.io/klog/v2 => github.com/simonpasquier/klog-gokit/v3 v3.1.0
