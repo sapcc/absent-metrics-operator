@@ -247,6 +247,14 @@ func parseAlertRule(logger logr.Logger, in monitoringv1.Rule, opts LabelOpts) ([
 			words = append(words, s...)
 		}
 		// Avoid name stuttering
+		//
+		// TODO: fix edge case when support_group or service label value has non-numeric
+		// character and splitting it will still result in name stuttering because
+		// matching with previous word (as we do below) does not work as the original word
+		// has been split into multiple words.
+		// Example: support_group = "containers", service = "go-pmtud",
+		// and metric = "go_pmtud_sent_error_peer_total" will result in
+		// "AbsentContainersGoPmtudGoPmtudSentErrorPeerTotal" as the alert name.
 		var alertName string
 		var prevW string
 		for _, v := range words {
