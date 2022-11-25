@@ -8,11 +8,11 @@ go 1.19
 
 require (
 	github.com/go-logr/logr v1.2.3
-	github.com/onsi/ginkgo/v2 v2.5.0
+	github.com/onsi/ginkgo/v2 v2.5.1
 	github.com/onsi/gomega v1.24.1
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.60.1
 	github.com/prometheus/client_golang v1.14.0
-	github.com/prometheus/prometheus v0.40.2
+	github.com/prometheus/prometheus v0.40.3
 	github.com/sapcc/go-api-declarations v1.4.2
 	go.uber.org/zap v1.23.0
 	golang.org/x/sync v0.1.0
