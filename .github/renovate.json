@@ -38,13 +38,6 @@
       "groupName": "External dependencies"
     },
     {
-      "matchDepTypes": [
-        "action",
-        "dockerfile"
-      ],
-      "enabled": false
-    },
-    {
       "matchPackagePrefixes": [
         "k8s.io/"
       ],
