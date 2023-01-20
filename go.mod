@@ -9,7 +9,7 @@ go 1.19
 require (
 	github.com/go-logr/logr v1.2.3
 	github.com/onsi/ginkgo/v2 v2.7.0
-	github.com/onsi/gomega v1.24.2
+	github.com/onsi/gomega v1.25.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.60.1
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/prometheus v0.40.7
@@ -65,10 +65,10 @@ require (
 	go.uber.org/goleak v1.2.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/exp v0.0.0-20221031165847-c99f073a8326 // indirect
-	golang.org/x/net v0.4.0 // indirect
+	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/oauth2 v0.1.0 // indirect
-	golang.org/x/sys v0.3.0 // indirect
-	golang.org/x/term v0.3.0 // indirect
+	golang.org/x/sys v0.4.0 // indirect
+	golang.org/x/term v0.4.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
