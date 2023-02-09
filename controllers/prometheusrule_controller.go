@@ -162,7 +162,7 @@ func (r *PrometheusRuleReconciler) reconcileObject(
 		return err
 	}
 
-	// Step 2: if it's a PrometheusRule then check if the the operator has been disabled
+	// Step 2: if it's a PrometheusRule then check if the operator has been disabled
 	// for it. If it is disabled then try to clean up the orphaned absence alert rules
 	// from any corresponding AbsencePrometheusRule.
 	//
