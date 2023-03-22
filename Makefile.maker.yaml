@@ -21,22 +21,8 @@ dockerfile:
 golangciLint:
   createConfig: true
 
-renovate:
-  enabled: true
-  packageRules:
-    - matchPackageNames: ["github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring"]
-      enabled: false
-    - matchPackageNames: ["github.com/prometheus/prometheus"]
-      allowedVersions: 0.40.x
-    - matchPackageNames: ["sigs.k8s.io/controller-runtime"]
-      matchUpdateTypes: ["major"]
-      enabled: false
-
 githubWorkflow:
   global:
-    assignees:
-      - talal
-      - majewsky
     ignorePaths: ["**.md"] # all Markdown files
   ci:
     enabled: true
@@ -49,6 +35,20 @@ githubWorkflow:
   spellCheck:
     enabled: true
     ignorePaths: [] # override global setting so that nothing is ignored
+
+renovate:
+  enabled: true
+  assignees:
+    - talal
+    - majewsky
+  packageRules:
+    - matchPackageNames: ["github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring"]
+      enabled: false
+    - matchPackageNames: ["github.com/prometheus/prometheus"]
+      allowedVersions: 0.40.x
+    - matchPackageNames: ["sigs.k8s.io/controller-runtime"]
+      matchUpdateTypes: ["major"]
+      enabled: false
 
 verbatim: |
   ENVTEST_VERSION := "1.23.x!"
