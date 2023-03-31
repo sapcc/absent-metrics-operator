@@ -13,7 +13,7 @@ require (
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.63.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/prometheus v0.42.0
-	github.com/sapcc/go-api-declarations v1.4.3
+	github.com/sapcc/go-api-declarations v1.5.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/text v0.8.0
