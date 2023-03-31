@@ -42,10 +42,6 @@ renovate:
     - talal
     - majewsky
   packageRules:
-    - matchPackageNames: ["github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring"]
-      enabled: false
-    - matchPackageNames: ["github.com/prometheus/prometheus"]
-      allowedVersions: 0.40.x
     - matchPackageNames: ["sigs.k8s.io/controller-runtime"]
       matchUpdateTypes: ["major"]
       enabled: false
