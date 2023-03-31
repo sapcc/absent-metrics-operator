@@ -42,19 +42,7 @@
       "matchPackagePrefixes": [
         "k8s.io/"
       ],
-      "allowedVersions": "0.25.x"
-    },
-    {
-      "matchPackageNames": [
-        "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring"
-      ],
-      "enabled": false
-    },
-    {
-      "matchPackageNames": [
-        "github.com/prometheus/prometheus"
-      ],
-      "allowedVersions": "0.40.x"
+      "allowedVersions": "0.26.x"
     },
     {
       "matchPackageNames": [
