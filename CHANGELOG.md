@@ -7,11 +7,19 @@ The sections should follow the order `Added`, `Changed`, `Fixed`, `Removed`, and
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/sapcc/absent-metrics-operator/compare/v0.9.2...HEAD)
+## [Unreleased](https://github.com/sapcc/absent-metrics-operator/compare/v0.9.3...HEAD)
 
 ### Changed
 
 - Updated all dependencies to their latest version.
+
+## 0.9.3 - 2023-04-04
+
+### Changed
+
+- Update Golang to 1.20.
+- Updated all dependencies to their latest version.
+- Use unpriviliged `appuser` with UID/GID 4200 instead of nobody user.
 - Use `sigs.k8s.io/yaml` instead of `github.com/ghodss/yaml`.
 
 ## 0.9.2 - 2022-11-08
