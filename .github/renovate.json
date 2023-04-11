@@ -9,6 +9,7 @@
     "talal",
     "majewsky"
   ],
+  "commitMessageAction": "Renovate: Update",
   "constraints": {
     "go": "1.20"
   },
