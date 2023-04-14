@@ -12,7 +12,7 @@ require (
 	github.com/onsi/gomega v1.27.6
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.64.0
 	github.com/prometheus/client_golang v1.14.0
-	github.com/prometheus/prometheus v0.43.0
+	github.com/prometheus/prometheus v2.5.0+incompatible
 	github.com/sapcc/go-api-declarations v1.5.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/sync v0.1.0
