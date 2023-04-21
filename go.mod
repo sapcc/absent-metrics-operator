@@ -88,4 +88,4 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
 
-replace k8s.io/klog/v2 => github.com/simonpasquier/klog-gokit/v3 v3.2.0
+replace k8s.io/klog/v2 => github.com/simonpasquier/klog-gokit/v3 v3.3.0
