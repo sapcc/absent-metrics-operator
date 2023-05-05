@@ -8,19 +8,19 @@ go 1.20
 
 require (
 	github.com/go-logr/logr v1.2.4
-	github.com/onsi/ginkgo/v2 v2.9.2
+	github.com/onsi/ginkgo/v2 v2.9.4
 	github.com/onsi/gomega v1.27.6
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.64.1
-	github.com/prometheus/client_golang v1.15.0
-	github.com/prometheus/prometheus v0.43.0
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.65.1
+	github.com/prometheus/client_golang v1.15.1
+	github.com/prometheus/prometheus v0.43.1
 	github.com/sapcc/go-api-declarations v1.5.1
 	go.uber.org/automaxprocs v1.5.2
 	go.uber.org/zap v1.24.0
-	golang.org/x/sync v0.1.0
+	golang.org/x/sync v0.2.0
 	golang.org/x/text v0.9.0
-	k8s.io/api v0.26.4
-	k8s.io/apimachinery v0.26.4
-	k8s.io/client-go v0.26.4
+	k8s.io/api v0.27.1
+	k8s.io/apimachinery v0.27.1
+	k8s.io/client-go v0.27.1
 	sigs.k8s.io/controller-runtime v0.14.6
 	sigs.k8s.io/yaml v1.3.0
 )
@@ -68,23 +68,23 @@ require (
 	go.uber.org/goleak v1.2.1 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/exp v0.0.0-20230307190834-24139beb5833 // indirect
-	golang.org/x/net v0.8.0 // indirect
+	golang.org/x/net v0.9.0 // indirect
 	golang.org/x/oauth2 v0.6.0 // indirect
-	golang.org/x/sys v0.6.0 // indirect
-	golang.org/x/term v0.6.0 // indirect
+	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/term v0.7.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	golang.org/x/tools v0.7.0 // indirect
+	golang.org/x/tools v0.8.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiextensions-apiserver v0.26.1 // indirect
-	k8s.io/component-base v0.26.1 // indirect
-	k8s.io/klog/v2 v2.90.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20230303024457-afdc3dddf62d // indirect
-	k8s.io/utils v0.0.0-20230308161112-d77c459e9343 // indirect
+	k8s.io/apiextensions-apiserver v0.27.1 // indirect
+	k8s.io/component-base v0.27.1 // indirect
+	k8s.io/klog/v2 v2.100.1 // indirect
+	k8s.io/kube-openapi v0.0.0-20230308215209-15aac26d736a // indirect
+	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
