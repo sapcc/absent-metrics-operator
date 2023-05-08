@@ -16,8 +16,8 @@ In this document:
 
 In other documents:
 
-- [Absence alert rule definition](./doc/absence-alert-rule-definition.md)
-- [Playbook for operators](./doc/playbook.md)
+- [Absence alert rule definition](./docs/absence-alert-rule-definition.md)
+- [Playbook for operators](./docs/playbook.md)
 
 ## Terminology
 
