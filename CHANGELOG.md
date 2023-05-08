@@ -68,7 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
-- Support for determining `tier` label [heuristically](./doc/playbook.md) has been
+- Support for determining `tier` label [heuristically](./docs/playbook.md) has been
   deprecated and will be removed in a later version.
 
 ## 0.8.0 - 2022-04-12

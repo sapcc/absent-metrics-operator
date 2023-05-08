@@ -14,7 +14,6 @@ coverageTest:
 dockerfile:
   enabled: true
   extraIgnores:
-    - doc/
     - PROJECT
     - RELEASE.md
 

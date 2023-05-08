@@ -44,7 +44,7 @@ _absence alert rule_ would be `AbsentContainersLimesSuccessfulScrapesRate5m`.
 The values of `support_group` and `service` labels are only included in the name if the
 labels are specified in the `--keep-labels` flag.
 
-The description also includes a [link](./doc/playbook.md) to the playbook for operators
+The description also includes a [link](./docs/playbook.md) to the playbook for operators
 that can be referenced on how to deal with _absence alert rules_.
 
 ## Labels

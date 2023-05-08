@@ -108,7 +108,7 @@ absent-metrics-operator --help
 ```
 
 In case of a false positive, the operator can be disabled for a specific alert rule or the
-entire `PrometheusRule` resource. Refer to the [playbook for operators](./doc/playbook.md#disable-the-operator)
+entire `PrometheusRule` resource. Refer to the [playbook for operators](./docs/playbook.md#disable-the-operator)
 for instructions.
 
 ### Metrics

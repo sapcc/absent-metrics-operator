@@ -272,7 +272,7 @@ func parseAlertRule(logger logr.Logger, in monitoringv1.Rule, opts LabelOpts) ([
 			"summary": fmt.Sprintf("missing %s", m),
 			"description": fmt.Sprintf(
 				"The metric '%s' is missing. '%s' alert using it may not fire as intended. "+
-					"See <https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md|the operator playbook>.",
+					"See <https://github.com/sapcc/absent-metrics-operator/blob/master/docs/playbook.md|the operator playbook>.",
 				m, in.Alert,
 			),
 		}

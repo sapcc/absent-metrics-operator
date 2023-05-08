@@ -26,7 +26,7 @@ spec:
           annotations:
             description:
               The metric 'http_requests_total' is missing. 'OpenstackLimesHttpErrors'
-              alert using it may not fire as intended. See <https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md|the
+              alert using it may not fire as intended. See <https://github.com/sapcc/absent-metrics-operator/blob/master/docs/playbook.md|the
               operator playbook>.
             summary: missing http_requests_total
 
@@ -41,7 +41,7 @@ spec:
           annotations:
             description:
               The metric 'limes_suspended_scrapes' is missing. 'OpenstackLimesSuspendedScrapes'
-              alert using it may not fire as intended. See <https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md|the
+              alert using it may not fire as intended. See <https://github.com/sapcc/absent-metrics-operator/blob/master/docs/playbook.md|the
               operator playbook>.
             summary: missing limes_suspended_scrapes
 
@@ -58,6 +58,6 @@ spec:
           annotations:
             description:
               The metric 'openstack_assignments_per_role' is missing. 'OpenstackLimesUnexpectedCloudViewerRoleAssignments'
-              alert using it may not fire as intended. See <https://github.com/sapcc/absent-metrics-operator/blob/master/doc/playbook.md|the
+              alert using it may not fire as intended. See <https://github.com/sapcc/absent-metrics-operator/blob/master/docs/playbook.md|the
               operator playbook>.
             summary: missing openstack_assignments_per_role
