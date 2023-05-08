@@ -7,11 +7,18 @@ The sections should follow the order `Added`, `Changed`, `Fixed`, `Removed`, and
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/sapcc/absent-metrics-operator/compare/v0.9.3...HEAD)
+## [Unreleased](https://github.com/sapcc/absent-metrics-operator/compare/v0.9.4...HEAD)
+
+## 0.9.4 - 2023-05-08
 
 ### Changed
 
-- Updated all dependencies to their latest version.
+- Add [automaxprocs](https://github.com/uber-go/automaxprocs)
+- Updated all dependencies and golang to their latest version.
+
+### Fixed
+
+- Links to documentation
 
 ## 0.9.3 - 2023-04-04
 
