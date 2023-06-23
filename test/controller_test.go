@@ -346,10 +346,11 @@ func newObjKey(namespace, name string) client.ObjectKey {
 }
 
 func createMockRule(metric string) monitoringv1.Rule {
+	duration := monitoringv1.Duration("5m")
 	return monitoringv1.Rule{
 		Alert: cases.Title(language.English).String(metric),
 		Expr:  intstr.FromString(fmt.Sprintf("%s > 0", metric)),
-		For:   "5m",
+		For:   &duration,
 		Labels: map[string]string{
 			"tier":    "tier",
 			"service": "service",

@@ -277,10 +277,11 @@ func parseAlertRule(logger logr.Logger, in monitoringv1.Rule, opts LabelOpts) ([
 			),
 		}
 
+		duration := monitoringv1.Duration("10m")
 		out = append(out, monitoringv1.Rule{
 			Alert:       alertName,
 			Expr:        intstr.FromString(fmt.Sprintf("absent(%s)", m)),
-			For:         "10m",
+			For:         &duration,
 			Labels:      absenceRuleLabels,
 			Annotations: ann,
 		})
