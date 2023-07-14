@@ -21,10 +21,9 @@ golangciLint:
   createConfig: true
 
 githubWorkflow:
-  global:
-    ignorePaths: ["**.md"] # all Markdown files
   ci:
     enabled: true
+    ignorePaths: ["**.md"] # all Markdown files
     kubernetesEnvtest:
       enabled: true
   securityChecks:
@@ -33,13 +32,13 @@ githubWorkflow:
     enabled: true
   spellCheck:
     enabled: true
-    ignorePaths: [] # override global setting so that nothing is ignored
 
 renovate:
   enabled: true
   assignees:
     - talal
     - majewsky
+    - SuperSandro2000
   packageRules:
     - matchPackageNames: ["sigs.k8s.io/controller-runtime"]
       matchUpdateTypes: ["major"]
