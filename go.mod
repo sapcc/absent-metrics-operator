@@ -14,13 +14,13 @@ require (
 	github.com/prometheus/client_golang v1.16.0
 	github.com/prometheus/prometheus v0.45.0
 	github.com/sapcc/go-api-declarations v1.7.0
-	go.uber.org/automaxprocs v1.5.2
+	go.uber.org/automaxprocs v1.5.3
 	go.uber.org/zap v1.24.0
 	golang.org/x/sync v0.3.0
 	golang.org/x/text v0.11.0
-	k8s.io/api v0.27.3
-	k8s.io/apimachinery v0.27.3
-	k8s.io/client-go v0.27.3
+	k8s.io/api v0.27.4
+	k8s.io/apimachinery v0.27.4
+	k8s.io/client-go v0.27.4
 	sigs.k8s.io/controller-runtime v0.15.0
 	sigs.k8s.io/yaml v1.3.0
 )
