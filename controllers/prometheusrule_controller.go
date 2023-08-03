@@ -16,11 +16,13 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	"github.com/sapcc/go-bits/errext"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -73,12 +75,12 @@ func (r *PrometheusRuleReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		// Handle err down below.
 	}
 	if err != nil {
-		if e, ok := err.(*ruleGroupParseError); ok {
+		if perr, ok := errext.As[*ruleGroupParseError](err); ok {
 			// We choose to absorb the error here as returning the error would requeue the
 			// resource for immediate processing and we'll be stuck parsing broken alert
 			// rules. Instead, we wait for the next time the resource is updated or until
 			// the requeueInterval is elapsed (whichever happens first).
-			log.Error(e, "could not parse rule groups")
+			log.Error(perr, "could not parse rule groups")
 			return ctrl.Result{RequeueAfter: requeueInterval}, nil
 		}
 		// Requeue for later processing.
@@ -124,7 +126,7 @@ func (r *PrometheusRuleReconciler) handleObjectNotFound(ctx context.Context, key
 	log.V(logLevelDebug).Info("PrometheusRule no longer exists")
 	err := r.cleanUpOrphanedAbsenceAlertRules(ctx, key, "")
 	if err != nil {
-		if !apierrors.IsNotFound(err) && err != errCorrespondingAbsencePromRuleNotExists {
+		if !apierrors.IsNotFound(err) && !errors.Is(err, errCorrespondingAbsencePromRuleNotExists) {
 			log.Error(err, "could not clean up orphaned absence alert rules")
 		}
 	} else {
@@ -176,7 +178,7 @@ func (r *PrometheusRuleReconciler) reconcileObject(
 		log.V(logLevelDebug).Info("operator disabled for this PrometheusRule")
 		err := r.cleanUpOrphanedAbsenceAlertRules(ctx, key, l[labelPrometheusServer])
 		if err != nil {
-			if !apierrors.IsNotFound(err) && err != errCorrespondingAbsencePromRuleNotExists {
+			if !apierrors.IsNotFound(err) && !errors.Is(err, errCorrespondingAbsencePromRuleNotExists) {
 				log.Error(err, "could not clean up orphaned absence alert rules")
 			}
 		} else {
