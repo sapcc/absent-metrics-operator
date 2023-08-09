@@ -12,7 +12,7 @@
   ],
   "commitMessageAction": "Renovate: Update",
   "constraints": {
-    "go": "1.20"
+    "go": "1.21"
   },
   "postUpdateOptions": [
     "gomodTidy",
@@ -23,7 +23,7 @@
       "matchPackageNames": [
         "golang"
       ],
-      "allowedVersions": "1.20.x"
+      "allowedVersions": "1.21.x"
     },
     {
       "matchPackagePatterns": [
