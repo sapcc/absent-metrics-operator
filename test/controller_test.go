@@ -89,7 +89,7 @@ var _ = Describe("Controller", func() {
 			It("should not create "+osAbsentPRName+" in "+swiftNs+" namespace", func() {
 				_, err := getPromRule(newObjKey(swiftNs, osAbsentPRName))
 				Expect(err).To(HaveOccurred())
-				Expect(apierrors.IsNotFound(err)).To(Equal(true))
+				Expect(apierrors.IsNotFound(err)).To(BeTrue())
 			})
 		})
 
@@ -198,7 +198,7 @@ var _ = Describe("Controller", func() {
 				waitForControllerToProcess()
 				_, err = getPromRule(newObjKey(resmgmtNs, k8sAbsentPRName))
 				Expect(err).To(HaveOccurred())
-				Expect(apierrors.IsNotFound(err)).To(Equal(true))
+				Expect(apierrors.IsNotFound(err)).To(BeTrue())
 			})
 
 			It("should delete orphaned absent alert rules from "+osAbsentPRName+" in "+resmgmtNs+" namespace", func() {
@@ -242,7 +242,7 @@ var _ = Describe("Controller", func() {
 				waitForControllerToProcess()
 				_, err = getPromRule(newObjKey("resmgmt", osAbsentPRName))
 				Expect(err).To(HaveOccurred())
-				Expect(apierrors.IsNotFound(err)).To(Equal(true))
+				Expect(apierrors.IsNotFound(err)).To(BeTrue())
 			})
 		})
 	})
@@ -292,7 +292,7 @@ var _ = Describe("Controller", func() {
 				waitForControllerToProcess()
 				_, err = getPromRule(prObjKey)
 				Expect(err).To(HaveOccurred())
-				Expect(apierrors.IsNotFound(err)).To(Equal(true))
+				Expect(apierrors.IsNotFound(err)).To(BeTrue())
 			})
 		})
 	})
