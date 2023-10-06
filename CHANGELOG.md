@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/sapcc/absent-metrics-operator/compare/v0.9.4...HEAD)
 
+## 0.9.5 - 2023-10-06
+
+### Changed
+- Updated all dependencies to their latest version.
+
 ## 0.9.4 - 2023-05-08
 
 ### Changed
