@@ -20,6 +20,9 @@ dockerfile:
 golangciLint:
   createConfig: true
 
+goReleaser:
+  createConfig: true
+
 githubWorkflow:
   ci:
     enabled: true
@@ -29,6 +32,8 @@ githubWorkflow:
   securityChecks:
     enabled: true
   license:
+    enabled: true
+  release:
     enabled: true
   spellCheck:
     enabled: true
