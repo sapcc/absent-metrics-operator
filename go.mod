@@ -17,7 +17,7 @@ require (
 	github.com/sapcc/go-bits v0.0.0-20231005132843-e2fe7b6e61d2
 	go.uber.org/automaxprocs v1.5.3
 	go.uber.org/zap v1.26.0
-	golang.org/x/sync v0.3.0
+	golang.org/x/sync v0.4.0
 	golang.org/x/text v0.13.0
 	k8s.io/api v0.28.2
 	k8s.io/apimachinery v0.28.2
