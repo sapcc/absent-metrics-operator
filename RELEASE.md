@@ -1,7 +1,7 @@
 # Release Guide
 
 1. Ensure local `master` branch is up to date with `origin/master`.
-2. Ensure all checks are passing: `make check`.
+2. Create the Evntest environment with `make prepare-envtest-binaries`. Ensure all checks are passing: `make check`.
 3. Update the [`changelog`](./CHANGELOG.md). Make sure that the format is consistent
    especially the version heading. We follow [semantic versioning][semver] for our
    releases.
