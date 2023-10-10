@@ -55,7 +55,3 @@ verbatim: |
     @if ! hash setup-envtest 2>/dev/null; then printf "\e[1;36m>> Installing setup-envtest...\e[0m\n"; go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest; fi
     @mkdir -p test/bin
     setup-envtest --arch=amd64 --bin-dir test/bin use $(ENVTEST_VERSION)
-
-  build/release-info: CHANGELOG.md | build
-    @if ! hash release-info 2>/dev/null; then printf "\e[1;36m>> Installing release-info...\e[0m\n"; go install github.com/sapcc/go-bits/tools/release-info@latest; fi
-    release-info $< $(shell git describe --tags --abbrev=0) > $@
