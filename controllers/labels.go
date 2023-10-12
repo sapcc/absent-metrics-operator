@@ -125,8 +125,9 @@ func (r *PrometheusRuleReconciler) labelOptsWithCCloudDefaults(
 	opts.DefaultService = newIfCurrentEmpty(opts.DefaultService, s)
 
 	t, s := mostCommonTierAndServiceCombo(rg)
-	opts.DefaultTier = newIfCurrentEmpty(opts.DefaultTier, t)
+	// opts.DefaultTier = newIfCurrentEmpty(opts.DefaultTier, t) // the `tier` label is sort of deprecated, do not inherit it between rules
 	opts.DefaultService = newIfCurrentEmpty(opts.DefaultService, s)
+	_ = t
 
 	return opts, nil
 }
