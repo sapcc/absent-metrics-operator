@@ -8,11 +8,11 @@ go 1.21
 
 require (
 	github.com/go-logr/logr v1.2.4
-	github.com/onsi/ginkgo/v2 v2.12.1
+	github.com/onsi/ginkgo/v2 v2.13.0
 	github.com/onsi/gomega v1.28.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.68.0
 	github.com/prometheus/client_golang v1.17.0
-	github.com/prometheus/prometheus v0.47.1
+	github.com/prometheus/prometheus v0.47.2
 	github.com/sapcc/go-api-declarations v1.9.0
 	github.com/sapcc/go-bits v0.0.0-20231012040926-125d71b35377
 	go.uber.org/automaxprocs v1.5.3
