@@ -204,9 +204,9 @@ func (r *PrometheusRuleReconciler) cleanUpAbsencePrometheusRule(ctx context.Cont
 	// concerning Prometheus server.
 	var listOpts client.ListOptions
 	client.InNamespace(absencePromRule.GetNamespace()).ApplyToList(&listOpts)
-	client.MatchingLabels{
-		labelPrometheusServer: absencePromRule.Labels[labelPrometheusServer],
-	}.ApplyToList(&listOpts)
+	//client.MatchingLabels{
+	//	labelPrometheusServer: absencePromRule.Labels[labelPrometheusServer],
+	//}.ApplyToList(&listOpts)
 	var promRules monitoringv1.PrometheusRuleList
 	if err := r.List(ctx, &promRules, &listOpts); err != nil {
 		return err
@@ -252,7 +252,8 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 	promServer, ok := promRuleLabels["prometheus"]
 	if !ok {
 		// Normally this shouldn't happen but just in case that it does.
-		return errors.New("no 'prometheus' label found")
+		promServer = "default-prometheus"
+		// return errors.New("no 'prometheus' label found")
 	}
 
 	// Step 2: get the corresponding AbsencePrometheusRule if it exists. We do this in
