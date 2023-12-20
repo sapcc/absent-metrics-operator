@@ -60,11 +60,13 @@ func main() {
 		probeAddr            string
 		enableLeaderElection bool
 		keepLabel            labelsMap
+		prometheusRuleString string
 	)
 	flag.BoolVar(&debug, "debug", false, "Alias for '-zap-devel' flag.")
 	// Port `9659` has been allocated for absent metrics operator: https://github.com/prometheus/prometheus/wiki/Default-port-allocations
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":9659", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flag.StringVar(&prometheusRuleString, "rule", "{{ .metadata.labels.prometheus }}-absent-metrics", "Create new prometheusRules form this template string.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -110,6 +112,7 @@ func main() {
 		Scheme:    mgr.GetScheme(),
 		Log:       ctrl.Log.WithName("controller").WithName("prometheusrule"),
 		KeepLabel: controllers.KeepLabel(keepLabel),
+		PrometheusRuleString: prometheusRuleString,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "PrometheusRule")
 		os.Exit(1)
