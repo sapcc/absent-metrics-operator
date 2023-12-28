@@ -7,21 +7,21 @@ go 1.21
 // https://github.com/prometheus-operator/prometheus-operator/blob/<tag>/go.mod
 
 require (
-	github.com/go-logr/logr v1.3.0
+	github.com/go-logr/logr v1.4.1
 	github.com/onsi/ginkgo/v2 v2.13.2
 	github.com/onsi/gomega v1.30.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.70.0
-	github.com/prometheus/client_golang v1.17.0
-	github.com/prometheus/prometheus v0.48.0
+	github.com/prometheus/client_golang v1.18.0
+	github.com/prometheus/prometheus v0.48.1
 	github.com/sapcc/go-api-declarations v1.10.5
 	github.com/sapcc/go-bits v0.0.0-20231221010852-98deb05b5d97
 	go.uber.org/automaxprocs v1.5.3
 	go.uber.org/zap v1.26.0
 	golang.org/x/sync v0.5.0
 	golang.org/x/text v0.14.0
-	k8s.io/api v0.28.4
-	k8s.io/apimachinery v0.28.4
-	k8s.io/client-go v0.28.4
+	k8s.io/api v0.28.5
+	k8s.io/apimachinery v0.28.5
+	k8s.io/client-go v0.28.5
 	sigs.k8s.io/controller-runtime v0.16.3
 	sigs.k8s.io/yaml v1.4.0
 )
@@ -61,7 +61,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/common v0.45.0 // indirect
-	github.com/prometheus/procfs v0.11.1 // indirect
+	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
@@ -87,4 +87,4 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 )
 
-replace k8s.io/klog/v2 => github.com/simonpasquier/klog-gokit/v3 v3.3.0
+replace k8s.io/klog/v2 => github.com/simonpasquier/klog-gokit/v3 v3.4.0
