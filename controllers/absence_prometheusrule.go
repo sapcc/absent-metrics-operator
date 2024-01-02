@@ -38,31 +38,20 @@ const absencePromRuleNameSuffix = "-absent-metric-alert-rules"
 // holds the absence alert rules concerning a specific Prometheus server (e.g. openstack, kubernetes, etc.).
 func AbsencePrometheusRuleName(prometheusRule monitoringv1.PrometheusRule, prometheusRuleString string) string {
 
-	//fmt.Printf("%+v\n", prometheusRule)
-
-	t := template.Must(template.New("sampleTest").Parse(prometheusRuleString))
+	t := template.Must(template.New("PrometheusRuleTemplate").Parse(prometheusRuleString))
 	b, err := json.Marshal(prometheusRule)
 
 	m := make(map[string]interface{})
 	err = json.Unmarshal(b, &m)
 
-	fmt.Println("After unmarshall")
-	fmt.Println(m)
-
 	buf := &bytes.Buffer{}
-	//err := t.Execute(buf, prometheusRule)
 	err = t.Execute(buf, m)
 	if err != nil {
 		fmt.Println(err.Error())
 		return "default-absent-metrics"
 	}
 
-
-	fmt.Println("Generated absence rule name:")
-	fmt.Println(buf.String())
 	return buf.String()
-
-	//return fmt.Sprintf("%s%s", promServer, absencePromRuleNameSuffix)
 }
 
 func (r *PrometheusRuleReconciler) newAbsencePrometheusRule(namespace, name string, promServer string) *monitoringv1.PrometheusRule {
@@ -240,9 +229,6 @@ func (r *PrometheusRuleReconciler) cleanUpAbsencePrometheusRule(ctx context.Cont
 	// concerning Prometheus server.
 	var listOpts client.ListOptions
 	client.InNamespace(absencePromRule.GetNamespace()).ApplyToList(&listOpts)
-	//client.MatchingLabels{
-	//	labelPrometheusServer: absencePromRule.Labels[labelPrometheusServer],
-	//}.ApplyToList(&listOpts)
 	var promRules monitoringv1.PrometheusRuleList
 	if err := r.List(ctx, &promRules, &listOpts); err != nil {
 		return err
