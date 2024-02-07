@@ -61,6 +61,8 @@ func main() {
 		enableLeaderElection bool
 		keepLabel            labelsMap
 	)
+	bininfo.HandleVersionArgument()
+
 	flag.BoolVar(&debug, "debug", false, "Alias for '-zap-devel' flag.")
 	// Port `9659` has been allocated for absent metrics operator: https://github.com/prometheus/prometheus/wiki/Default-port-allocations
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":9659", "The address the metric endpoint binds to.")
