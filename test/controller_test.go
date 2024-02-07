@@ -349,7 +349,7 @@ func createMockRule(metric string) monitoringv1.Rule {
 	duration := monitoringv1.Duration("5m")
 	return monitoringv1.Rule{
 		Alert: cases.Title(language.English).String(metric),
-		Expr:  intstr.FromString(fmt.Sprintf("%s > 0", metric)),
+		Expr:  intstr.FromString(metric + " > 0"),
 		For:   &duration,
 		Labels: map[string]string{
 			"tier":    "tier",

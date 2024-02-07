@@ -76,8 +76,7 @@ func (mex *metricNameExtractor) Visit(node parser.Node, path []parser.Node) (par
 				if err != nil {
 					// We do not return on error here so that any subsequent
 					// VectorSelector(s) get a chance to be processed.
-					mex.logger.Error(err, fmt.Sprintf("could not compile regex: %s", v.Value),
-						"expr", mex.expr)
+					mex.logger.Error(err, "could not compile regex: "+v.Value, "expr", mex.expr)
 					continue
 				}
 				if rx.MatchString(v.Value) {
@@ -88,13 +87,13 @@ func (mex *metricNameExtractor) Visit(node parser.Node, path []parser.Node) (par
 	}
 	if name == "" {
 		mex.logger.Error(errors.New("error while parsing PromQL query"),
-			fmt.Sprintf("could not find metric name for VectorSelector: %s", vs.String()),
+			"could not find metric name for VectorSelector: "+vs.String(),
 			"expr", mex.expr)
 		return mex, nil
 	}
 
 	switch {
-	case strings.Contains(mex.expr, fmt.Sprintf("absent(%s", name)) ||
+	case strings.Contains(mex.expr, "absent("+name) ||
 		strings.Contains(mex.expr, fmt.Sprintf("absent({__name__=\"%s\"", name)):
 		// Skip this metric if the there is already an absent function for it in the
 		// original expression.
@@ -200,7 +199,7 @@ func parseAlertRule(logger logr.Logger, in monitoringv1.Rule, opts LabelOpts) ([
 	if err != nil {
 		// TODO: remove newline characters from expression.
 		// The returned error has the expression at the end because
-		// it could contain newline chracters.
+		// it could contain newline characters.
 		return nil, fmt.Errorf("could not parse rule expression: %s: %s", err.Error(), exprStr)
 	}
 	if len(mex.found) == 0 {
@@ -269,7 +268,7 @@ func parseAlertRule(logger logr.Logger, in monitoringv1.Rule, opts LabelOpts) ([
 		// when our upstream solution gets the ability to process hardcoded
 		// links in the 'playbook' label.
 		ann := map[string]string{
-			"summary": fmt.Sprintf("missing %s", m),
+			"summary": "missing " + m,
 			"description": fmt.Sprintf(
 				"The metric '%s' is missing. '%s' alert using it may not fire as intended. "+
 					"See <https://github.com/sapcc/absent-metrics-operator/blob/master/docs/playbook.md|the operator playbook>.",
