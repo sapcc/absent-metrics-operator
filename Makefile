@@ -23,6 +23,9 @@ prepare-static-check: FORCE install-controller-gen
 install-controller-gen: FORCE
 	@if ! hash controller-gen 2>/dev/null; then printf "\e[1;36m>> Installing controller-gen...\e[0m\n"; go install sigs.k8s.io/controller-tools/cmd/controller-gen@latest; fi
 
+install-ginkgo: FORCE
+	@if ! hash ginkgo 2>/dev/null; then printf "\e[1;36m>> Installing ginkgo...\e[0m\n"; go install github.com/onsi/ginkgo/v2/ginkgo; fi
+
 GO_BUILDFLAGS =
 GO_LDFLAGS =
 GO_TESTENV =
@@ -50,8 +53,8 @@ install: FORCE build/absent-metrics-operator
 	install -d -m 0755 "$(DESTDIR)$(PREFIX)/bin"
 	install -m 0755 build/absent-metrics-operator "$(DESTDIR)$(PREFIX)/bin/absent-metrics-operator"
 
-# which packages to test with "go test"
-GO_TESTPKGS := $(shell go list -f '{{if or .TestGoFiles .XTestGoFiles}}{{.ImportPath}}{{end}}' ./...)
+# which packages to test with test runner
+GO_TESTPKGS := $(shell go list -f '{{if or .TestGoFiles .XTestGoFiles}}{{.Dir}}{{end}}' ./...)
 # which packages to measure coverage for
 GO_COVERPKGS := $(shell go list ./... | grep -E '/controllers')
 # to get around weird Makefile syntax restrictions, we need variables containing nothing, a space and comma
@@ -71,9 +74,9 @@ run-golangci-lint: FORCE prepare-static-check
 	@printf "\e[1;36m>> golangci-lint\e[0m\n"
 	@golangci-lint run
 
-build/cover.out: FORCE generate | build
-	@printf "\e[1;36m>> go test\e[0m\n"
-	KUBEBUILDER_ASSETS="$(shell setup-envtest use 1.29.1 --bin-dir $(TESTBIN) -p path)" go test $(GO_BUILDFLAGS) -ldflags '-s -w -X github.com/sapcc/go-api-declarations/bininfo.binName=absent-metrics-operator -X github.com/sapcc/go-api-declarations/bininfo.version=$(BININFO_VERSION) -X github.com/sapcc/go-api-declarations/bininfo.commit=$(BININFO_COMMIT_HASH) -X github.com/sapcc/go-api-declarations/bininfo.buildDate=$(BININFO_BUILD_DATE) $(GO_LDFLAGS)' -shuffle=on -p 1 -coverprofile=$@ -covermode=count -coverpkg=$(subst $(space),$(comma),$(GO_COVERPKGS)) $(GO_TESTPKGS)
+build/cover.out: FORCE install-ginkgo generate | build
+	@printf "\e[1;36m>> Running tests\e[0m\n"
+	KUBEBUILDER_ASSETS="$(shell setup-envtest use 1.29.1 --bin-dir $(TESTBIN) -p path)" ginkgo run --randomize-all $(GO_BUILDFLAGS) -ldflags '-s -w -X github.com/sapcc/go-api-declarations/bininfo.binName=absent-metrics-operator -X github.com/sapcc/go-api-declarations/bininfo.version=$(BININFO_VERSION) -X github.com/sapcc/go-api-declarations/bininfo.commit=$(BININFO_COMMIT_HASH) -X github.com/sapcc/go-api-declarations/bininfo.buildDate=$(BININFO_BUILD_DATE) $(GO_LDFLAGS)' -p 1 -coverprofile=$@ -covermode=count -coverpkg=$(subst $(space),$(comma),$(GO_COVERPKGS)) $(GO_TESTPKGS)
 
 build/cover.html: build/cover.out
 	@printf "\e[1;36m>> go tool cover > build/cover.html\e[0m\n"
@@ -126,6 +129,7 @@ help: FORCE
 	@printf "\e[1mPrepare\e[0m\n"
 	@printf "  \e[36mprepare-static-check\e[0m           Install any tools required by static-check. This is used in CI before dropping privileges, you should probably install all the tools using your package manager\n"
 	@printf "  \e[36minstall-controller-gen\e[0m         Install controller-gen required by static-check and build-all. This is used in CI before dropping privileges, you should probably install all the tools using your package manager\n"
+	@printf "  \e[36minstall-ginkgo\e[0m                 Install ginkgo required when using it as test runner. This is used in CI before dropping privileges, you should probably install all the tools using your package manager\n"
 	@printf "\n"
 	@printf "\e[1mBuild\e[0m\n"
 	@printf "  \e[36mbuild-all\e[0m                      Build all binaries.\n"
