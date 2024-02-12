@@ -16,7 +16,6 @@ package test
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -76,12 +75,9 @@ var _ = BeforeSuite(func() {
 	logf.SetLogger(logger)
 
 	By("bootstrapping test environment")
-	p, err := binaryAssetsAbsPath()
-	Expect(err).ToNot(HaveOccurred())
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths:     []string{"crd"},
 		ErrorIfCRDPathMissing: true,
-		BinaryAssetsDirectory: p,
 	}
 	cfg, err := testEnv.Start()
 	Expect(err).ToNot(HaveOccurred())
@@ -142,26 +138,6 @@ var _ = AfterSuite(func() {
 
 ///////////////////////////////////////////////////////////////////////////////
 // Helper functions
-
-func binaryAssetsAbsPath() (string, error) {
-	// setup-envtest should have downloaded binaries in a subdirectory inside bin/k8s.
-	parentDir := "bin/k8s"
-	files, err := os.ReadDir(parentDir)
-	if err != nil {
-		return "", err
-	}
-	if len(files) != 1 || !files[0].IsDir() {
-		return "", fmt.Errorf(
-			"test/%s should only have one directory and that directory should contain binary assets downloaded by setup-envtest",
-			parentDir,
-		)
-	}
-	absPath, err := filepath.Abs(filepath.Join(parentDir, files[0].Name()))
-	if err != nil {
-		return "", err
-	}
-	return absPath, nil
-}
 
 func addMockPrometheusRules(ctx context.Context) error {
 	mockDir := filepath.Join("fixtures", "start-data")

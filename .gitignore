@@ -4,7 +4,7 @@ dist/
 
 # Test artifacts
 *.actual
-test/bin/
+testbin/
 
 # kubebuilder artifacts (that we don't need)
 config/

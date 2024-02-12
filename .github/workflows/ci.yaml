@@ -48,17 +48,5 @@ jobs:
         with:
           check-latest: true
           go-version: "1.21"
-      - name: Cache envtest binaries
-        id: cache-envtest
-        uses: actions/cache@v4
-        with:
-          key: ${{ runner.os }}-envtest-${{ hashFiles('Makefile.maker.yaml') }}
-          path: test/bin
-      - name: Download envtest binaries
-        if: steps.cache-envtest.outputs.cache-hit != 'true'
-        run: |
-          go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
-          mkdir -p test/bin
-          setup-envtest --bin-dir test/bin use 1.26.x!
       - name: Run tests and generate coverage report
         run: make build/cover.out
