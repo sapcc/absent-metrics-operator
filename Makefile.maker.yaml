@@ -17,6 +17,9 @@ dockerfile:
     - PROJECT
     - RELEASE.md
 
+golang:
+  setGoModVersion: true
+
 golangciLint:
   createConfig: true
 
@@ -27,12 +30,13 @@ githubWorkflow:
   ci:
     enabled: true
     ignorePaths: ["**.md"] # all Markdown files
-  securityChecks:
-    enabled: true
   license:
     enabled: true
   release:
     enabled: true
+  securityChecks:
+    enabled: true
+
 renovate:
   enabled: true
   assignees:
