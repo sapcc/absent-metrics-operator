@@ -14,14 +14,16 @@ endif
 
 default: build-all
 
-prepare-static-check: FORCE install-controller-gen
+prepare-static-check: FORCE
 	@if ! hash golangci-lint 2>/dev/null; then printf "\e[1;36m>> Installing golangci-lint (this may take a while)...\e[0m\n"; go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; fi
 	@if ! hash go-licence-detector 2>/dev/null; then printf "\e[1;36m>> Installing go-licence-detector...\e[0m\n"; go install go.elastic.co/go-licence-detector@latest; fi
 	@if ! hash addlicense 2>/dev/null; then  printf "\e[1;36m>> Installing addlicense...\e[0m\n";  go install github.com/google/addlicense@latest; fi
-	@if ! hash setup-envtest 2>/dev/null; then printf "\e[1;36m>> Installing setup-envtest...\e[0m\n"; go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest; fi
 
 install-controller-gen: FORCE
 	@if ! hash controller-gen 2>/dev/null; then printf "\e[1;36m>> Installing controller-gen...\e[0m\n"; go install sigs.k8s.io/controller-tools/cmd/controller-gen@latest; fi
+
+install-setup-envtest: FORCE
+	@if ! hash setup-envtest 2>/dev/null; then printf "\e[1;36m>> Installing setup-envtest...\e[0m\n"; go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest; fi
 
 install-ginkgo: FORCE
 	@if ! hash ginkgo 2>/dev/null; then printf "\e[1;36m>> Installing ginkgo...\e[0m\n"; go install github.com/onsi/ginkgo/v2/ginkgo; fi
@@ -74,7 +76,7 @@ run-golangci-lint: FORCE prepare-static-check
 	@printf "\e[1;36m>> golangci-lint\e[0m\n"
 	@golangci-lint run
 
-build/cover.out: FORCE install-ginkgo generate | build
+build/cover.out: FORCE install-ginkgo generate install-controller-gen install-setup-envtest | build
 	@printf "\e[1;36m>> Running tests\e[0m\n"
 	KUBEBUILDER_ASSETS="$(shell setup-envtest use 1.29.1 --bin-dir $(TESTBIN) -p path)" ginkgo run --randomize-all $(GO_BUILDFLAGS) -ldflags '-s -w -X github.com/sapcc/go-api-declarations/bininfo.binName=absent-metrics-operator -X github.com/sapcc/go-api-declarations/bininfo.version=$(BININFO_VERSION) -X github.com/sapcc/go-api-declarations/bininfo.commit=$(BININFO_COMMIT_HASH) -X github.com/sapcc/go-api-declarations/bininfo.buildDate=$(BININFO_BUILD_DATE) $(GO_LDFLAGS)' -p 1 -coverprofile=$@ -covermode=count -coverpkg=$(subst $(space),$(comma),$(GO_COVERPKGS)) $(GO_TESTPKGS)
 
@@ -129,6 +131,7 @@ help: FORCE
 	@printf "\e[1mPrepare\e[0m\n"
 	@printf "  \e[36mprepare-static-check\e[0m           Install any tools required by static-check. This is used in CI before dropping privileges, you should probably install all the tools using your package manager\n"
 	@printf "  \e[36minstall-controller-gen\e[0m         Install controller-gen required by static-check and build-all. This is used in CI before dropping privileges, you should probably install all the tools using your package manager\n"
+	@printf "  \e[36minstall-setup-envtest\e[0m          Install setup-envtest required by check. This is used in CI before dropping privileges, you should probably install all the tools using your package manager\n"
 	@printf "  \e[36minstall-ginkgo\e[0m                 Install ginkgo required when using it as test runner. This is used in CI before dropping privileges, you should probably install all the tools using your package manager\n"
 	@printf "\n"
 	@printf "\e[1mBuild\e[0m\n"
