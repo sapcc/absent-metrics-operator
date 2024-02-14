@@ -39,7 +39,7 @@ import (
 	"github.com/sapcc/absent-metrics-operator/controllers"
 )
 
-var _ = Describe("Controller", func() {
+var _ = Describe("Controller", Ordered, func() {
 	// Note: Throughout the individual tests we will use two terms:
 	//   *PromRule(s)*: this refers to a PrometheusRule resource(s) that contains alert rules.
 	//   *AbsentPromRule(s)*: this refers to the PrometheusRule resource(s) created by the
