@@ -12,7 +12,7 @@ require (
 	github.com/onsi/gomega v1.31.1
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.71.2
 	github.com/prometheus/client_golang v1.19.0
-	github.com/prometheus/prometheus v0.50.0
+	github.com/prometheus/prometheus v0.50.1
 	github.com/sapcc/go-api-declarations v1.10.9
 	github.com/sapcc/go-bits v0.0.0-20240229224940-f0612298e3a6
 	go.uber.org/automaxprocs v1.5.3
