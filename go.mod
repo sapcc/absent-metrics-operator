@@ -8,11 +8,11 @@ go 1.22
 
 require (
 	github.com/go-logr/logr v1.4.1
-	github.com/onsi/ginkgo/v2 v2.17.0
+	github.com/onsi/ginkgo/v2 v2.17.1
 	github.com/onsi/gomega v1.32.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.72.0
 	github.com/prometheus/client_golang v1.19.0
-	github.com/prometheus/prometheus v0.51.0
+	github.com/prometheus/prometheus v0.51.1
 	github.com/sapcc/go-api-declarations v1.10.10
 	github.com/sapcc/go-bits v0.0.0-20240328092936-0e0b562825d4
 	go.uber.org/automaxprocs v1.5.3
