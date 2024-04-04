@@ -29,18 +29,12 @@ goReleaser:
 githubWorkflow:
   ci:
     enabled: true
-    ignorePaths: ["**.md"] # all Markdown files
-  license:
-    enabled: true
   release:
-    enabled: true
-  securityChecks:
     enabled: true
 
 renovate:
   enabled: true
   assignees:
-    - talal
     - majewsky
     - SuperSandro2000
   packageRules:
