@@ -10,9 +10,9 @@ require (
 	github.com/go-logr/logr v1.4.1
 	github.com/onsi/ginkgo/v2 v2.17.1
 	github.com/onsi/gomega v1.32.0
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.73.0
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.73.1
 	github.com/prometheus/client_golang v1.19.0
-	github.com/prometheus/prometheus v0.51.1
+	github.com/prometheus/prometheus v0.51.2
 	github.com/sapcc/go-api-declarations v1.10.11
 	github.com/sapcc/go-bits v0.0.0-20240404145041-8c313ab7cd29
 	go.uber.org/automaxprocs v1.5.3
@@ -22,7 +22,7 @@ require (
 	k8s.io/api v0.29.3
 	k8s.io/apimachinery v0.29.3
 	k8s.io/client-go v0.29.3
-	sigs.k8s.io/controller-runtime v0.17.2
+	sigs.k8s.io/controller-runtime v0.17.3
 	sigs.k8s.io/yaml v1.4.0
 )
 
