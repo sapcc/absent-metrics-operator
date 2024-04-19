@@ -9,7 +9,7 @@ go 1.22
 require (
 	github.com/go-logr/logr v1.4.1
 	github.com/onsi/ginkgo/v2 v2.17.1
-	github.com/onsi/gomega v1.32.0
+	github.com/onsi/gomega v1.33.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.73.1
 	github.com/prometheus/client_golang v1.19.0
 	github.com/prometheus/prometheus v0.51.2
