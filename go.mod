@@ -13,8 +13,8 @@ require (
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.73.1
 	github.com/prometheus/client_golang v1.19.0
 	github.com/prometheus/prometheus v0.51.2
-	github.com/sapcc/go-api-declarations v1.10.12
-	github.com/sapcc/go-bits v0.0.0-20240418035538-c509bd89fb1a
+	github.com/sapcc/go-api-declarations v1.11.0
+	github.com/sapcc/go-bits v0.0.0-20240425084953-de3210f2772e
 	go.uber.org/automaxprocs v1.5.3
 	go.uber.org/zap v1.27.0
 	golang.org/x/sync v0.7.0
@@ -59,7 +59,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_model v0.6.0 // indirect
-	github.com/prometheus/common v0.52.3 // indirect
+	github.com/prometheus/common v0.53.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
