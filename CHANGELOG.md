@@ -2,16 +2,24 @@
 
 All notable changes to the absent metrics operator will be documented in this file.
 
-The sections should follow the order `Added`, `Changed`, `Fixed`, `Removed`, and `Deprecated`.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+<!---
+The changes should be grouped using the following categories (in order of precedence):
+- Added: for new features
+- Changed: for changes in existing functionality
+- Fixed: for any bug fixes
+- Removed: for now removed features
+- Deprecated: for soon-to-be removed features
+-->
 
 ## [Unreleased](https://github.com/sapcc/absent-metrics-operator/compare/v0.9.4...HEAD)
 
 ## 0.9.5 - 2023-10-06
 
 ### Changed
+
 - Updated all dependencies to their latest version.
 
 ## 0.9.4 - 2023-05-08
