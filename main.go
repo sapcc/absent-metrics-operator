@@ -76,7 +76,7 @@ func main() {
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
-	// Enabled debug mode if `-debug` flag is provided.
+	// Enable debug mode if `-debug` flag is provided.
 	if debug {
 		opts.Development = true
 	}
