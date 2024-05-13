@@ -33,7 +33,7 @@ process. Follow the instructions below for creating a new release.
 
    ```sh
    git tag vX.Y.Z
-   git push --tags
+   git push && git push --tags
    ```
 
    > [!IMPORTANT]
