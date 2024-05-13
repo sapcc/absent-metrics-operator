@@ -14,7 +14,7 @@ coverageTest:
 dockerfile:
   enabled: true
   extraIgnores:
-    - hack/
+    - /hack/
     - PROJECT
     - RELEASE.md
 
