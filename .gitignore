@@ -1,10 +1,10 @@
 # Build artifacts
-build/
-dist/
+/build/
+/dist/
 
 # Test artifacts
-*.actual
-testbin/
+/test/fixtures/*.actual
+/testbin/
 
 # kubebuilder artifacts (that we don't need)
-config/
+/config/
