@@ -119,12 +119,6 @@ var _ = Describe("Controller", Ordered, func() {
 	Describe("Update", func() {
 		objKey := newObjKey(swiftNs, "openstack-swift.alerts")
 		prObjKey := newObjKey(swiftNs, osAbsentPRName)
-		labelOpts := controllers.LabelOpts{
-			DefaultSupportGroup: "not-containers",
-			DefaultTier:         "os",
-			DefaultService:      "swift",
-			Keep:                keepLabel,
-		}
 		fooBar := "foo_bar"
 		barFoo := "bar_foo"
 
@@ -141,7 +135,7 @@ var _ = Describe("Controller", Ordered, func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				// Generate the corresponding absent alert rules.
-				expected, err := controllers.ParseRuleGroups(logger, pr.Spec.Groups, pr.GetName(), labelOpts)
+				expected, err := controllers.ParseRuleGroups(logger, pr.Spec.Groups, pr.GetName(), keepLabel)
 				Expect(err).ToNot(HaveOccurred())
 
 				// Get the updated AbsentPromRule from the server and check if it has the
@@ -175,7 +169,7 @@ var _ = Describe("Controller", Ordered, func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				// Generate the corresponding absent alert rules.
-				expected, err := controllers.ParseRuleGroups(logger, pr.Spec.Groups, pr.GetName(), labelOpts)
+				expected, err := controllers.ParseRuleGroups(logger, pr.Spec.Groups, pr.GetName(), keepLabel)
 				Expect(err).ToNot(HaveOccurred())
 
 				// Get the updated AbsentPromRule from the server and check if the
@@ -263,12 +257,7 @@ var _ = Describe("Controller", Ordered, func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				// Generate the corresponding absent alert rules.
-				expected, err := controllers.ParseRuleGroups(logger, pr.Spec.Groups, pr.GetName(), controllers.LabelOpts{
-					DefaultSupportGroup: "not-containers",
-					DefaultTier:         "os",
-					DefaultService:      "swift",
-					Keep:                keepLabel,
-				})
+				expected, err := controllers.ParseRuleGroups(logger, pr.Spec.Groups, pr.GetName(), keepLabel)
 				Expect(err).ToNot(HaveOccurred())
 
 				// Check that the corresponding absent alert rule was removed.

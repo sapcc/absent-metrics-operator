@@ -142,7 +142,7 @@ func (e *ruleGroupParseError) Error() string {
 // used.
 //
 // The rule group names for the absence alerts have the format: promRuleName/originalGroupName.
-func ParseRuleGroups(logger logr.Logger, in []monitoringv1.RuleGroup, promRuleName string, opts LabelOpts) ([]monitoringv1.RuleGroup, error) {
+func ParseRuleGroups(logger logr.Logger, in []monitoringv1.RuleGroup, promRuleName string, keepLabel KeepLabel) ([]monitoringv1.RuleGroup, error) {
 	out := make([]monitoringv1.RuleGroup, 0, len(in))
 	for _, g := range in {
 		var absenceAlertRules []monitoringv1.Rule
@@ -155,7 +155,7 @@ func ParseRuleGroups(logger logr.Logger, in []monitoringv1.RuleGroup, promRuleNa
 			if r.Labels != nil && parseBool(r.Labels[labelNoAlertOnAbsence]) {
 				continue
 			}
-			rules, err := parseAlertRule(logger, r, opts)
+			rules, err := parseAlertRule(logger, r, keepLabel)
 			if err != nil {
 				return nil, &ruleGroupParseError{cause: err}
 			}
@@ -185,7 +185,7 @@ var nonAlphaNumericRx = regexp.MustCompile(`[^a-zA-Z0-9]`)
 // an alert expression can reference multiple time series therefore a slice of
 // []monitoringv1.Rule is returned as multiple (one for each time series) absence alert
 // rules would be generated.
-func parseAlertRule(logger logr.Logger, in monitoringv1.Rule, opts LabelOpts) ([]monitoringv1.Rule, error) {
+func parseAlertRule(logger logr.Logger, in monitoringv1.Rule, keepLabel KeepLabel) ([]monitoringv1.Rule, error) {
 	exprStr := in.Expr.String()
 	mex := &metricNameExtractor{
 		logger: logger,
@@ -214,19 +214,9 @@ func parseAlertRule(logger logr.Logger, in monitoringv1.Rule, opts LabelOpts) ([
 
 	// Retain labels from the original alert rule.
 	if ruleLabels := in.Labels; ruleLabels != nil {
-		for k := range opts.Keep {
+		for k := range keepLabel {
 			v := ruleLabels[k]
-			emptyOrTmplVal := (v == "" || strings.Contains(v, "$labels"))
-			if k == LabelSupportGroup && emptyOrTmplVal {
-				v = opts.DefaultSupportGroup
-			}
-			if k == LabelTier && emptyOrTmplVal {
-				v = opts.DefaultTier
-			}
-			if k == LabelService && emptyOrTmplVal {
-				v = opts.DefaultService
-			}
-			if v != "" {
+			if v != "" && !strings.Contains(v, "$labels") {
 				absenceRuleLabels[k] = v
 			}
 		}

@@ -4,9 +4,6 @@ metadata:
   labels:
     absent-metrics-operator/managed-by: "true"
     prometheus: kubernetes
-    ccloud/service: keppel
-    tier: os
-    service: keppel
     type: alerting-rules
   annotations:
     absent-metrics-operator/updated-at: "1970-01-01T00:00:01Z"
@@ -15,6 +12,21 @@ spec:
   groups:
     - name: kubernetes-keppel.alerts/keppel.alerts
       rules:
+        - alert: AbsentKeppelKubePodFailedSchedulingMemoryTotal
+          expr: absent(kube_pod_failed_scheduling_memory_total)
+          for: 10m
+          labels:
+            context: absent-metrics
+            service: keppel
+            severity: info
+          annotations:
+            description:
+              The metric 'kube_pod_failed_scheduling_memory_total' is missing.
+              'OpenstackKeppelPodSchedulingInsufficientMemory' alert using it may not
+              fire as intended. See <https://github.com/sapcc/absent-metrics-operator/blob/master/docs/playbook.md|the
+              operator playbook>.
+            summary: missing kube_pod_failed_scheduling_memory_total
+
         - alert: AbsentOsKeppelContainerMemoryUsagePercent
           expr: absent(keppel_container_memory_usage_percent)
           for: 10m
@@ -30,19 +42,3 @@ spec:
               See <https://github.com/sapcc/absent-metrics-operator/blob/master/docs/playbook.md|the
               operator playbook>.
             summary: missing keppel_container_memory_usage_percent
-
-        - alert: AbsentOsKeppelKubePodFailedSchedulingMemoryTotal
-          expr: absent(kube_pod_failed_scheduling_memory_total)
-          for: 10m
-          labels:
-            context: absent-metrics
-            tier: os
-            service: keppel
-            severity: info
-          annotations:
-            description:
-              The metric 'kube_pod_failed_scheduling_memory_total' is missing.
-              'OpenstackKeppelPodSchedulingInsufficientMemory' alert using it may not
-              fire as intended. See <https://github.com/sapcc/absent-metrics-operator/blob/master/docs/playbook.md|the
-              operator playbook>.
-            summary: missing kube_pod_failed_scheduling_memory_total

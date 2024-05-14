@@ -16,6 +16,11 @@ The changes should be grouped using the following categories (in order of preced
 
 ## [Unreleased](https://github.com/sapcc/absent-metrics-operator/compare/v0.9.4...HEAD)
 
+### Removed
+
+- Heuristic determination of `tier`, `service`, and `support_group` labels. These labels will now be copied over as is from the original alert rule to its corresponding absence alert rule.
+- `tier`, `service`, `ccloud/service`, and `ccloud/support-group` labels at the object level (PrometheusRule).
+
 ## 0.9.5 - 2023-10-06
 
 ### Changed
