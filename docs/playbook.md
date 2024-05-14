@@ -1,14 +1,14 @@
 # Playbook for Operators
 
-> This document assumes that you have already read and understood the [general
-> README](../README.md). If not, start reading there.
+> [!NOTE]
+> This document assumes that you have already read and understood the [general README](../README.md). If not, start reading there.
 
 This document contains instruction on how to deal with _absence alerts_.
 
 ## Disable the operator
 
-> **Note**: make sure that you use `"true"` and not `true` as the value for labels
-> mentioned below.
+> [!IMPORTANT]
+> Make sure that you use `"true"` (string) and not `true` (boolean) as the value for labels below.
 
 ### Specific alert rule
 
