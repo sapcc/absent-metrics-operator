@@ -1,7 +1,7 @@
 # Playbook for Operators
 
-> This document assumes that you have already read and understood the [general
-> README](../README.md). If not, start reading there.
+> [!NOTE]
+> This document assumes that you have already read and understood the [general README](../README.md). If not, start reading there.
 
 This document contains instruction on how to deal with _absence alerts_.
 
