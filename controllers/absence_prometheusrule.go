@@ -273,7 +273,7 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 
 	// Remove resource level tier, service, and support-group labels from existing PrometheusRule
 	// objects created by the operator.
-	// TODO: remove this in the next release when the labels have been removed from all
+	// TODO: remove this after August 2024, by then the labels should have been removed from all
 	// PrometheusRules created by the operator.
 	if r.KeepLabel[LabelSupportGroup] && r.KeepLabel[LabelTier] && r.KeepLabel[LabelService] {
 		delete(absencePromRule.Labels, LabelCCloudSupportGroup)
