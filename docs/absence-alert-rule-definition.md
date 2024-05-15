@@ -1,7 +1,7 @@
 # Absence alert rule definition
 
-> This document assumes that you have already read and understood the [general
-> README](../README.md). If not, start reading there.
+> [!NOTE]
+> This document assumes that you have already read and understood the [general README](../README.md). If not, start reading there.
 
 This document describes how _absence alert rules_ are defined.
 
