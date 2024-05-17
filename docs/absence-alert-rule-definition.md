@@ -1,7 +1,7 @@
 # Absence alert rule definition
 
-> This document assumes that you have already read and understood the [general
-> README](../README.md). If not, start reading there.
+> [!NOTE]
+> This document assumes that you have already read and understood the [general README](../README.md). If not, start reading there.
 
 This document describes how _absence alert rules_ are defined.
 
@@ -49,15 +49,9 @@ that can be referenced on how to deal with _absence alert rules_.
 
 ## Labels
 
-Labels which are specified with the `--keep-labels` flag will be retained from the
-original alert rule and will be defined on the corresponding _absence alert rule_ as is.
-
-The `support_group` and `service` labels are a special case, they have some custom behavior which is
-defined in the [playbook for operators](./playbook.md#support-group-and-service-labels).
-
-### Defaults
-
 The following labels are always present on all _absence alert rules_:
 
 - `severity: info`
 - `context: absent-metrics`
+
+Additionally, labels which are specified with the `--keep-labels` flag will be copied over verbatim from the original alert rule to the corresponding _absence alert rule_.

@@ -46,7 +46,7 @@ spec:
             dashboard: limes-overview
             severity: warning
             support_group: containers
-            service: "{{ $labels.service_name }}"
+            service: limes
           annotations:
             summary: "Limes cannot find {{ title $labels.service_name }} endpoint"
             description: "Limes has suspended scraping from {{ title $labels.service_name }} for more than an hour."

@@ -255,9 +255,7 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 		return errors.New("no 'prometheus' label found")
 	}
 
-	// Step 2: get the corresponding AbsencePrometheusRule if it exists. We do this in
-	// advance so that we can get suitable defaults for tier and service labels in the
-	// next step.
+	// Step 2: get the corresponding AbsencePrometheusRule if it exists.
 	existingAbsencePrometheusRule := false
 	absencePromRule, err := r.getExistingAbsencePrometheusRule(ctx, namespace, promServer)
 	switch {
@@ -273,37 +271,24 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 
 	unmodifiedAbsencePromRule := absencePromRule.DeepCopy()
 
-	// Step 3: get defaults for support group, tier and service labels and add them to the
-	// AbsencePrometheusRule.
-	//
-	// We make a copy of the existing CCloud labels so that we can compare if the labels
-	// have been updated.
-	labelOpts := LabelOpts{Keep: r.KeepLabel}
-	if keepCCloudLabels(labelOpts.Keep) {
-		var err error
-		labelOpts, err = r.labelOptsWithCCloudDefaults(ctx, promRule)
-		if err != nil {
-			return err
-		}
-
-		// Update the labels on AbsencePrometheusRule object in case they might've changed
-		// or delete them in case they no longer exist and defaults could not be
-		// determined.
-		// New CCloud format:
-		updateLabel(absencePromRule.Labels, LabelCCloudSupportGroup, labelOpts.DefaultSupportGroup)
-		updateLabel(absencePromRule.Labels, LabelCCloudService, labelOpts.DefaultService)
-		// Old CCloud format:
-		updateLabel(absencePromRule.Labels, LabelTier, labelOpts.DefaultTier)
-		updateLabel(absencePromRule.Labels, LabelService, labelOpts.DefaultService)
+	// Remove resource level tier, service, and support-group labels from existing PrometheusRule
+	// objects created by the operator.
+	// TODO: remove this after August 2024, by then the labels should have been removed from all
+	// PrometheusRules created by the operator.
+	if r.KeepLabel[LabelSupportGroup] && r.KeepLabel[LabelTier] && r.KeepLabel[LabelService] {
+		delete(absencePromRule.Labels, LabelCCloudSupportGroup)
+		delete(absencePromRule.Labels, LabelCCloudService)
+		delete(absencePromRule.Labels, LabelService)
+		delete(absencePromRule.Labels, LabelTier)
 	}
 
-	// Step 4: parse RuleGroups and generate corresponding absence alert rules.
-	absenceRuleGroups, err := ParseRuleGroups(log, promRule.Spec.Groups, promRuleName, labelOpts)
+	// Step 3: parse RuleGroups and generate corresponding absence alert rules.
+	absenceRuleGroups, err := ParseRuleGroups(log, promRule.Spec.Groups, promRuleName, r.KeepLabel)
 	if err != nil {
 		return err
 	}
 
-	// Step 5: we clean up orphaned absence alert rules from the AbsencePrometheusRule in
+	// Step 4: we clean up orphaned absence alert rules from the AbsencePrometheusRule in
 	// case no absence alert rules were generated.
 	// This can happen when changes have been made to alert rules that result in no absent
 	// alerts. E.g. absent() or the 'no_alert_on_absence' label was used.
@@ -315,26 +300,11 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 		return nil
 	}
 
-	// Step 6. log in case we couldn't find defaults for tier and service. We log after
-	// Step 4 and 5 to avoid unnecessary logging in case the aforementioned steps result
-	// in no change.
-	if keepCCloudLabels(labelOpts.Keep) {
-		if labelOpts.DefaultSupportGroup == "" {
-			log.Info("could not find a default value for 'support_group' label")
-		}
-		if labelOpts.DefaultTier == "" {
-			log.Info("could not find a default value for 'tier' label")
-		}
-		if labelOpts.DefaultService == "" {
-			log.Info("could not find a default value for 'service' label")
-		}
-	}
-
-	// Step 7: if it's an existing AbsencePrometheusRule then update otherwise create a new resource.
+	// Step 5: if it's an existing AbsencePrometheusRule then update otherwise create a new resource.
 	if existingAbsencePrometheusRule {
 		existingRuleGroups := absencePromRule.Spec.Groups
 		result := mergeAbsenceRuleGroups(existingRuleGroups, absenceRuleGroups)
-		if reflect.DeepEqual(getCCloudLabels(unmodifiedAbsencePromRule), getCCloudLabels(absencePromRule)) &&
+		if reflect.DeepEqual(unmodifiedAbsencePromRule.GetLabels(), absencePromRule.GetLabels()) &&
 			reflect.DeepEqual(existingRuleGroups, result) {
 			return nil
 		}
