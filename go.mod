@@ -9,8 +9,8 @@ go 1.22.0
 require (
 	github.com/go-logr/logr v1.4.2
 	github.com/onsi/ginkgo/v2 v2.19.0
-	github.com/onsi/gomega v1.33.1
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.75.1
+	github.com/onsi/gomega v1.34.0
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.75.2
 	github.com/prometheus/client_golang v1.19.1
 	github.com/prometheus/prometheus v0.53.1
 	github.com/sapcc/go-api-declarations v1.12.0
