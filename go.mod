@@ -13,8 +13,8 @@ require (
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.75.1
 	github.com/prometheus/client_golang v1.19.1
 	github.com/prometheus/prometheus v0.53.1
-	github.com/sapcc/go-api-declarations v1.11.3
-	github.com/sapcc/go-bits v0.0.0-20240718093810-9d9ecb2e98b2
+	github.com/sapcc/go-api-declarations v1.12.0
+	github.com/sapcc/go-bits v0.0.0-20240725082021-261f0bf53c79
 	go.uber.org/automaxprocs v1.5.3
 	golang.org/x/sync v0.7.0
 	golang.org/x/text v0.16.0
@@ -67,7 +67,7 @@ require (
 	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/oauth2 v0.21.0 // indirect
-	golang.org/x/sys v0.21.0 // indirect
+	golang.org/x/sys v0.22.0 // indirect
 	golang.org/x/term v0.21.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.22.0 // indirect
