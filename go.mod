@@ -14,10 +14,10 @@ require (
 	github.com/prometheus/client_golang v1.19.1
 	github.com/prometheus/prometheus v0.53.1
 	github.com/sapcc/go-api-declarations v1.12.1
-	github.com/sapcc/go-bits v0.0.0-20240801093859-8ef04d19f38d
+	github.com/sapcc/go-bits v0.0.0-20240808095728-a371e948855b
 	go.uber.org/automaxprocs v1.5.3
-	golang.org/x/sync v0.7.0
-	golang.org/x/text v0.16.0
+	golang.org/x/sync v0.8.0
+	golang.org/x/text v0.17.0
 	k8s.io/api v0.30.2
 	k8s.io/apimachinery v0.30.2
 	k8s.io/client-go v0.30.2
@@ -67,7 +67,7 @@ require (
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/net v0.27.0 // indirect
 	golang.org/x/oauth2 v0.21.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/sys v0.23.0 // indirect
 	golang.org/x/term v0.22.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.23.0 // indirect
