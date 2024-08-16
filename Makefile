@@ -82,7 +82,7 @@ run-golangci-lint: FORCE prepare-static-check
 
 build/cover.out: FORCE install-ginkgo generate install-setup-envtest | build
 	@printf "\e[1;36m>> Running tests\e[0m\n"
-	KUBEBUILDER_ASSETS="$(shell setup-envtest use 1.30 --bin-dir $(TESTBIN) -p path)" ginkgo run --randomize-all -output-dir=build $(GO_BUILDFLAGS) -ldflags '-s -w -X github.com/sapcc/go-api-declarations/bininfo.binName=absent-metrics-operator -X github.com/sapcc/go-api-declarations/bininfo.version=$(BININFO_VERSION) -X github.com/sapcc/go-api-declarations/bininfo.commit=$(BININFO_COMMIT_HASH) -X github.com/sapcc/go-api-declarations/bininfo.buildDate=$(BININFO_BUILD_DATE) $(GO_LDFLAGS)' -covermode=count -coverpkg=$(subst $(space),$(comma),$(GO_COVERPKGS)) $(GO_TESTPKGS)
+	KUBEBUILDER_ASSETS="$(shell setup-envtest use 1.31 --bin-dir $(TESTBIN) -p path)" ginkgo run --randomize-all -output-dir=build $(GO_BUILDFLAGS) -ldflags '-s -w -X github.com/sapcc/go-api-declarations/bininfo.binName=absent-metrics-operator -X github.com/sapcc/go-api-declarations/bininfo.version=$(BININFO_VERSION) -X github.com/sapcc/go-api-declarations/bininfo.commit=$(BININFO_COMMIT_HASH) -X github.com/sapcc/go-api-declarations/bininfo.buildDate=$(BININFO_BUILD_DATE) $(GO_LDFLAGS)' -covermode=count -coverpkg=$(subst $(space),$(comma),$(GO_COVERPKGS)) $(GO_TESTPKGS)
 	@mv build/coverprofile.out build/cover.out
 
 build/cover.html: build/cover.out
