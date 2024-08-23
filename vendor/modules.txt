@@ -167,7 +167,7 @@ github.com/pkg/errors
 ## explicit; go 1.22.0
 github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring
 github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1
-# github.com/prometheus/client_golang v1.20.0
+# github.com/prometheus/client_golang v1.20.1
 ## explicit; go 1.20
 github.com/prometheus/client_golang/internal/github.com/golang/gddo/httputil
 github.com/prometheus/client_golang/internal/github.com/golang/gddo/httputil/header
@@ -207,7 +207,7 @@ github.com/prometheus/prometheus/util/strutil
 # github.com/sapcc/go-api-declarations v1.12.4
 ## explicit; go 1.21
 github.com/sapcc/go-api-declarations/bininfo
-# github.com/sapcc/go-bits v0.0.0-20240815085238-fce0691187a2
+# github.com/sapcc/go-bits v0.0.0-20240822124354-41dc601581db
 ## explicit; go 1.22
 github.com/sapcc/go-bits/errext
 github.com/sapcc/go-bits/logg
