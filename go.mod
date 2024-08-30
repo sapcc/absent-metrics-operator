@@ -8,11 +8,11 @@ go 1.23
 
 require (
 	github.com/go-logr/logr v1.4.2
-	github.com/onsi/ginkgo/v2 v2.20.1
-	github.com/onsi/gomega v1.34.1
+	github.com/onsi/ginkgo/v2 v2.20.2
+	github.com/onsi/gomega v1.34.2
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.76.0
 	github.com/prometheus/client_golang v1.20.2
-	github.com/prometheus/prometheus v0.54.0
+	github.com/prometheus/prometheus v0.54.1
 	github.com/sapcc/go-api-declarations v1.12.4
 	github.com/sapcc/go-bits v0.0.0-20240829073103-7495f31d66ad
 	go.uber.org/automaxprocs v1.5.3
@@ -47,7 +47,7 @@ require (
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8 // indirect
+	github.com/google/pprof v0.0.0-20240827171923-fa2c70bbbfe5 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
