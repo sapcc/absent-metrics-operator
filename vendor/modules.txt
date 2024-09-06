@@ -163,11 +163,11 @@ github.com/onsi/gomega/types
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
-# github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.76.0
+# github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.76.1
 ## explicit; go 1.22.0
 github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring
 github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1
-# github.com/prometheus/client_golang v1.20.2
+# github.com/prometheus/client_golang v1.20.3
 ## explicit; go 1.20
 github.com/prometheus/client_golang/internal/github.com/golang/gddo/httputil
 github.com/prometheus/client_golang/internal/github.com/golang/gddo/httputil/header
@@ -268,7 +268,7 @@ golang.org/x/sys/windows
 # golang.org/x/term v0.23.0
 ## explicit; go 1.18
 golang.org/x/term
-# golang.org/x/text v0.17.0
+# golang.org/x/text v0.18.0
 ## explicit; go 1.18
 golang.org/x/text/cases
 golang.org/x/text/encoding
