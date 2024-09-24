@@ -63,9 +63,9 @@ var (
 	}
 )
 
-func TestController(t *testing.T) {
+func TestE2E(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Controller Suite")
+	RunSpecs(t, "e2e Test Suite")
 }
 
 var _ = BeforeSuite(func() {
