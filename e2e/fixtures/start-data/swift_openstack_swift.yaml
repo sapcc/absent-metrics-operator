@@ -12,74 +12,15 @@ spec:
   groups:
     - name: swift.alerts
       rules:
-        - alert: OpenstackSwiftUsedSpace
-          expr: max(predict_linear(global:swift_cluster_storage_used_percent_average[1w], 60 * 60 * 24 * 30)) > 0.8
+        - alert: OpenstackSwiftFoo
+          expr: swift_foo > 0
           for: 1d
           labels:
             context: usedcapacity
-            dashboard: swift-capacity-global?var-region={{ $labels.region }}
             severity: critical
             support_group: not-containers
             tier: os
             service: swift
-            meta: Swift storage usage will reach 80% in 30 days. Order hardware now!
           annotations:
             summary: Swift storage expected to be full soon
             description: Swift storage usage will reach 80% in 30 days. Order hardware now!
-
-        - record: predict_linear_global_cluster_storage_used_percent_average
-          expr: max(predict_linear(global:swift_cluster_storage_used_percent_average[1w], 60 * 60 * 24 * 30)) > 0.8
-          labels:
-            context: usedcapacity
-            support_group: not-containers
-            tier: os
-            service: swift
-            meta: Swift storage usage will reach 80% in 30 days. Order hardware now!
-
-        - alert: OpenstackSwiftHealthCheck
-          expr: avg(swift_recon_task_exit_code) BY (region) > 0.2 or avg(swift_dispersion_task_exit_code) BY (region) > 0.2
-          for: 5m
-          labels:
-            context: health
-            dashboard: swift-overview
-            severity: warning
-            support_group: not-containers
-            tier: os
-            service: swift
-            playbook: docs/support/playbook/swift/healthcheck.html
-            meta: some health checks for Swift are failing
-          annotations:
-            summary: swift-health-check
-            description: Swift health check failures. Run kubectl log (swift-proxy-...  / swift-health-exporter-...) collector to get details
-
-        - alert: OpenstackSwiftMismatchedRings
-          expr: (swift_cluster_md5_not_matched{kind="ring"} - swift_cluster_md5_errors{kind="ring"}) > 0
-          for: 15m
-          labels:
-            context: mismatchedrings
-            dashboard: swift-overview
-            severity: warning
-            support_group: not-containers
-            tier: os
-            service: swift
-            playbook: docs/support/playbook/swift/rings.html
-            meta: Rings are not equal on all Swift nodes
-            no_alert_on_absence: "true"
-          annotations:
-            summary: swift-mismatched-rings
-            description: Rings are not equal on all nodes
-
-        - alert: OpenstackSwiftMismatchedConfig
-          expr: (swift_cluster_md5_not_matched{kind="swiftconf"}) > 0
-          for: 15m
-          labels:
-            context: mismatchedconf
-            dashboard: swift-overview
-            severity: warning
-            support_group: not-containers
-            tier: os
-            service: swift
-            meta: Configuration is not equal on all Swift nodes
-          annotations:
-            summary: swift-mismatched-config
-            description: Configuration is not equal on all nodes

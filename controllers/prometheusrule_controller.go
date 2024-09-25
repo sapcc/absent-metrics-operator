@@ -48,7 +48,7 @@ type PrometheusRuleReconciler struct {
 	Log    logr.Logger
 
 	// KeepLabel is a map of labels that will be retained from the original alert rule and
-	// passed on to its corresponding absent alert rule.
+	// passed on to its corresponding absence alert rule.
 	KeepLabel KeepLabel
 }
 

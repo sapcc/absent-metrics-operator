@@ -136,10 +136,8 @@ func (e *ruleGroupParseError) Error() string {
 // ParseRuleGroups takes a slice of RuleGroup that has alert rules and returns
 // a new slice of RuleGroup that has the corresponding absence alert rules.
 //
-// The original tier and service labels from the alert rules will be carried over to
-// the corresponding absence alerts unless templating (i.e. $labels) was used
-// for these labels in which case the provided default tier and service will be
-// used.
+// The labels specified in the keepLabel map will be carried over to the corresponding
+// absence alerts unless templating (i.e. $labels) was used for these labels.
 //
 // The rule group names for the absence alerts have the format: promRuleName/originalGroupName.
 func ParseRuleGroups(logger logr.Logger, in []monitoringv1.RuleGroup, promRuleName string, keepLabel KeepLabel) ([]monitoringv1.RuleGroup, error) {
@@ -147,15 +145,7 @@ func ParseRuleGroups(logger logr.Logger, in []monitoringv1.RuleGroup, promRuleNa
 	for _, g := range in {
 		var absenceAlertRules []monitoringv1.Rule
 		for _, r := range g.Rules {
-			// Do not parse recording rules.
-			if r.Record != "" {
-				continue
-			}
-			// Do not parse alert rule if it has the no_alert_on_absence label.
-			if r.Labels != nil && parseBool(r.Labels[labelNoAlertOnAbsence]) {
-				continue
-			}
-			rules, err := parseAlertRule(logger, r, keepLabel)
+			rules, err := parseRule(logger, r, keepLabel)
 			if err != nil {
 				return nil, &ruleGroupParseError{cause: err}
 			}
@@ -181,11 +171,20 @@ func ParseRuleGroups(logger logr.Logger, in []monitoringv1.RuleGroup, promRuleNa
 
 var nonAlphaNumericRx = regexp.MustCompile(`[^a-zA-Z0-9]`)
 
-// parseAlertRule generates the corresponding absence alert rules for a given Rule. Since
-// an alert expression can reference multiple time series therefore a slice of
-// []monitoringv1.Rule is returned as multiple (one for each time series) absence alert
-// rules would be generated.
-func parseAlertRule(logger logr.Logger, in monitoringv1.Rule, keepLabel KeepLabel) ([]monitoringv1.Rule, error) {
+// parseRule generates the corresponding absence alert rules for a given Rule.
+// Since an alert expression can reference multiple time series therefore a slice of
+// []monitoringv1.Rule is returned as multiple absence alert rules would be generated —
+// one for each time series.
+func parseRule(logger logr.Logger, in monitoringv1.Rule, keepLabel KeepLabel) ([]monitoringv1.Rule, error) {
+	// Do not parse recording rules.
+	if in.Record != "" {
+		return nil, nil
+	}
+	// Do not parse alert rule if it has the no_alert_on_absence label.
+	if in.Labels != nil && parseBool(in.Labels[labelNoAlertOnAbsence]) {
+		return nil, nil
+	}
+
 	exprStr := in.Expr.String()
 	mex := &metricNameExtractor{
 		logger: logger,
@@ -276,5 +275,9 @@ func parseAlertRule(logger logr.Logger, in monitoringv1.Rule, keepLabel KeepLabe
 		})
 	}
 
+	// Sort alert rules for consistent test results.
+	sort.SliceStable(out, func(i, j int) bool {
+		return out[i].Alert < out[j].Alert
+	})
 	return out, nil
 }
