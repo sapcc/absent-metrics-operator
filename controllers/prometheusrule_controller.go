@@ -50,6 +50,7 @@ type PrometheusRuleReconciler struct {
 	// KeepLabel is a map of labels that will be retained from the original alert rule and
 	// passed on to its corresponding absence alert rule.
 	KeepLabel KeepLabel
+	PrometheusRuleString string
 }
 
 //+kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheusrules,verbs=get;list;watch;create;update;patch;delete
@@ -67,10 +68,10 @@ func (r *PrometheusRuleReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	err := r.Get(ctx, req.NamespacedName, &promRule)
 	switch {
 	case err == nil:
-		err = r.reconcileObject(ctx, req.NamespacedName, &promRule)
+		err = r.reconcileObject(ctx, req.NamespacedName, &promRule, r.PrometheusRuleString)
 	case apierrors.IsNotFound(err):
 		// Could not find object on the API server, maybe it has been deleted?
-		return r.handleObjectNotFound(ctx, req.NamespacedName)
+		return r.handleObjectNotFound(ctx, req.NamespacedName, r.PrometheusRuleString)
 	default:
 		// Handle err down below.
 	}
@@ -103,7 +104,7 @@ func (r *PrometheusRuleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 // handleObjectNotFound is a helper function for Reconcile(). It exists separately so that
 // we can exit on error without making the `switch` in Reconcile() complex.
-func (r *PrometheusRuleReconciler) handleObjectNotFound(ctx context.Context, key types.NamespacedName) (ctrl.Result, error) {
+func (r *PrometheusRuleReconciler) handleObjectNotFound(ctx context.Context, key types.NamespacedName, prometheusRuleString string) (ctrl.Result, error) {
 	log := r.Log.WithValues("name", key.Name, "namespace", key.Namespace)
 
 	// Step 1: check if the object is a PrometheusRule or an AbsencePrometheusRule.
@@ -124,7 +125,7 @@ func (r *PrometheusRuleReconciler) handleObjectNotFound(ctx context.Context, key
 	// we wait until the next time when all AbsencePrometheusRules are requeued for
 	// processing (after the requeueInterval is elapsed).
 	log.V(logLevelDebug).Info("PrometheusRule no longer exists")
-	err := r.cleanUpOrphanedAbsenceAlertRules(ctx, key, "")
+	err := r.cleanUpOrphanedAbsenceAlertRules(ctx, key, "", prometheusRuleString)
 	if err != nil {
 		if !apierrors.IsNotFound(err) && !errors.Is(err, errCorrespondingAbsencePromRuleNotExists) {
 			log.Error(err, "could not clean up orphaned absence alert rules")
@@ -142,6 +143,7 @@ func (r *PrometheusRuleReconciler) reconcileObject(
 	ctx context.Context,
 	key types.NamespacedName,
 	obj *monitoringv1.PrometheusRule,
+	prometheusRuleString string,
 ) error {
 
 	log := r.Log.WithValues("name", key.Name, "namespace", key.Namespace)
@@ -176,7 +178,7 @@ func (r *PrometheusRuleReconciler) reconcileObject(
 	// elapsed).
 	if parseBool(l[labelOperatorDisable]) {
 		log.V(logLevelDebug).Info("operator disabled for this PrometheusRule")
-		err := r.cleanUpOrphanedAbsenceAlertRules(ctx, key, l[labelPrometheusServer])
+		err := r.cleanUpOrphanedAbsenceAlertRules(ctx, key, l[labelPrometheusServer], prometheusRuleString)
 		if err != nil {
 			if !apierrors.IsNotFound(err) && !errors.Is(err, errCorrespondingAbsencePromRuleNotExists) {
 				log.Error(err, "could not clean up orphaned absence alert rules")
@@ -189,7 +191,7 @@ func (r *PrometheusRuleReconciler) reconcileObject(
 	}
 
 	// Step 3: Generate the corresponding absence alert rules for this resource.
-	err := r.updateAbsenceAlertRules(ctx, obj)
+	err := r.updateAbsenceAlertRules(ctx, obj, prometheusRuleString)
 	if err == nil {
 		setReconcileGauge(key)
 		log.V(logLevelDebug).Info("successfully reconciled PrometheusRule")
