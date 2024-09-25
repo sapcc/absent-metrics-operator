@@ -59,7 +59,7 @@ var _ = Describe("Controller", Ordered, func() {
 		swiftNs   = "swift"
 		resmgmtNs = "resmgmt"
 
-		resmgcetOSAbsencePRomRule = getFixture("resmgmt_openstack_absent_metrics_alert_rules.yaml")
+		resmgmtOSAbsencePromRule = getFixture("resmgmt_openstack_absent_metrics_alert_rules.yaml")
 	)
 
 	Describe("Create", func() {
@@ -73,7 +73,7 @@ var _ = Describe("Controller", Ordered, func() {
 
 			It("should create "+osAbsencePRName+" in "+resmgmtNs+" namespace", func() {
 				expectPromRulesToMatch(
-					resmgcetOSAbsencePRomRule,
+					resmgmtOSAbsencePromRule,
 					getPromRule(newObjKey(resmgmtNs, osAbsencePRName)),
 				)
 			})
@@ -177,8 +177,8 @@ var _ = Describe("Controller", Ordered, func() {
 				limesRolePRName := "openstack-limes-roleassign.alerts"
 				deletePromRule(newObjKey(resmgmtNs, limesRolePRName))
 
-				expected := make([]monitoringv1.RuleGroup, 0, len(resmgcetOSAbsencePRomRule.Spec.Groups)-1)
-				for _, g := range resmgcetOSAbsencePRomRule.Spec.Groups {
+				expected := make([]monitoringv1.RuleGroup, 0, len(resmgmtOSAbsencePromRule.Spec.Groups)-1)
+				for _, g := range resmgmtOSAbsencePromRule.Spec.Groups {
 					if !strings.Contains(g.Name, limesRolePRName) {
 						expected = append(expected, g)
 					}
