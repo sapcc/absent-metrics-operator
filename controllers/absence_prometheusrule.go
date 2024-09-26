@@ -245,25 +245,30 @@ func (r *PrometheusRuleReconciler) cleanUpOrphanedAbsenceAlertRules(
 // has the 'absent-metrics-operator/disable' label. If such rules are found then they are
 // deleted.
 func (r *PrometheusRuleReconciler) cleanUpAbsencePrometheusRule(ctx context.Context, absencePromRule *monitoringv1.PrometheusRule) error {
-	// Step 1: get names of all PrometheusRule resources in this namespace for the
-	// concerning Thanos or Prometheus server.
+	// Step 1: get names of all PrometheusRule resources in this namespace.
 	var listOpts client.ListOptions
 	client.InNamespace(absencePromRule.GetNamespace()).ApplyToList(&listOpts)
-	if thanos, ok := absencePromRule.Labels[labelThanosRuler]; ok {
-		client.MatchingLabels{labelThanosRuler: thanos}.ApplyToList(&listOpts)
-	} else {
-		client.MatchingLabels{labelPrometheusServer: absencePromRule.Labels[labelPrometheusServer]}.ApplyToList(&listOpts)
-	}
 	var promRules monitoringv1.PrometheusRuleList
 	if err := r.List(ctx, &promRules, &listOpts); err != nil {
 		return err
 	}
+
+	// Step 2: collect names of those PrometheusRule resources whose absence alert rules
+	// would end up in this AbsencePrometheusRule as per the name generation template.
+	aPRName := absencePromRule.GetName()
 	prNames := make(map[string]bool)
 	for _, pr := range promRules.Items {
-		prNames[pr.GetName()] = true
+		if _, ok := pr.Labels[labelOperatorManagedBy]; ok {
+			continue
+		}
+		if n, err := r.PrometheusRuleName(pr); err == nil {
+			if n == aPRName {
+				prNames[pr.GetName()] = true
+			}
+		}
 	}
 
-	// Step 2: iterate through all the AbsencePrometheusRule's RuleGroups and remove those
+	// Step 4: iterate through all the AbsencePrometheusRule's RuleGroups and remove those
 	// that don't belong to any PrometheusRule.
 	newRuleGroups := make([]monitoringv1.RuleGroup, 0, len(absencePromRule.Spec.Groups))
 	for _, g := range absencePromRule.Spec.Groups {
@@ -277,7 +282,7 @@ func (r *PrometheusRuleReconciler) cleanUpAbsencePrometheusRule(ctx context.Cont
 		return nil
 	}
 
-	// Step 3: if, after the cleanup, the AbsencePrometheusRule ends up being empty then
+	// Step 5: if, after the cleanup, the AbsencePrometheusRule ends up being empty then
 	// delete it otherwise update.
 	if len(newRuleGroups) == 0 {
 		return r.deleteAbsencePrometheusRule(ctx, absencePromRule)
