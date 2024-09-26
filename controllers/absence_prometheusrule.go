@@ -35,7 +35,7 @@ import (
 
 const (
 	absencePromRuleNameSuffix          = "-absent-metric-alert-rules"
-	DefaultAbsencePromRuleNameTemplate = `{{ if index .metadata.labels "thanos-rule" }}{{ index .metadata.labels "thanos-rule" }}{{ else }}{{ index .metadata.labels "prometheus" }}{{ end }}`
+	DefaultAbsencePromRuleNameTemplate = `{{ if index .metadata.labels "thanos-ruler" }}{{ index .metadata.labels "thanos-ruler" }}{{ else }}{{ index .metadata.labels "prometheus" }}{{ end }}`
 )
 
 // AbsencePromRuleNameGenerator is a function type that takes a PrometheusRule and

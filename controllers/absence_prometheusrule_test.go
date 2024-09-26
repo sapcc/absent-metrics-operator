@@ -27,8 +27,8 @@ var _ = Describe("AbsencePrometheusRule", func() {
 			Name:      "foobar.alerts",
 			Namespace: "outerspace",
 			Labels: map[string]string{
-				"prometheus":  "openstack",
-				"thanos-rule": "titan",
+				"prometheus":   "openstack",
+				"thanos-ruler": "titan",
 			},
 		},
 	}
@@ -57,9 +57,13 @@ var _ = Describe("AbsencePrometheusRule", func() {
 			`{{ .metadata.labels.prometheus }}`,
 			"openstack"+absencePromRuleNameSuffix,
 		),
-		Entry("name with thanos-rule label if it exists",
+		Entry("name with thanos-ruler label if it exists",
 			DefaultAbsencePromRuleNameTemplate,
 			"titan"+absencePromRuleNameSuffix,
+		),
+		Entry("name that references nonexistent metadata",
+			`{{ .metadata.doesntexist }}`,
+			"foobar"+absencePromRuleNameSuffix,
 		),
 	)
 })
