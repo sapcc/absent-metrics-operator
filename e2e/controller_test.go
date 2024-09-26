@@ -193,6 +193,25 @@ var _ = Describe("Controller", Ordered, func() {
 			})
 		})
 
+		Context("when a rule group is deleted from a PrometheusRule", func() {
+			It("should delete the corresponding rule group from the AbsencePromRule "+osAbsencePRName+" in "+resmgmtNs+" namespace", func() {
+				// We will remove one of the two rule groups.
+				prName := "openstack-limes-api.alerts"
+				pr := getPromRule(newObjKey(resmgmtNs, prName))
+				ruleGroupName := pr.Spec.Groups[0].Name
+				pr.Spec.Groups = pr.Spec.Groups[1:]
+				Expect(k8sClient.Update(ctx, &pr)).To(Succeed())
+
+				waitForControllerToProcess()
+				actual := getPromRule(newObjKey(resmgmtNs, osAbsencePRName))
+				groups := make([]string, 0, len(actual.Spec.Groups))
+				for _, v := range actual.Spec.Groups {
+					groups = append(groups, v.Name)
+				}
+				Expect(groups).ToNot(ContainElement(controllers.AbsenceRuleGroupName(prName, ruleGroupName)))
+			})
+		})
+
 		Context("when a PrometheusRule has no alert rules", func() {
 			It("should delete "+osAbsencePRName+" in "+resmgmtNs+" namespace", func() {
 				// We will remove all alert rules from a PromRule which should result in
@@ -204,8 +223,7 @@ var _ = Describe("Controller", Ordered, func() {
 				Expect(k8sClient.Update(ctx, &pr)).To(Succeed())
 
 				waitForControllerToProcess()
-				expectToNotFindPromRule(newObjKey("resmgmt", osAbsencePRName))
-
+				expectToNotFindPromRule(newObjKey(resmgmtNs, osAbsencePRName))
 			})
 		})
 	})

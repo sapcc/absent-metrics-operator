@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 	"time"
 
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -302,8 +303,8 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 
 	// Step 5: if it's an existing AbsencePrometheusRule then update otherwise create a new resource.
 	if existingAbsencePrometheusRule {
-		existingRuleGroups := absencePromRule.Spec.Groups
-		result := mergeAbsenceRuleGroups(existingRuleGroups, absenceRuleGroups)
+		existingRuleGroups := unmodifiedAbsencePromRule.Spec.Groups
+		result := mergeAbsenceRuleGroups(promRuleName, existingRuleGroups, absenceRuleGroups)
 		if reflect.DeepEqual(unmodifiedAbsencePromRule.GetLabels(), absencePromRule.GetLabels()) &&
 			reflect.DeepEqual(existingRuleGroups, result) {
 			return nil
@@ -318,27 +319,13 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 // mergeAbsenceRuleGroups merges existing and newly generated AbsenceRuleGroups. If the
 // same AbsenceRuleGroup exists in both 'existing' and 'new' then the newer one will be
 // used.
-func mergeAbsenceRuleGroups(existingRuleGroups, newRuleGroups []monitoringv1.RuleGroup) []monitoringv1.RuleGroup {
+func mergeAbsenceRuleGroups(promRuleName string, existingRuleGroups, newRuleGroups []monitoringv1.RuleGroup) []monitoringv1.RuleGroup {
 	var result []monitoringv1.RuleGroup
-	added := make(map[string]bool)
-
-OuterLoop:
-	for _, oldG := range existingRuleGroups {
-		for _, newG := range newRuleGroups {
-			if oldG.Name == newG.Name {
-				// Add the new updated RuleGroup.
-				result = append(result, newG)
-				added[newG.Name] = true
-				continue OuterLoop
-			}
-		}
-		// This RuleGroup should be carried over as is.
-		result = append(result, oldG)
-	}
-
-	// Add the pending rule groups.
-	for _, g := range newRuleGroups {
-		if !added[g.Name] {
+	// Add the absence rule groups for the PrometheusRule that we are currently dealing with.
+	result = append(result, newRuleGroups...)
+	// Carry over the absence rule groups for other PrometheusRule(s) as is.
+	for _, g := range existingRuleGroups {
+		if !strings.HasPrefix(g.Name, promRuleName) {
 			result = append(result, g)
 		}
 	}
