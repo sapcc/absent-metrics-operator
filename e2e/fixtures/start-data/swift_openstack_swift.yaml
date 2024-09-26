@@ -1,0 +1,26 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: openstack-swift.alerts
+  namespace: swift
+  labels:
+    type: alerting-rules
+    prometheus: openstack
+    absent-metrics-operator/disable: "true"
+spec:
+  groups:
+    - name: swift.alerts
+      rules:
+        - alert: OpenstackSwiftFoo
+          expr: swift_foo > 0
+          for: 1d
+          labels:
+            context: usedcapacity
+            severity: critical
+            support_group: not-containers
+            tier: os
+            service: swift
+          annotations:
+            summary: Swift storage expected to be full soon
+            description: Swift storage usage will reach 80% in 30 days. Order hardware now!

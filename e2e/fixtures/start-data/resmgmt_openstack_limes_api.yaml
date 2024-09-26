@@ -1,0 +1,24 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: openstack-limes-api.alerts
+  namespace: resmgmt
+  labels:
+    type: alerting-rules
+    prometheus: openstack
+spec:
+  groups:
+    - name: api.alerts
+      rules:
+        - alert: OpenstackLimesFoo
+          expr: limes_foo > 0
+          for: 5m
+          labels:
+            context: api
+            severity: info
+            support_group: containers
+            service: limes
+          annotations:
+            summary: "Server errors on {{ $labels.kubernetes_name }}"
+            description: "{{ $labels.kubernetes_name }} is producing HTTP responses with 5xx status codes."

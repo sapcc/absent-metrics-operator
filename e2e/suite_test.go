@@ -63,9 +63,9 @@ var (
 	}
 )
 
-func TestController(t *testing.T) {
+func TestE2E(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Controller Suite")
+	RunSpecs(t, "e2e Test Suite")
 }
 
 var _ = BeforeSuite(func() {
@@ -79,36 +79,29 @@ var _ = BeforeSuite(func() {
 		CRDDirectoryPaths:     []string{"crd"},
 		ErrorIfCRDPathMissing: true,
 	}
-	cfg, err := testEnv.Start()
-	Expect(err).ToNot(HaveOccurred())
-	Expect(cfg).NotTo(BeNil())
+	cfg := checkErrAndReturnResult(testEnv.Start())
 
-	err = monitoringv1.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
+	Expect(monitoringv1.AddToScheme(scheme.Scheme)).To(Succeed())
 
-	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
+	mgr := checkErrAndReturnResult(ctrl.NewManager(cfg, ctrl.Options{
 		Scheme: scheme.Scheme,
 		Metrics: metricsserver.Options{
 			BindAddress: "0",
 		},
-	})
-	Expect(err).NotTo(HaveOccurred())
+	}))
 
 	reg = controllers.RegisterMetrics()
 
-	err = (&controllers.PrometheusRuleReconciler{
+	Expect((&controllers.PrometheusRuleReconciler{
 		Client:    mgr.GetClient(),
 		Scheme:    mgr.GetScheme(),
 		Log:       ctrl.Log.WithName("controller").WithName("prometheusrule"),
 		KeepLabel: keepLabel,
-	}).SetupWithManager(mgr)
-	Expect(err).NotTo(HaveOccurred())
+	}).SetupWithManager(mgr)).To(Succeed())
 
 	//+kubebuilder:scaffold:scheme
 
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
-	Expect(err).NotTo(HaveOccurred())
-	Expect(k8sClient).NotTo(BeNil())
+	k8sClient = checkErrAndReturnResult(client.New(cfg, client.Options{Scheme: scheme.Scheme}))
 
 	// We start the controller before adding objects since the items are
 	// queued by the controller sequentially and we depend on this behavior in
@@ -121,7 +114,7 @@ var _ = BeforeSuite(func() {
 	})
 
 	By("adding mock PrometheusRule resources")
-	Expect(addMockPrometheusRules(ctx)).ToNot(HaveOccurred())
+	Expect(addMockPrometheusRules(ctx)).To(Succeed())
 
 	// High duration for sleep is needed otherwise test runs in CI fail.
 	time.Sleep(1 * time.Second)
