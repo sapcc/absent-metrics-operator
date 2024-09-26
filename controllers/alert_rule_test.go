@@ -37,6 +37,8 @@ var _ = Describe("Alert Rule", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(actual).To(HaveLen(len(expected)))
 
+			// We only check the alert name, expression, and labels. Annotations are hard-coded and
+			// don't need to be checked here in unit tests; they are already checked in e2e tests.
 			for i, wanted := range expected {
 				got := actual[i]
 				Expect(got.Alert).To(Equal(wanted.Alert))

@@ -22,3 +22,17 @@ spec:
           annotations:
             summary: "Server errors on {{ $labels.kubernetes_name }}"
             description: "{{ $labels.kubernetes_name }} is producing HTTP responses with 5xx status codes."
+
+    - name: api2.alerts
+      rules:
+        - alert: OpenstackLimesBar
+          expr: limes_bar > 0
+          for: 5m
+          labels:
+            context: api
+            severity: info
+            support_group: containers
+            service: limes
+          annotations:
+            summary: "Server errors on {{ $labels.kubernetes_name }}"
+            description: "{{ $labels.kubernetes_name }} is producing HTTP responses with 5xx status codes."

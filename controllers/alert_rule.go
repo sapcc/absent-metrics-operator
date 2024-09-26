@@ -107,9 +107,9 @@ func (mex *metricNameExtractor) Visit(node parser.Node, path []parser.Node) (par
 	return mex, nil
 }
 
-// absenceRuleGroupName returns the name of the RuleGroup that holds absence alert rules
+// AbsenceRuleGroupName returns the name of the RuleGroup that holds absence alert rules
 // for a specific RuleGroup in a specific PrometheusRule.
-func absenceRuleGroupName(promRule, ruleGroup string) string {
+func AbsenceRuleGroupName(promRule, ruleGroup string) string {
 	return fmt.Sprintf("%s/%s", promRule, ruleGroup)
 }
 
@@ -161,7 +161,7 @@ func ParseRuleGroups(logger logr.Logger, in []monitoringv1.RuleGroup, promRuleNa
 			})
 
 			out = append(out, monitoringv1.RuleGroup{
-				Name:  absenceRuleGroupName(promRuleName, g.Name),
+				Name:  AbsenceRuleGroupName(promRuleName, g.Name),
 				Rules: absenceAlertRules,
 			})
 		}
