@@ -16,6 +16,15 @@ The changes should be grouped using the following categories (in order of preced
 
 ## [Unreleased](https://github.com/sapcc/absent-metrics-operator/compare/v0.9.4...HEAD)
 
+### Added
+
+- New `prom-rule-name` flag which can be used to provide a template for AbsencePrometheusRule name generation and consequently absence alert rules aggregation.
+- Improved tests by adding dedicated unit tests for alert rule parsing and name generation edge-cases.
+
+### Fixed
+
+- Clean up of absence alert rules when a rule group is deleted.
+
 ### Removed
 
 - Heuristic determination of `tier`, `service`, and `support_group` labels. These labels will now be copied over as is from the original alert rule to its corresponding absence alert rule.
@@ -67,7 +76,7 @@ The changes should be grouped using the following categories (in order of preced
 
 ### Fixed
 
-- `-debug` flag.
+- `debug` flag.
 
 ## 0.9.0 - 2022-11-02
 
