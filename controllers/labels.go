@@ -32,6 +32,7 @@ const (
 
 	labelNoAlertOnAbsence = "no_alert_on_absence"
 	labelPrometheusServer = "prometheus"
+	labelThanosRuler      = "thanos-ruler"
 )
 
 // KeepLabel specifies which labels to keep on an absence alert rule.

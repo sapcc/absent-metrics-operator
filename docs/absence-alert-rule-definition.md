@@ -8,8 +8,16 @@ This document describes how _absence alert rules_ are defined.
 ## Aggregation
 
 The _absence alert rules_ are defined in a separate `PrometheusRule` resource that is
-managed by the operator. They are aggregated first by namespace and then by the Prometheus
-server.
+managed by the operator. They are aggregated first by namespace and then using the
+template provided in the `--prom-rule-name` flag.
+
+The default template is:
+
+```go
+{{ if index .metadata.labels "thanos-ruler" }}{{ index .metadata.labels "thanos-ruler" }}{{ else }}{{ index .metadata.labels "prometheus" }}{{ end }}
+```
+
+this means that the absence alert rules will be aggregated in a namespace by the `thanos-ruler` label if it exists otherwise the `prometheus` label.
 
 For example, if a namespace has alert rules defined across several `PrometheusRule`
 resources for the Prometheus servers called `OpenStack` and `Infra`. The _absent alert
@@ -18,6 +26,18 @@ called:
 
 - `openstack-absent-metric-alert-rules`
 - `infra-absent-metric-alert-rules`
+
+### Examples
+Here are some example templates that you could use for aggregation:
+
+- 1:1 AbsencePrometheusRule creation, i.e. for each `PrometheusRule` object, create a corresponding `PrometheusRule` object that holds the absence alerts
+  ```go
+  {{ .metadata.name }}
+  ```
+- One AbsencePrometheusRule per namespace — this will create one `PrometheusRule` object which will hold all the absence alert rules for that namespace
+  ```go
+  {{ .metadata.namespace }}
+  ```
 
 ## Rule Template
 

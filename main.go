@@ -59,6 +59,7 @@ func main() {
 		probeAddr            string
 		enableLeaderElection bool
 		keepLabel            labelsMap
+		prometheusRuleName   string
 	)
 	bininfo.HandleVersionArgument()
 
@@ -66,6 +67,8 @@ func main() {
 	// Port `9659` has been allocated for absent metrics operator: https://github.com/prometheus/prometheus/wiki/Default-port-allocations
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":9659", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flag.StringVar(&prometheusRuleName, "prom-rule-name", controllers.DefaultAbsencePromRuleNameTemplate,
+		"The template to be used as the name of generated PrometheusRule(s) and consequently aggregating generated absence alert rules.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -90,6 +93,12 @@ func main() {
 		}
 	}
 
+	prometheusRuleNameGen, err := controllers.CreateAbsencePromRuleNameGenerator(prometheusRuleName)
+	if err != nil {
+		setupLog.Error(err, "unable to parse PrometheusRule name template", "prom-rule-name", prometheusRuleName)
+		os.Exit(1)
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme: scheme,
 		Metrics: metricsserver.Options{
@@ -107,10 +116,11 @@ func main() {
 	controllers.RegisterMetrics()
 
 	if err = (&controllers.PrometheusRuleReconciler{
-		Client:    mgr.GetClient(),
-		Scheme:    mgr.GetScheme(),
-		Log:       ctrl.Log.WithName("controller").WithName("prometheusrule"),
-		KeepLabel: controllers.KeepLabel(keepLabel),
+		Client:             mgr.GetClient(),
+		Scheme:             mgr.GetScheme(),
+		Log:                ctrl.Log.WithName("controller").WithName("prometheusrule"),
+		KeepLabel:          controllers.KeepLabel(keepLabel),
+		PrometheusRuleName: prometheusRuleNameGen,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "PrometheusRule")
 		os.Exit(1)

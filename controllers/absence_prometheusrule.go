@@ -15,12 +15,14 @@
 package controllers
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"reflect"
 	"sort"
 	"strings"
+	"text/template"
 	"time"
 
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -30,37 +32,76 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const absencePromRuleNameSuffix = "-absent-metric-alert-rules"
+const (
+	absencePromRuleNameSuffix          = "-absent-metric-alert-rules"
+	DefaultAbsencePromRuleNameTemplate = `{{ if index .metadata.labels "thanos-ruler" }}{{ index .metadata.labels "thanos-ruler" }}{{ else }}{{ index .metadata.labels "prometheus" }}{{ end }}`
+)
 
-// AbsencePrometheusRuleName returns the name of an AbsencePrometheusRule resource that
-// holds the absence alert rules concerning a specific Prometheus server (e.g. openstack, kubernetes, etc.).
-func AbsencePrometheusRuleName(promServer string) string {
-	return fmt.Sprintf("%s%s", promServer, absencePromRuleNameSuffix)
+// AbsencePromRuleNameGenerator is a function type that takes a PrometheusRule and
+// generates a name for its corresponding PrometheusRule that holds the generated absence
+// alert rules.
+type AbsencePromRuleNameGenerator func(*monitoringv1.PrometheusRule) (string, error)
+
+// CreateAbsencePromRuleNameGenerator creates an absencePromRuleNameGenerator function
+// based on a template string.
+func CreateAbsencePromRuleNameGenerator(tmplStr string) (AbsencePromRuleNameGenerator, error) {
+	t, err := template.New("promRuleNameGenerator").Option("missingkey=error").Parse(tmplStr)
+	if err != nil {
+		return nil, err
+	}
+
+	return func(pr *monitoringv1.PrometheusRule) (string, error) {
+		// only a specific vetted subset of attributes is passed into the name template to avoid surprising behavior
+		data := map[string]any{
+			"metadata": map[string]any{
+				"annotations": pr.ObjectMeta.Annotations,
+				"labels":      pr.ObjectMeta.Labels,
+				"namespace":   pr.ObjectMeta.Namespace,
+				"name":        pr.ObjectMeta.Name,
+			},
+		}
+
+		var buf bytes.Buffer
+		err = t.Execute(&buf, data)
+		if err != nil {
+			return "", fmt.Errorf("could not generate AbsencePrometheusRule name: %w", err)
+		}
+
+		return buf.String() + absencePromRuleNameSuffix, nil
+	}, nil
 }
 
-func (r *PrometheusRuleReconciler) newAbsencePrometheusRule(namespace, promServer string) *monitoringv1.PrometheusRule {
+func (r *PrometheusRuleReconciler) newAbsencePrometheusRule(name, namespace string, labels map[string]string) *monitoringv1.PrometheusRule {
+	l := map[string]string{
+		// Add a label that identifies that this PrometheusRule resource is
+		// created and managed by this operator.
+		labelOperatorManagedBy: "true",
+		"type":                 "alerting-rules",
+	}
+	// Carry over labels from source PrometheusRule object if needed.
+	if v, ok := labels[labelPrometheusServer]; ok {
+		l[labelPrometheusServer] = v
+	}
+	if v, ok := labels[labelThanosRuler]; ok {
+		l[labelThanosRuler] = v
+	}
+
 	return &monitoringv1.PrometheusRule{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      AbsencePrometheusRuleName(promServer),
+			Name:      name,
 			Namespace: namespace,
-			Labels: map[string]string{
-				// Add a label that identifies that this PrometheusRule resource is
-				// created and managed by this operator.
-				labelOperatorManagedBy: "true",
-				labelPrometheusServer:  promServer,
-				"type":                 "alerting-rules",
-			},
+			Labels:    l,
 		},
 	}
 }
 
 func (r *PrometheusRuleReconciler) getExistingAbsencePrometheusRule(
 	ctx context.Context,
-	namespace, promServer string,
+	name, namespace string,
 ) (*monitoringv1.PrometheusRule, error) {
 
 	var absencePromRule monitoringv1.PrometheusRule
-	nsName := types.NamespacedName{Namespace: namespace, Name: AbsencePrometheusRuleName(promServer)}
+	nsName := types.NamespacedName{Namespace: namespace, Name: name}
 	if err := r.Get(ctx, nsName, &absencePromRule); err != nil {
 		return nil, err
 	}
@@ -134,21 +175,21 @@ var errCorrespondingAbsencePromRuleNotExists = errors.New("corresponding Absence
 func (r *PrometheusRuleReconciler) cleanUpOrphanedAbsenceAlertRules(
 	ctx context.Context,
 	promRule types.NamespacedName,
-	promServer string,
+	absencePromRule string,
 ) error {
 
 	// Step 1: find the corresponding AbsencePrometheusRule that needs to be cleaned up.
 	var aPRToClean *monitoringv1.PrometheusRule
-	if promServer != "" {
+	if absencePromRule != "" {
 		var err error
-		if aPRToClean, err = r.getExistingAbsencePrometheusRule(ctx, promRule.Namespace, promServer); err != nil {
+		if aPRToClean, err = r.getExistingAbsencePrometheusRule(ctx, absencePromRule, promRule.Namespace); err != nil {
 			return err
 		}
 	} else {
-		// Since we don't know the Prometheus server for this PrometheusRule therefore we
-		// have to list all AbsencePrometheusRules in its namespace and find the specific
-		// AbsencePrometheusRule that contains the absence alert rules that were generated
-		// for this PrometheusRule.
+		// Since we don't know the corresponding AbsencePrometheusRule for this PrometheusRule
+		// therefore we have to list all AbsencePrometheusRules in the concerning namespace and
+		// find the specific AbsencePrometheusRule that contains the absence alert rules that
+		// were generated for this PrometheusRule.
 		var listOpts client.ListOptions
 		client.InNamespace(promRule.Namespace).ApplyToList(&listOpts)
 		client.HasLabels{labelOperatorManagedBy}.ApplyToList(&listOpts)
@@ -201,23 +242,30 @@ func (r *PrometheusRuleReconciler) cleanUpOrphanedAbsenceAlertRules(
 // has the 'absent-metrics-operator/disable' label. If such rules are found then they are
 // deleted.
 func (r *PrometheusRuleReconciler) cleanUpAbsencePrometheusRule(ctx context.Context, absencePromRule *monitoringv1.PrometheusRule) error {
-	// Step 1: get names of all PrometheusRule resources in this namespace for the
-	// concerning Prometheus server.
+	// Step 1: get names of all PrometheusRule resources in this namespace.
 	var listOpts client.ListOptions
 	client.InNamespace(absencePromRule.GetNamespace()).ApplyToList(&listOpts)
-	client.MatchingLabels{
-		labelPrometheusServer: absencePromRule.Labels[labelPrometheusServer],
-	}.ApplyToList(&listOpts)
 	var promRules monitoringv1.PrometheusRuleList
 	if err := r.List(ctx, &promRules, &listOpts); err != nil {
 		return err
 	}
+
+	// Step 2: collect names of those PrometheusRule resources whose absence alert rules
+	// would end up in this AbsencePrometheusRule as per the name generation template.
+	aPRName := absencePromRule.GetName()
 	prNames := make(map[string]bool)
 	for _, pr := range promRules.Items {
-		prNames[pr.GetName()] = true
+		if _, ok := pr.Labels[labelOperatorManagedBy]; ok {
+			continue
+		}
+		if n, err := r.PrometheusRuleName(pr); err == nil {
+			if n == aPRName {
+				prNames[pr.GetName()] = true
+			}
+		}
 	}
 
-	// Step 2: iterate through all the AbsencePrometheusRule's RuleGroups and remove those
+	// Step 4: iterate through all the AbsencePrometheusRule's RuleGroups and remove those
 	// that don't belong to any PrometheusRule.
 	newRuleGroups := make([]monitoringv1.RuleGroup, 0, len(absencePromRule.Spec.Groups))
 	for _, g := range absencePromRule.Spec.Groups {
@@ -231,7 +279,7 @@ func (r *PrometheusRuleReconciler) cleanUpAbsencePrometheusRule(ctx context.Cont
 		return nil
 	}
 
-	// Step 3: if, after the cleanup, the AbsencePrometheusRule ends up being empty then
+	// Step 5: if, after the cleanup, the AbsencePrometheusRule ends up being empty then
 	// delete it otherwise update.
 	if len(newRuleGroups) == 0 {
 		return r.deleteAbsencePrometheusRule(ctx, absencePromRule)
@@ -248,22 +296,18 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 	namespace := promRule.GetNamespace()
 	log := r.Log.WithValues("name", promRuleName, "namespace", namespace)
 
-	// Step 1: find the Prometheus server for this resource.
-	promRuleLabels := promRule.GetLabels()
-	promServer, ok := promRuleLabels["prometheus"]
-	if !ok {
-		// Normally this shouldn't happen but just in case that it does.
-		return errors.New("no 'prometheus' label found")
-	}
-
-	// Step 2: get the corresponding AbsencePrometheusRule if it exists.
+	// Step 1: get the corresponding AbsencePrometheusRule if it exists.
 	existingAbsencePrometheusRule := false
-	absencePromRule, err := r.getExistingAbsencePrometheusRule(ctx, namespace, promServer)
+	aPRName, err := r.PrometheusRuleName(promRule)
+	if err != nil {
+		return err
+	}
+	absencePromRule, err := r.getExistingAbsencePrometheusRule(ctx, aPRName, namespace)
 	switch {
 	case err == nil:
 		existingAbsencePrometheusRule = true
 	case apierrors.IsNotFound(err):
-		absencePromRule = r.newAbsencePrometheusRule(namespace, promServer)
+		absencePromRule = r.newAbsencePrometheusRule(aPRName, namespace, promRule.GetLabels())
 	default:
 		// This could have been caused by a temporary network failure, or any
 		// other transient reason.
@@ -283,25 +327,25 @@ func (r *PrometheusRuleReconciler) updateAbsenceAlertRules(ctx context.Context, 
 		delete(absencePromRule.Labels, LabelTier)
 	}
 
-	// Step 3: parse RuleGroups and generate corresponding absence alert rules.
+	// Step 2: parse RuleGroups and generate corresponding absence alert rules.
 	absenceRuleGroups, err := ParseRuleGroups(log, promRule.Spec.Groups, promRuleName, r.KeepLabel)
 	if err != nil {
 		return err
 	}
 
-	// Step 4: we clean up orphaned absence alert rules from the AbsencePrometheusRule in
+	// Step 3: we clean up orphaned absence alert rules from the AbsencePrometheusRule in
 	// case no absence alert rules were generated.
 	// This can happen when changes have been made to alert rules that result in no absent
 	// alerts. E.g. absent() or the 'no_alert_on_absence' label was used.
 	if len(absenceRuleGroups) == 0 {
 		if existingAbsencePrometheusRule {
 			key := types.NamespacedName{Namespace: namespace, Name: promRuleName}
-			return r.cleanUpOrphanedAbsenceAlertRules(ctx, key, promServer)
+			return r.cleanUpOrphanedAbsenceAlertRules(ctx, key, aPRName)
 		}
 		return nil
 	}
 
-	// Step 5: if it's an existing AbsencePrometheusRule then update otherwise create a new resource.
+	// Step 4: if it's an existing AbsencePrometheusRule then update otherwise create a new resource.
 	if existingAbsencePrometheusRule {
 		existingRuleGroups := unmodifiedAbsencePromRule.Spec.Groups
 		result := mergeAbsenceRuleGroups(promRuleName, existingRuleGroups, absenceRuleGroups)

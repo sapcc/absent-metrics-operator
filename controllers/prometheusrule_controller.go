@@ -47,6 +47,7 @@ type PrometheusRuleReconciler struct {
 	Scheme *runtime.Scheme
 	Log    logr.Logger
 
+	PrometheusRuleName AbsencePromRuleNameGenerator
 	// KeepLabel is a map of labels that will be retained from the original alert rule and
 	// passed on to its corresponding absence alert rule.
 	KeepLabel KeepLabel
@@ -176,7 +177,10 @@ func (r *PrometheusRuleReconciler) reconcileObject(
 	// elapsed).
 	if parseBool(l[labelOperatorDisable]) {
 		log.V(logLevelDebug).Info("operator disabled for this PrometheusRule")
-		err := r.cleanUpOrphanedAbsenceAlertRules(ctx, key, l[labelPrometheusServer])
+		aPRName, err := r.PrometheusRuleName(obj)
+		if err == nil {
+			err = r.cleanUpOrphanedAbsenceAlertRules(ctx, key, aPRName)
+		}
 		if err != nil {
 			if !apierrors.IsNotFound(err) && !errors.Is(err, errCorrespondingAbsencePromRuleNotExists) {
 				log.Error(err, "could not clean up orphaned absence alert rules")

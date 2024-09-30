@@ -53,8 +53,8 @@ var _ = Describe("Controller", Ordered, func() {
 	// 	 - swift/openstack-swift.alerts
 
 	var (
-		k8sAbsencePRName = controllers.AbsencePrometheusRuleName("kubernetes")
-		osAbsencePRName  = controllers.AbsencePrometheusRuleName("openstack")
+		k8sAbsencePRName = "kubernetes-absent-metric-alert-rules"
+		osAbsencePRName  = "openstack-absent-metric-alert-rules"
 
 		swiftNs   = "swift"
 		resmgmtNs = "resmgmt"

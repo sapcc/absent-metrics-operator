@@ -93,10 +93,11 @@ var _ = BeforeSuite(func() {
 	reg = controllers.RegisterMetrics()
 
 	Expect((&controllers.PrometheusRuleReconciler{
-		Client:    mgr.GetClient(),
-		Scheme:    mgr.GetScheme(),
-		Log:       ctrl.Log.WithName("controller").WithName("prometheusrule"),
-		KeepLabel: keepLabel,
+		Client:             mgr.GetClient(),
+		Scheme:             mgr.GetScheme(),
+		Log:                ctrl.Log.WithName("controller").WithName("prometheusrule"),
+		KeepLabel:          keepLabel,
+		PrometheusRuleName: checkErrAndReturnResult(controllers.CreateAbsencePromRuleNameGenerator(controllers.DefaultAbsencePromRuleNameTemplate)),
 	}).SetupWithManager(mgr)).To(Succeed())
 
 	//+kubebuilder:scaffold:scheme
