@@ -17,7 +17,6 @@ package controllers
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -52,22 +51,20 @@ func CreateAbsencePromRuleNameGenerator(tmplStr string) (AbsencePromRuleNameGene
 	}
 
 	return func(pr *monitoringv1.PrometheusRule) (string, error) {
-		errStr := "could not generate AbsencePrometheusRule name"
-		b, err := json.Marshal(pr)
-		if err != nil {
-			return "", fmt.Errorf("%s: %s", errStr, err.Error())
-		}
-
-		var m map[string]interface{}
-		err = json.Unmarshal(b, &m)
-		if err != nil {
-			return "", fmt.Errorf("%s: %s", errStr, err.Error())
+		// only a specific vetted subset of attributes is passed into the name template to avoid surprising behavior
+		data := map[string]any{
+			"metadata": map[string]any{
+				"annotations": pr.ObjectMeta.Annotations,
+				"labels":      pr.ObjectMeta.Labels,
+				"namespace":   pr.ObjectMeta.Namespace,
+				"name":        pr.ObjectMeta.Name,
+			},
 		}
 
 		var buf bytes.Buffer
-		err = t.Execute(&buf, m)
+		err = t.Execute(&buf, data)
 		if err != nil {
-			return "", fmt.Errorf("%s: %s", errStr, err.Error())
+			return "", fmt.Errorf("could not generate AbsencePrometheusRule name: %w", err)
 		}
 
 		return buf.String() + absencePromRuleNameSuffix, nil
