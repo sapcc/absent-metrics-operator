@@ -11,7 +11,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.20.2
 	github.com/onsi/gomega v1.34.2
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.77.1
-	github.com/prometheus/client_golang v1.20.4
+	github.com/prometheus/client_golang v1.20.5
 	github.com/prometheus/prometheus v0.54.1
 	github.com/sapcc/go-api-declarations v1.12.8
 	github.com/sapcc/go-bits v0.0.0-20241010083035-71b8c70d91ad
