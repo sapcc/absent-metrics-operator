@@ -32,7 +32,6 @@ GO_BUILDFLAGS = -mod vendor
 GO_LDFLAGS =
 GO_TESTENV =
 GO_BUILDENV =
-TESTBIN=$(shell pwd)/testbin
 
 # These definitions are overridable, e.g. to provide fixed version/commit values when
 # no .git directory is present or to provide a fixed build date for reproducibility.
@@ -82,7 +81,7 @@ run-golangci-lint: FORCE prepare-static-check
 
 build/cover.out: FORCE install-ginkgo generate install-setup-envtest | build
 	@printf "\e[1;36m>> Running tests\e[0m\n"
-	KUBEBUILDER_ASSETS=$$(setup-envtest use 1.31 --bin-dir $(TESTBIN) -p path) ginkgo run --randomize-all -output-dir=build $(GO_BUILDFLAGS) -ldflags '-s -w -X github.com/sapcc/go-api-declarations/bininfo.binName=absent-metrics-operator -X github.com/sapcc/go-api-declarations/bininfo.version=$(BININFO_VERSION) -X github.com/sapcc/go-api-declarations/bininfo.commit=$(BININFO_COMMIT_HASH) -X github.com/sapcc/go-api-declarations/bininfo.buildDate=$(BININFO_BUILD_DATE) $(GO_LDFLAGS)' -covermode=count -coverpkg=$(subst $(space),$(comma),$(GO_COVERPKGS)) $(GO_TESTPKGS)
+	KUBEBUILDER_ASSETS=$$(setup-envtest use 1.31 -p path) ginkgo run --randomize-all -output-dir=build $(GO_BUILDFLAGS) -ldflags '-s -w -X github.com/sapcc/go-api-declarations/bininfo.binName=absent-metrics-operator -X github.com/sapcc/go-api-declarations/bininfo.version=$(BININFO_VERSION) -X github.com/sapcc/go-api-declarations/bininfo.commit=$(BININFO_COMMIT_HASH) -X github.com/sapcc/go-api-declarations/bininfo.buildDate=$(BININFO_BUILD_DATE) $(GO_LDFLAGS)' -covermode=count -coverpkg=$(subst $(space),$(comma),$(GO_COVERPKGS)) $(GO_TESTPKGS)
 	@mv build/coverprofile.out build/cover.out
 
 build/cover.html: build/cover.out
@@ -130,7 +129,6 @@ vars: FORCE
 	@printf "GO_LDFLAGS=$(GO_LDFLAGS)\n"
 	@printf "GO_TESTPKGS=$(GO_TESTPKGS)\n"
 	@printf "PREFIX=$(PREFIX)\n"
-	@printf "TESTBIN=$(TESTBIN)\n"
 help: FORCE
 	@printf "\n"
 	@printf "\e[1mUsage:\e[0m\n"
