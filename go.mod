@@ -8,9 +8,9 @@ go 1.23
 
 require (
 	github.com/go-logr/logr v1.4.2
-	github.com/onsi/ginkgo/v2 v2.21.0
+	github.com/onsi/ginkgo/v2 v2.22.0
 	github.com/onsi/gomega v1.35.1
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.78.1
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.78.2
 	github.com/prometheus/client_golang v1.20.5
 	github.com/prometheus/prometheus v0.300.0
 	github.com/sapcc/go-api-declarations v1.12.9
@@ -21,7 +21,7 @@ require (
 	k8s.io/api v0.31.2
 	k8s.io/apimachinery v0.31.2
 	k8s.io/client-go v0.31.2
-	sigs.k8s.io/controller-runtime v0.19.1
+	sigs.k8s.io/controller-runtime v0.19.2
 	sigs.k8s.io/yaml v1.4.0
 )
 
