@@ -16,12 +16,12 @@ require (
 	github.com/sapcc/go-api-declarations v1.13.0
 	github.com/sapcc/go-bits v0.0.0-20241128180218-03123d6bae9b
 	go.uber.org/automaxprocs v1.6.0
-	golang.org/x/sync v0.9.0
-	golang.org/x/text v0.20.0
+	golang.org/x/sync v0.10.0
+	golang.org/x/text v0.21.0
 	k8s.io/api v0.31.2
 	k8s.io/apimachinery v0.31.2
 	k8s.io/client-go v0.31.2
-	sigs.k8s.io/controller-runtime v0.19.2
+	sigs.k8s.io/controller-runtime v0.19.3
 	sigs.k8s.io/yaml v1.4.0
 )
 
@@ -32,7 +32,6 @@ require (
 	github.com/dennwc/varint v1.0.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/evanphx/json-patch/v5 v5.9.0 // indirect
-	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/go-logr/zapr v1.3.0 // indirect
 	github.com/go-openapi/jsonpointer v0.20.2 // indirect
