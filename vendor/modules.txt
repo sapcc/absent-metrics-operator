@@ -195,10 +195,10 @@ github.com/prometheus/prometheus/tsdb/errors
 github.com/prometheus/prometheus/tsdb/fileutil
 github.com/prometheus/prometheus/util/annotations
 github.com/prometheus/prometheus/util/strutil
-# github.com/sapcc/go-api-declarations v1.13.1
+# github.com/sapcc/go-api-declarations v1.13.2
 ## explicit; go 1.21
 github.com/sapcc/go-api-declarations/bininfo
-# github.com/sapcc/go-bits v0.0.0-20241212142854-05ca4ed3590b
+# github.com/sapcc/go-bits v0.0.0-20250101161453-7169321dc311
 ## explicit; go 1.23
 github.com/sapcc/go-bits/errext
 github.com/sapcc/go-bits/logg
