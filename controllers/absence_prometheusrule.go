@@ -82,6 +82,9 @@ func (r *PrometheusRuleReconciler) newAbsencePrometheusRule(name, namespace stri
 	if v, ok := labels[labelPrometheusServer]; ok {
 		l[labelPrometheusServer] = v
 	}
+	if v, ok := labels[labelGreenhousePlugin]; ok {
+		l[labelGreenhousePlugin] = v
+	}
 	if v, ok := labels[labelThanosRuler]; ok {
 		l[labelThanosRuler] = v
 	}
