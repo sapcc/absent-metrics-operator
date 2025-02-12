@@ -32,6 +32,7 @@ const (
 
 	labelNoAlertOnAbsence = "no_alert_on_absence"
 	labelPrometheusServer = "prometheus"
+	labelGreenhousePlugin = "plugin"
 	labelThanosRuler      = "thanos-ruler"
 )
 
