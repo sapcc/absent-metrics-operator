@@ -205,7 +205,7 @@ func (r *PrometheusRuleReconciler) cleanUpOrphanedAbsenceAlertRules(
 			for _, g := range aPR.Spec.Groups {
 				n := promRulefromAbsenceRuleGroupName(g.Name)
 				if n != "" && n == promRule.Name {
-					aPRToClean = aPR
+					aPRToClean = &aPR
 					break
 				}
 			}
@@ -261,7 +261,7 @@ func (r *PrometheusRuleReconciler) cleanUpAbsencePrometheusRule(ctx context.Cont
 		if _, ok := pr.Labels[labelOperatorManagedBy]; ok {
 			continue
 		}
-		if n, err := r.PrometheusRuleName(pr); err == nil {
+		if n, err := r.PrometheusRuleName(&pr); err == nil {
 			if n == aPRName {
 				prNames[pr.GetName()] = true
 			}
