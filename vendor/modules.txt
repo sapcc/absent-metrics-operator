@@ -196,10 +196,10 @@ github.com/prometheus/prometheus/tsdb/errors
 github.com/prometheus/prometheus/tsdb/fileutil
 github.com/prometheus/prometheus/util/annotations
 github.com/prometheus/prometheus/util/strutil
-# github.com/sapcc/go-api-declarations v1.14.1
+# github.com/sapcc/go-api-declarations v1.14.2
 ## explicit; go 1.24
 github.com/sapcc/go-api-declarations/bininfo
-# github.com/sapcc/go-bits v0.0.0-20250320011137-5ec7b29ab444
+# github.com/sapcc/go-bits v0.0.0-20250327084830-778195481ca6
 ## explicit; go 1.24
 github.com/sapcc/go-bits/errext
 github.com/sapcc/go-bits/logg
@@ -232,8 +232,8 @@ go.uber.org/zap/internal/exit
 go.uber.org/zap/internal/pool
 go.uber.org/zap/internal/stacktrace
 go.uber.org/zap/zapcore
-# golang.org/x/net v0.35.0
-## explicit; go 1.18
+# golang.org/x/net v0.36.0
+## explicit; go 1.23.0
 golang.org/x/net/html
 golang.org/x/net/html/atom
 golang.org/x/net/html/charset
