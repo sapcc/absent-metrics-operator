@@ -52,12 +52,13 @@ func CreateAbsencePromRuleNameGenerator(tmplStr string) (AbsencePromRuleNameGene
 
 	return func(pr *monitoringv1.PrometheusRule) (string, error) {
 		// only a specific vetted subset of attributes is passed into the name template to avoid surprising behavior
+		meta := pr.ObjectMeta
 		data := map[string]any{
 			"metadata": map[string]any{
-				"annotations": pr.ObjectMeta.Annotations,
-				"labels":      pr.ObjectMeta.Labels,
-				"namespace":   pr.ObjectMeta.Namespace,
-				"name":        pr.ObjectMeta.Name,
+				"annotations": meta.Annotations,
+				"labels":      meta.Labels,
+				"namespace":   meta.Namespace,
+				"name":        meta.Name,
 			},
 		}
 
