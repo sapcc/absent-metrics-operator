@@ -3,7 +3,7 @@
 # Edit Makefile.maker.yaml instead.                                            #
 ################################################################################
 
-# Copyright 2024 SAP SE
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company
 # SPDX-License-Identifier: Apache-2.0
 
 name: goreleaser
@@ -27,7 +27,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           check-latest: true
-          go-version: 1.24.2
+          go-version: 1.24.3
       - name: Generate release info
         run: |
           go install github.com/sapcc/go-bits/tools/release-info@latest
