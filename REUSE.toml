@@ -21,6 +21,14 @@ SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
 path = [
+  "PROJECT",
+  "e2e/fixtures/*.prom",
+]
+SPDX-FileCopyrightText = "SAP SE or an SAP affiliate company"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
   "vendor/github.com/go-logr/logr/**",
 ]
 precedence = "aggregate"

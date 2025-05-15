@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2025 SAP SE or an SAP affiliate company
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Absent Metrics Operator
 
 [![GitHub Release](https://img.shields.io/github/v/release/sapcc/absent-metrics-operator)](https://github.com/sapcc/absent-metrics-operator/releases/latest)

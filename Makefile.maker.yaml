@@ -41,3 +41,11 @@ renovate:
     - matchPackageNames: ["sigs.k8s.io/controller-runtime"]
       matchUpdateTypes: ["major"]
       enabled: false
+
+reuse:
+  annotations:
+    - paths:
+      - PROJECT
+      - e2e/fixtures/*.prom
+      SPDX-FileCopyrightText: SAP SE or an SAP affiliate company
+      SPDX-License-Identifier: Apache-2.0
