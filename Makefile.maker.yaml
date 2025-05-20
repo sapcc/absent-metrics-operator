@@ -31,6 +31,8 @@ githubWorkflow:
     enabled: true
   release:
     enabled: true
+  pushContainerToGhcr:
+    enabled: true
 
 renovate:
   enabled: true
