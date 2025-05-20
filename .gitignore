@@ -3,7 +3,7 @@
 /dist/
 
 # Test artifacts
-/test/fixtures/*.actual
+*.actual
 /testbin/
 
 # kubebuilder artifacts (that we don't need)

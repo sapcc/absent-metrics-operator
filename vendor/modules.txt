@@ -146,7 +146,7 @@ github.com/onsi/gomega/types
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
-# github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.82.0
+# github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.82.1
 ## explicit; go 1.24
 github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring
 github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1
@@ -171,7 +171,7 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/prometheus/prometheus v0.303.0
+# github.com/prometheus/prometheus v0.303.1
 ## explicit; go 1.23.0
 github.com/prometheus/prometheus/model/exemplar
 github.com/prometheus/prometheus/model/histogram
@@ -191,7 +191,7 @@ github.com/prometheus/prometheus/util/strutil
 # github.com/sapcc/go-api-declarations v1.15.0
 ## explicit; go 1.24
 github.com/sapcc/go-api-declarations/bininfo
-# github.com/sapcc/go-bits v0.0.0-20250501121442-a1d2d0135a19
+# github.com/sapcc/go-bits v0.0.0-20250506185838-b658155ceaf5
 ## explicit; go 1.24
 github.com/sapcc/go-bits/errext
 github.com/sapcc/go-bits/logg
@@ -238,7 +238,7 @@ golang.org/x/net/internal/httpcommon
 ## explicit; go 1.23.0
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sync v0.13.0
+# golang.org/x/sync v0.14.0
 ## explicit; go 1.23.0
 golang.org/x/sync/errgroup
 # golang.org/x/sys v0.32.0
@@ -249,7 +249,7 @@ golang.org/x/sys/windows
 # golang.org/x/term v0.31.0
 ## explicit; go 1.23.0
 golang.org/x/term
-# golang.org/x/text v0.24.0
+# golang.org/x/text v0.25.0
 ## explicit; go 1.23.0
 golang.org/x/text/cases
 golang.org/x/text/encoding
