@@ -2,8 +2,6 @@ module github.com/sapcc/absent-metrics-operator
 
 go 1.24.0
 
-toolchain go1.24.3
-
 // Note: in case of dependency issues, ensure that the "k8s.io/*" and
 // "github.com/prometheus/*" dependencies have the same versions as used by
 // https://github.com/prometheus-operator/prometheus-operator/blob/<tag>/go.mod
