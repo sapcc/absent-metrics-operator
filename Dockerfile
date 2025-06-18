@@ -25,7 +25,8 @@ COPY --from=builder /etc/ssl/certs/ /etc/ssl/certs/
 COPY --from=builder /etc/ssl/cert.pem /etc/ssl/cert.pem
 COPY --from=builder /pkg/ /usr/
 # make sure all binaries can be executed
-RUN absent-metrics-operator --version 2>/dev/null
+RUN set -x \
+  && absent-metrics-operator --version 2>/dev/null
 
 ARG BININFO_BUILD_DATE BININFO_COMMIT_HASH BININFO_VERSION
 LABEL source_repository="https://github.com/sapcc/absent-metrics-operator" \
