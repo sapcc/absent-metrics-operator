@@ -35,6 +35,12 @@ The changes should be grouped using the following categories (in order of preced
 - Heuristic determination of `tier`, `service`, and `support_group` labels. These labels will now be copied over as is from the original alert rule to its corresponding absence alert rule.
 - `tier`, `service`, `ccloud/service`, and `ccloud/support-group` labels at the object level (PrometheusRule).
 
+## 0.9.6 - 2024-06-27
+
+### Changed
+
+- Enable image push to ghcr
+
 ## 0.9.5 - 2023-10-06
 
 ### Changed
