@@ -219,7 +219,7 @@ go.uber.org/zap/zapcore
 # go.yaml.in/yaml/v2 v2.4.2
 ## explicit; go 1.15
 go.yaml.in/yaml/v2
-# golang.org/x/net v0.40.0
+# golang.org/x/net v0.41.0
 ## explicit; go 1.23.0
 golang.org/x/net/html
 golang.org/x/net/html/atom
@@ -233,7 +233,7 @@ golang.org/x/net/internal/httpcommon
 ## explicit; go 1.23.0
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sync v0.15.0
+# golang.org/x/sync v0.16.0
 ## explicit; go 1.23.0
 golang.org/x/sync/errgroup
 # golang.org/x/sys v0.33.0
@@ -244,7 +244,7 @@ golang.org/x/sys/windows
 # golang.org/x/term v0.32.0
 ## explicit; go 1.23.0
 golang.org/x/term
-# golang.org/x/text v0.26.0
+# golang.org/x/text v0.27.0
 ## explicit; go 1.23.0
 golang.org/x/text/cases
 golang.org/x/text/encoding
@@ -271,11 +271,11 @@ golang.org/x/text/unicode/norm
 # golang.org/x/time v0.11.0
 ## explicit; go 1.23.0
 golang.org/x/time/rate
-# golang.org/x/tools v0.33.0
+# golang.org/x/tools v0.34.0
 ## explicit; go 1.23.0
 golang.org/x/tools/cover
+golang.org/x/tools/go/ast/edge
 golang.org/x/tools/go/ast/inspector
-golang.org/x/tools/internal/astutil/edge
 # gomodules.xyz/jsonpatch/v2 v2.4.0
 ## explicit; go 1.20
 gomodules.xyz/jsonpatch/v2
