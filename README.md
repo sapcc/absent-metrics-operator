@@ -94,7 +94,7 @@ annotations:
 ```
 
 Refer to the _absence alert rule_ [definition
-documentation](./doc/absence-alert-rule-definition.md) for more information on how these
+documentation](./docs/absence-alert-rule-definition.md) for more information on how these
 alerts are generated and defined.
 
 ## Installation

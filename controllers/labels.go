@@ -5,9 +5,6 @@ package controllers
 
 // These constants are exported for reusability across packages.
 const (
-	LabelCCloudSupportGroup = "ccloud/support-group"
-	LabelCCloudService      = "ccloud/service"
-
 	LabelSupportGroup = "support_group"
 	LabelTier         = "tier"
 	LabelService      = "service"
