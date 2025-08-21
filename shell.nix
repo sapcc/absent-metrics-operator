@@ -17,6 +17,7 @@ mkShell {
     kubernetes-controller-tools # controller-gen
     reuse
     setup-envtest
+    syft
     # keep this line if you use bash
     bashInteractive
   ];
