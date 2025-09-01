@@ -213,6 +213,14 @@ SPDX-License-Identifier = "MIT"
 
 [[annotations]]
 path = [
+  "vendor/github.com/Masterminds/semver/v3/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Other"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = [
   "vendor/github.com/alecthomas/units/**",
 ]
 precedence = "aggregate"
@@ -334,14 +342,6 @@ SPDX-License-Identifier = "Apache-2.0"
 [[annotations]]
 path = [
   "vendor/github.com/beorn7/perks/**",
-]
-precedence = "aggregate"
-SPDX-FileCopyrightText = "Other"
-SPDX-License-Identifier = "MIT"
-
-[[annotations]]
-path = [
-  "vendor/github.com/blang/semver/v4/**",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Other"
@@ -965,14 +965,6 @@ SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
 path = [
-  "vendor/google.golang.org/genproto/**",
-]
-precedence = "aggregate"
-SPDX-FileCopyrightText = "Other"
-SPDX-License-Identifier = "Apache-2.0"
-
-[[annotations]]
-path = [
   "vendor/google.golang.org/genproto/googleapis/rpc/**",
 ]
 precedence = "aggregate"
@@ -1085,7 +1077,7 @@ SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
 path = [
-  "vendor/sigs.k8s.io/structured-merge-diff/v4/**",
+  "vendor/sigs.k8s.io/structured-merge-diff/v6/**",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Other"
