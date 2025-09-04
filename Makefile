@@ -53,11 +53,13 @@ install-controller-gen: FORCE
 install-setup-envtest: FORCE
 	@if ! hash setup-envtest 2>/dev/null; then printf "\e[1;36m>> Installing setup-envtest (this may take a while)...\e[0m\n"; go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest; fi
 
-GO_BUILDFLAGS := -mod vendor $(GO_BUILDFLAGS)
-GO_LDFLAGS := $(GO_LDFLAGS)
-GO_TESTFLAGS := $(GO_TESTFLAGS)
-GO_TESTENV := $(GO_TESTENV)
-GO_BUILDENV := $(GO_BUILDENV)
+# To add additional flags or values, specify the variable in the environment, e.g. `GO_BUILDFLAGS='-tags experimental' make`.
+# To override the default flags or values, specify the variable on the command line, e.g. `make GO_BUILDFLAGS='-tags experimental'`.
+GO_BUILDFLAGS += -mod vendor
+GO_LDFLAGS +=
+GO_TESTFLAGS +=
+GO_TESTENV +=
+GO_BUILDENV +=
 
 # These definitions are overridable, e.g. to provide fixed version/commit values when
 # no .git directory is present or to provide a fixed build date for reproducibility.
@@ -184,7 +186,6 @@ vars: FORCE
 	@printf "GO_BUILDFLAGS=$(GO_BUILDFLAGS)\n"
 	@printf "GO_COVERPKGS=$(GO_COVERPKGS)\n"
 	@printf "GO_LDFLAGS=$(GO_LDFLAGS)\n"
-	@printf "GO_TESTENV=$(GO_TESTENV)\n"
 	@printf "GO_TESTFLAGS=$(GO_TESTFLAGS)\n"
 	@printf "GO_TESTPKGS=$(GO_TESTPKGS)\n"
 	@printf "MAKE=$(MAKE)\n"
