@@ -15,6 +15,7 @@ mkShell {
     goreleaser
     gotools # goimports
     kubernetes-controller-tools # controller-gen
+    renovate
     reuse
     setup-envtest
     syft
