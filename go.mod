@@ -14,7 +14,7 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/prometheus v0.306.0
 	github.com/sapcc/go-api-declarations v1.17.4
-	github.com/sapcc/go-bits v0.0.0-20250923124349-47cc042a32b4
+	github.com/sapcc/go-bits v0.0.0-20250924092957-bcc75ecf4553
 	go.uber.org/automaxprocs v1.6.0
 	golang.org/x/sync v0.17.0
 	golang.org/x/text v0.29.0
