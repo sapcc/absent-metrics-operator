@@ -421,6 +421,30 @@ SPDX-License-Identifier = "MIT"
 
 [[annotations]]
 path = [
+  "vendor/github.com/gkampitakis/ciinfo/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Other"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = [
+  "vendor/github.com/gkampitakis/go-diff/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Other"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = [
+  "vendor/github.com/gkampitakis/go-snaps/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Other"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = [
   "vendor/github.com/go-logr/stdr/**",
 ]
 precedence = "aggregate"
@@ -462,6 +486,14 @@ SPDX-License-Identifier = "Apache-2.0"
 [[annotations]]
 path = [
   "vendor/github.com/go-task/slim-sprig/v3/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Other"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = [
+  "vendor/github.com/goccy/go-yaml/**",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Other"
@@ -581,6 +613,14 @@ SPDX-License-Identifier = "MIT"
 
 [[annotations]]
 path = [
+  "vendor/github.com/joshdk/go-junit/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Other"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = [
   "vendor/github.com/jpillora/backoff/**",
 ]
 precedence = "aggregate"
@@ -630,6 +670,22 @@ SPDX-License-Identifier = "Apache-2.0"
 [[annotations]]
 path = [
   "vendor/github.com/mailru/easyjson/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Other"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = [
+  "vendor/github.com/maruel/natural/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Other"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "vendor/github.com/mfridman/tparse/**",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Other"
@@ -789,6 +845,38 @@ SPDX-License-Identifier = "MIT"
 
 [[annotations]]
 path = [
+  "vendor/github.com/tidwall/gjson/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Other"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = [
+  "vendor/github.com/tidwall/match/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Other"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = [
+  "vendor/github.com/tidwall/pretty/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Other"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = [
+  "vendor/github.com/tidwall/sjson/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Other"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = [
   "vendor/github.com/x448/float16/**",
 ]
 precedence = "aggregate"
@@ -894,6 +982,14 @@ SPDX-License-Identifier = "BSD-3-Clause"
 [[annotations]]
 path = [
   "vendor/golang.org/x/exp/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Other"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = [
+  "vendor/golang.org/x/mod/**",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Other"
